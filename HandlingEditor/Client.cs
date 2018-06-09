@@ -11,6 +11,7 @@ using System.Collections;
 using HandlingEditor;
 using static NativeUI.UIMenuDynamicListItem;
 using System.Text;
+using System.Xml;
 
 namespace handling_editor
 {
@@ -40,6 +41,7 @@ namespace handling_editor
         #region GUI_FIELDS
         private MenuPool _menuPool;
         private UIMenu EditorMenu;
+        private UIMenu presetsMenu;
         #endregion
 
         private async Task<string> GetOnScreenValue(string defaultText)
@@ -201,6 +203,14 @@ namespace handling_editor
             newitem.MouseEdgeEnabled = false;
             newitem.ControlDisablingEnabled = false;
             newitem.MouseControlsEnabled = false;
+            newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneExtraOption, "Save"));
+            newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, "Delete"));
+            KvpList kvpList = new KvpList();
+            foreach(var key in kvpList)
+            {
+                string value = GetResourceKvpString(key);
+                newitem.AddItem(new UIMenuItem(key));
+            }
 
             return newitem;
         }
@@ -221,7 +231,7 @@ namespace handling_editor
             }
 
             AddMenuReset(EditorMenu);
-            AddPresetsSubMenu(EditorMenu);
+            presetsMenu = AddPresetsSubMenu(EditorMenu);
 
             EditorMenu.MouseEdgeEnabled = false;
             EditorMenu.ControlDisablingEnabled = false;
@@ -293,12 +303,41 @@ namespace handling_editor
             {
                 if (IsControlJustPressed(1, toggleMenu)/* || IsDisabledControlJustPressed(1, toggleMenu)*/) // TOGGLE MENU VISIBLE
                     EditorMenu.Visible = !EditorMenu.Visible;
+
+                if (presetsMenu.Visible)
+                {
+                    if (IsControlJustPressed(1, 179))
+                    {
+                        string name = await GetOnScreenValue("");
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            SavePreset(name, currentPreset);
+                            InitialiseMenu();
+                            presetsMenu.Visible = true;
+                        }
+                        else
+                            CitizenFX.Core.UI.Screen.ShowNotification("Invalid string.");
+                    }
+                    else if (IsControlJustPressed(1, 178))
+                    {
+                        string key = presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text;
+                        if (GetResourceKvpString(key) != null)
+                        {
+                            DeleteResourceKvp(key);
+                            InitialiseMenu();
+                            presetsMenu.Visible = true;
+                        }
+                    }
+                }
+                
             }
             else
             {
-                // Close menu if opened
-                if (EditorMenu.Visible)
-                    EditorMenu.Visible = false;
+                _menuPool.CloseAllMenus();
+                
+                /*// Close menu if opened
+                if (presetsMenu.Visible)
+                    EditorMenu.Visible = false;*/
             }
 
 
@@ -626,6 +665,71 @@ namespace handling_editor
             await Delay(0);
         }
 
+        private string GetXmlFromPreset(string name, HandlingPreset preset)
+        {
+            XmlDocument doc = new XmlDocument();
+            XmlElement handlingData = doc.CreateElement("HandlingData");
+            XmlElement handlingItem = doc.CreateElement("Item");
+            handlingItem.SetAttribute("type", "CHandlingData");
+            handlingItem.SetAttribute("presetName", name);
+
+            foreach (var item in preset.Fields)
+            {
+                XmlElement field = doc.CreateElement(item.Key);
+
+                Type fieldType = handlingInfo.FieldsInfo[item.Key].Type;
+                if(fieldType == typeof(float))
+                {
+                    field.SetAttribute("value", ((float)(item.Value)).ToString());
+                }
+                else if (fieldType == typeof(int))
+                {
+                    field.SetAttribute("value", ((int)(item.Value)).ToString());
+                }
+                else if (fieldType == typeof(Vector3))
+                {
+                    field.SetAttribute("x", ((Vector3)(item.Value)).X.ToString());
+                    field.SetAttribute("y", ((Vector3)(item.Value)).Y.ToString());
+                    field.SetAttribute("z", ((Vector3)(item.Value)).Z.ToString());
+                }
+                else if (fieldType == typeof(string))
+                {
+                    field.InnerText = item.Value;
+                }
+                else { }
+                handlingItem.AppendChild(field);
+            }
+
+            handlingData.AppendChild(handlingItem);
+            doc.AppendChild(handlingData);
+
+            return doc.ToString();
+        }
+
+        private async void SavePreset(string name, HandlingPreset preset)
+        {
+            string kvpName = $"handling_{name}";
+            if(GetResourceKvpString(kvpName) != null)
+                CitizenFX.Core.UI.Screen.ShowNotification($"The name {name} is already used for another preset.");
+            else
+            {
+                string xml = GetXmlFromPreset(name, preset);
+                SetResourceKvp(kvpName, xml);
+                await Delay(0);
+            }
+        }
+        /*
+        private HandlingPreset GetPresetFromXml(string xml)
+        {
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(xml);
+
+            var handling = doc["HandlingData"]["Item"];
+            string name = handling.GetAttribute("presetName");
+
+            return new HandlingPreset();
+        }*/
+
         private void ReadFieldInfo()
         {
             string strings = null;
@@ -671,6 +775,35 @@ namespace handling_editor
             }
         }
  
+    }
+   
+    public class KvpList : IEnumerable<string>
+    {
+        public string prefix = "handling_";
+
+        public IEnumerator<string> GetEnumerator()
+        {
+            int handle = StartFindKvp(prefix);
+
+            if (handle != -1)
+            {
+                string kvp;
+                do
+                {
+                    kvp = FindKvp(handle);
+
+                    if (kvp != null)
+                        yield return kvp;
+                }
+                while (kvp != null);
+                EndFindKvp(handle);
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 
     public class VehicleList : IEnumerable<int>
