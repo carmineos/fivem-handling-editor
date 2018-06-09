@@ -55,6 +55,7 @@
     <Compile Include="CHandlingData.cs" />
     <Compile Include="CHandlingDataInfo.cs" />
     <Compile Include="Client.cs" />
+    <Compile Include="HandlingPreset.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

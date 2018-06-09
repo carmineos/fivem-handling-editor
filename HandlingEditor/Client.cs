@@ -10,6 +10,7 @@ using static CitizenFX.Core.Native.API;
 using System.Collections;
 using HandlingEditor;
 using static NativeUI.UIMenuDynamicListItem;
+using System.Text;
 
 namespace handling_editor
 {
@@ -36,6 +37,7 @@ namespace handling_editor
         private long lastTime;
         private int playerPed;
         private int currentVehicle;
+        private HandlingPreset currentPreset;
         private IEnumerable<int> vehicles;
         #endregion
 
@@ -84,7 +86,10 @@ namespace handling_editor
         }*/
         private UIMenuDynamicListItem AddDynamicFloatList(UIMenu menu, FloatFieldInfo fieldInfo)
         {
-            float value = GetVehicleHandlingFloat(currentVehicle, "CHandlingData", fieldInfo.Name); //TODO: Get value from current preset
+            if (!currentPreset.Fields.ContainsKey(fieldInfo.Name))
+                return null;
+
+            float value = currentPreset.Fields[fieldInfo.Name];
             var newitem = new UIMenuDynamicListItem(fieldInfo.Name, fieldInfo.Description, value.ToString("F2"), (sender, direction) =>
             {
                 if (direction == ChangeDirection.Left)
@@ -93,7 +98,10 @@ namespace handling_editor
                     if (newvalue < fieldInfo.Min)
                         CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldInfo.Name}~w~ is {fieldInfo.Min}");
                     else
+                    {
                         value = newvalue;
+                        currentPreset.Fields[fieldInfo.Name] = newvalue;
+                    }
                 }
                 else
                 {
@@ -101,7 +109,10 @@ namespace handling_editor
                     if (newvalue > fieldInfo.Max)
                         CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldInfo.Name}~w~ is {fieldInfo.Max}");
                     else
+                    {
                         value = newvalue;
+                        currentPreset.Fields[fieldInfo.Name] = newvalue;
+                    }
                 }
                 return value.ToString("F2");
             });
@@ -112,7 +123,10 @@ namespace handling_editor
 
         private UIMenuDynamicListItem AddDynamicIntList(UIMenu menu, IntFieldInfo fieldInfo)
         {
-            int value = GetVehicleHandlingInt(currentVehicle, "CHandlingData", fieldInfo.Name); //TODO: Get value from current preset
+            if (!currentPreset.Fields.ContainsKey(fieldInfo.Name))
+                return null;
+
+            int value = currentPreset.Fields[fieldInfo.Name]; //TODO: Get value from current preset
             var newitem = new UIMenuDynamicListItem(fieldInfo.Name, fieldInfo.Description, value.ToString("F2"), (sender, direction) =>
             {
                 if (direction == ChangeDirection.Left)
@@ -121,7 +135,10 @@ namespace handling_editor
                     if (newvalue < fieldInfo.Min)
                         CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldInfo.Name}~w~ is {fieldInfo.Min}");
                     else
+                    {
                         value = newvalue;
+                        currentPreset.Fields[fieldInfo.Name] = newvalue;
+                    }
                 }
                 else
                 {
@@ -129,7 +146,10 @@ namespace handling_editor
                     if (newvalue > fieldInfo.Max)
                         CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldInfo.Name}~w~ is {fieldInfo.Max}");
                     else
+                    {
                         value = newvalue;
+                        currentPreset.Fields[fieldInfo.Name] = newvalue;
+                    }
                 }
                 return value.ToString("F2");
             });
@@ -147,6 +167,8 @@ namespace handling_editor
             {
                 if (item == newitem)
                 {
+                    currentPreset.Reset();
+                    RefreshVehicleUsingPreset(currentVehicle, currentPreset);
                     InitialiseMenu();
                     EditorMenu.Visible = true;
                 }
@@ -172,9 +194,9 @@ namespace handling_editor
                 else if(item.Value.Type == typeof(int))
                     AddDynamicIntList(EditorMenu, (IntFieldInfo)item.Value);
                 /*else if (item.Value.Type == typeof(VectorFieldInfo))
-                    AddDynamicVectorList(EditorMenu, item);*/
+                    AddDynamicVectorList(EditorMenu, (VectorFieldInfo)item.Value);*/
             }
-            
+
             AddMenuReset(EditorMenu);
 
             EditorMenu.MouseEdgeEnabled = false;
@@ -183,6 +205,7 @@ namespace handling_editor
 
             _menuPool.Add(EditorMenu);
             _menuPool.RefreshIndex();
+            
             /*
             EditorMenu.OnListChange += (sender, item, index) =>
             {
@@ -199,15 +222,21 @@ namespace handling_editor
             handlingInfo = new CHandlingDataInfo();
             ReadFieldInfo();
             LoadConfig();
+            RegisterDecorators();
 
             currentTime = GetGameTimer();
             lastTime = GetGameTimer();
-
+            currentPreset = new HandlingPreset();
             currentVehicle = -1;
             vehicles = Enumerable.Empty<int>();
 
             InitialiseMenu();
-            
+
+            RegisterCommand("handling_info", new Action<int, dynamic>((source, args) =>
+            {
+                PrintDecoratorsInfo(currentVehicle);
+            }), false);
+
             Tick += OnTick;
             Tick += ScriptTask;
         }
@@ -247,6 +276,7 @@ namespace handling_editor
                     if (vehicle != currentVehicle)
                     {
                         currentVehicle = vehicle;
+                        currentPreset = CreateHandlingPreset(currentVehicle);                
                         InitialiseMenu();
                     }
                 }
@@ -254,22 +284,195 @@ namespace handling_editor
                 {
                     // If current vehicle isn't a car or player isn't driving current vehicle or vehicle is dead
                     currentVehicle = -1;
+                    currentPreset = null;
                 }
             }
             else
             {
                 // If player isn't in any vehicle
                 currentVehicle = -1;
+                currentPreset = null;
+            }
+
+            // Check if current vehicle needs to be refreshed
+            if (currentVehicle != -1 && currentPreset != null)
+            {
+                if (currentPreset.IsEdited)
+                    //Debug.WriteLine("Current preset is edited");
+                    RefreshVehicleUsingPreset(currentVehicle, currentPreset);
             }
 
             // Check if decorators needs to be updated
             if (currentTime > timer)
             {
-                
+                if (currentVehicle != -1 && currentPreset != null)
+                    UpdateVehicleDecorators(currentVehicle, currentPreset);
+
                 vehicles = new VehicleList();
 
                 lastTime = GetGameTimer();
             }
+
+            // Refreshes the iterated vehicles
+            //RefreshVehicles(vehicles.Except(new List<int> { currentVehicle }));
+
+            await Delay(0);
+        }
+
+        private async void RefreshVehicleUsingPreset(int vehicle, HandlingPreset preset)
+        {
+            if (DoesEntityExist(vehicle))
+            {
+                foreach (var item in preset.Fields)
+                {
+                    //Debug.Write($"Refreshing {item.Key}, default:{preset.DefaultFields[item.Key]}, current:{item.Value}");
+
+                    Type type = handlingInfo.FieldsInfo[item.Key].Type;
+
+                    if (type == typeof(float))
+                        SetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key, item.Value);
+                    /*
+                    if (type == typeof(int))
+                        SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, item.Value);
+
+                    if (type == typeof(Vector3))
+                        SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, item.Value);*/
+                }
+            }
+            await Delay(0);
+        }
+
+        private async void UpdateVehicleDecorators(int vehicle, HandlingPreset preset)
+        {
+            foreach (var item in preset.Fields)
+            {
+                string defDecorName = $"{item.Key}_def";
+                Type fieldType = handlingInfo.FieldsInfo[item.Key].Type;
+
+                dynamic defaultValue = preset.DefaultFields[item.Key];
+
+                if (fieldType == typeof(float))
+                {
+                    if (DecorExistOn(vehicle, item.Key))
+                    {
+                        float value = DecorGetFloat(vehicle, item.Key);
+                        if (value != item.Value)
+                            DecorSetFloat(vehicle, item.Key, item.Value);
+                    }
+                    else
+                    {
+                        if (defaultValue != item.Value)
+                            DecorSetFloat(vehicle, item.Key, item.Value);
+                    }
+
+                    if (DecorExistOn(vehicle, defDecorName))
+                    {
+                        float value = DecorGetFloat(vehicle, defDecorName);
+                        if (value != defaultValue)
+                            DecorSetFloat(vehicle, defDecorName, defaultValue);
+                    }
+                    else
+                    {
+                        if (defaultValue != item.Value)
+                            DecorSetFloat(vehicle, defDecorName, defaultValue);
+                    }
+                }
+                if(fieldType == typeof(int))
+                { }
+
+
+            }
+            await Delay(0);
+        }
+
+        private void RegisterDecorators()
+        {
+            foreach (var item in handlingInfo.FieldsInfo)
+            {
+                string defDecorName = $"{item.Key}_def";
+                Type type = item.Value.Type;
+
+                if (type == typeof(float))
+                {
+                    DecorRegister(item.Key, 1);
+                    DecorRegister(defDecorName, 1);
+                }/*
+                else if (type == typeof(int))
+                {
+                    DecorRegister(item.Key, 3);
+                    DecorRegister(defDecorName, 3);
+                }*/
+            }
+        }
+
+        private HandlingPreset CreateHandlingPreset(int vehicle)
+        {
+            Dictionary<string, dynamic> defaultFields = new Dictionary<string, dynamic>();
+            Dictionary<string, dynamic> fields = new Dictionary<string, dynamic>();
+            
+            foreach(var item in handlingInfo.FieldsInfo)
+            {
+                /*
+                if ()//vehicle hasn't such handling field
+                    continue;*/
+
+                string defDecorName = $"{item.Key}_def";
+
+                if (item.Value.Type == typeof(float))
+                {
+                    if (DecorExistOn(vehicle, defDecorName))
+                        defaultFields[item.Key] = DecorGetFloat(vehicle, defDecorName);
+                    else defaultFields[item.Key] = GetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key);
+
+                    if (DecorExistOn(vehicle, item.Key))
+                        fields[item.Key] = DecorGetFloat(vehicle, item.Key);
+                    else fields[item.Key] = defaultFields[item.Key];
+                }
+                /*
+                else if (item.Value.Type == typeof(int))
+                {
+                    if (DecorExistOn(vehicle, defDecorName))
+                        defaultFields[item.Key] = DecorGetInt(vehicle, defDecorName);
+                    else defaultFields[item.Key] = GetVehicleHandlingInt(vehicle, "CHandlingData", item.Key);
+
+                    if (DecorExistOn(vehicle, item.Key))
+                        fields[item.Key] = DecorGetInt(vehicle, item.Key);
+                    else fields[item.Key] = defaultFields[item.Key];
+                }*/
+            }
+
+            HandlingPreset preset = new HandlingPreset(defaultFields, fields);
+
+            return preset;
+        }
+
+        private async void PrintDecoratorsInfo(int vehicle)
+        {
+            if (DoesEntityExist(vehicle))
+            {
+                int netID = NetworkGetNetworkIdFromEntity(vehicle);
+                StringBuilder s = new StringBuilder();
+                s.Append($"VSTANCER: Vehicle:{vehicle} netID:{netID} ");
+
+                foreach (var item in handlingInfo.FieldsInfo)
+                {
+                    if (DecorExistOn(vehicle, item.Key))
+                    {
+                        string defDecorName = $"{item.Key}_def";
+                        Type type = item.Value.Type;
+
+                        if (type == typeof(float))
+                        {
+                            float value = DecorGetFloat(vehicle, item.Key);
+                            float defaultValue = DecorGetFloat(vehicle, defDecorName);
+                            s.Append($"{item.Key}:{value}  default:{defaultValue} ");
+                        }
+                    }
+                        
+                }
+                Debug.WriteLine(s.ToString());
+            }
+            else Debug.WriteLine("HANDLING_EDITOR: Current vehicle doesn't exist");
 
             await Delay(0);
         }
@@ -288,7 +491,7 @@ namespace handling_editor
             {
                 Debug.WriteLine(e.Message);
                 Debug.WriteLine(e.StackTrace);
-                Debug.WriteLine("HANDLING_EDITOR: Impossible to load HandlingInfo.xml");
+                Debug.WriteLine("HANDLING_EDITOR: Error loading HandlingInfo.xml");
             }
         }
 

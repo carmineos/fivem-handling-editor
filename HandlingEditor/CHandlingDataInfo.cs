@@ -174,6 +174,7 @@ namespace HandlingEditor
             Max = max;
         }
     }
+
     public class StringFieldInfo : FieldInfo
     {
         public StringFieldInfo(string name, string description, bool editable) : base(name, description, editable)
@@ -207,6 +208,7 @@ namespace HandlingEditor
             {
                 if (item.NodeType == XmlNodeType.Comment)
                     continue;
+
                 string name = item.Name;
                 Type type = FieldInfo.GetFieldType(name);
 
@@ -264,9 +266,7 @@ namespace HandlingEditor
             }
         }
 
-
-        /*
-        public void ParseXMLLinq(string xml)
+        /** public void ParseXMLLinq(string xml)
         {
             XDocument doc = XDocument.Parse(xml);
             
@@ -329,68 +329,5 @@ namespace HandlingEditor
             }
         }
         */
-        /*
-        public void ParseJSON(string text)
-        {
-            JObject obj = JObject.Parse(text);
-
-            foreach (var item in obj["CHandlingData"])
-            {
-                string name = item.ToString();
-                Type type = FieldInfo.GetFieldType(name);
-
-                bool editable = bool.Parse(item["Editable"].ToString());
-                string description = item["Description"].ToString();
-
-                var minNode = item["Min"];
-                var maxNode = item["Max"];
-
-                if (type == typeof(float))
-                {
-                    float min = float.Parse(minNode["value"].ToString());
-                    float max = float.Parse(maxNode["value"].ToString());
-
-                    FloatFieldInfo fieldInfo = new FloatFieldInfo(name, description, editable, min, max);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else if (type == typeof(int))
-                {
-                    int min = int.Parse(minNode["value"].ToString());
-                    int max = int.Parse(maxNode["value"].ToString());
-
-                    IntFieldInfo fieldInfo = new IntFieldInfo(name, description, editable, min, max);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else if (type == typeof(Vector3))
-                {
-                    Vector3 min = new Vector3(
-                        float.Parse(minNode["x"].ToString()),
-                        float.Parse(minNode["y"].ToString()),
-                        float.Parse(minNode["z"].ToString()));
-
-                    Vector3 max = new Vector3(
-                        float.Parse(maxNode["x"].ToString()),
-                        float.Parse(maxNode["y"].ToString()),
-                        float.Parse(maxNode["z"].ToString()));
-
-                    VectorFieldInfo fieldInfo = new VectorFieldInfo(name, description, editable, min, max);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else if (type == typeof(string))
-                {
-                    StringFieldInfo fieldInfo = new StringFieldInfo(name, description, editable);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else
-                {
-                    StringFieldInfo fieldInfo = new StringFieldInfo(name, description, editable);
-                    FieldsInfo[name] = fieldInfo;
-                }
-            }
-        }*/
     }
 }
