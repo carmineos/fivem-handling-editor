@@ -32,7 +32,7 @@ namespace handling_editor
 
 
         #region FIELDS
-        private CHandlingDataInfo handlingInfo;
+        private static CHandlingDataInfo handlingInfo;
         private long currentTime;
         private long lastTime;
         private int playerPed;
@@ -169,6 +169,8 @@ namespace handling_editor
                 {
                     currentPreset.Reset();
                     RefreshVehicleUsingPreset(currentVehicle, currentPreset);
+                    RemoveDecorators(currentVehicle);
+
                     InitialiseMenu();
                     EditorMenu.Visible = true;
                 }
@@ -232,9 +234,38 @@ namespace handling_editor
 
             InitialiseMenu();
 
+            RegisterCommand("handling_distance", new Action<int, dynamic>((source, args) =>
+            {
+                bool result = float.TryParse(args[0], out float value);
+                if (result)
+                {
+                    maxSyncDistance = value;
+                    Debug.WriteLine("HANDLING EDITOR: Received new maxSyncDistance value {0}", value);
+                }
+                else Debug.WriteLine("HANDLING EDITOR: Can't parse {0}", value);
+
+            }), false);
+
+            RegisterCommand("handling_debug", new Action<int, dynamic>((source, args) =>
+            {
+                bool result = bool.TryParse(args[0], out bool value);
+                if (result)
+                {
+                    debug = value;
+                    Debug.WriteLine("HANDLING EDITOR: Received new debug value {0}", value);
+                }
+                else Debug.WriteLine("HANDLING EDITOR: Can't parse {0}", value);
+
+            }), false);
+
             RegisterCommand("handling_info", new Action<int, dynamic>((source, args) =>
             {
                 PrintDecoratorsInfo(currentVehicle);
+            }), false);
+
+            RegisterCommand("handling_print", new Action<int, dynamic>((source, args) =>
+            {
+                PrintVehiclesWithDecorators(vehicles);
             }), false);
 
             Tick += OnTick;
@@ -314,7 +345,7 @@ namespace handling_editor
             }
 
             // Refreshes the iterated vehicles
-            //RefreshVehicles(vehicles.Except(new List<int> { currentVehicle }));
+            RefreshVehicles(vehicles.Except(new List<int> { currentVehicle }));
 
             await Delay(0);
         }
@@ -385,6 +416,21 @@ namespace handling_editor
             await Delay(0);
         }
 
+        private async void RemoveDecorators(int vehicle)
+        {
+            foreach (var item in handlingInfo.FieldsInfo)
+            {
+                string defDecorName = $"{item.Key}_def";
+
+                if (DecorExistOn(vehicle, item.Key))
+                    DecorRemove(vehicle, item.Key);
+                if (DecorExistOn(vehicle, defDecorName))
+                    DecorRemove(vehicle, defDecorName);
+            }
+
+            await Delay(0);
+        }
+
         private void RegisterDecorators()
         {
             foreach (var item in handlingInfo.FieldsInfo)
@@ -403,6 +449,51 @@ namespace handling_editor
                     DecorRegister(defDecorName, 3);
                 }*/
             }
+        }
+
+        private async void RefreshVehicles(IEnumerable<int> vehiclesList)
+        {
+            Vector3 currentCoords = GetEntityCoords(playerPed, true);
+
+            foreach (int entity in vehiclesList)
+            {
+                //if (entity != currentVehicle)
+                if (DoesEntityExist(entity))
+                {
+                    Vector3 coords = GetEntityCoords(entity, true);
+
+                    if (Vector3.Distance(currentCoords, coords) <= maxSyncDistance)
+                        RefreshVehicleUsingDecorators(entity);
+                }
+            }
+            await Delay(0);
+        }
+
+        private async void RefreshVehicleUsingDecorators(int vehicle)
+        {
+            foreach (var item in handlingInfo.FieldsInfo)
+            {
+                if (DecorExistOn(vehicle, item.Key))
+                {
+                    Type type = item.Value.Type;
+
+                    if (type == typeof(float))
+                    {
+                        var value = DecorGetFloat(vehicle, item.Key);
+                        SetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key, value);
+                    }/*
+                    else if (type == typeof(int))
+                    {
+                        var value = DecorGetInt(vehicle, item.Key);
+                        SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, value);
+                    }
+                    else if (type == typeof(Vector3))
+                    { }*/
+
+                }
+            }
+
+            await Delay(0);
         }
 
         private HandlingPreset CreateHandlingPreset(int vehicle)
@@ -452,7 +543,7 @@ namespace handling_editor
             {
                 int netID = NetworkGetNetworkIdFromEntity(vehicle);
                 StringBuilder s = new StringBuilder();
-                s.Append($"VSTANCER: Vehicle:{vehicle} netID:{netID} ");
+                s.Append($"HANDLING EDITOR: Vehicle:{vehicle} netID:{netID} ");
 
                 foreach (var item in handlingInfo.FieldsInfo)
                 {
@@ -461,18 +552,47 @@ namespace handling_editor
                         string defDecorName = $"{item.Key}_def";
                         Type type = item.Value.Type;
 
+                        dynamic value = 0, defaultValue = 0;
+
                         if (type == typeof(float))
                         {
-                            float value = DecorGetFloat(vehicle, item.Key);
-                            float defaultValue = DecorGetFloat(vehicle, defDecorName);
-                            s.Append($"{item.Key}:{value}  default:{defaultValue} ");
+                            value = DecorGetFloat(vehicle, item.Key);
+                            defaultValue = DecorGetFloat(vehicle, defDecorName);
                         }
+                        if (type == typeof(int))
+                        {
+                            value = DecorGetInt(vehicle, item.Key);
+                            defaultValue = DecorGetInt(vehicle, defDecorName);
+                        }
+                        s.Append($"{item.Key}:{value}({defaultValue}) ");
                     }
                         
                 }
                 Debug.WriteLine(s.ToString());
             }
             else Debug.WriteLine("HANDLING_EDITOR: Current vehicle doesn't exist");
+
+            await Delay(0);
+        }
+
+        private bool HasDecorators(int entity)
+        {
+            foreach (var item in handlingInfo.FieldsInfo)
+            {
+                if (DecorExistOn(entity, item.Key))
+                    return true;
+            }
+            return false;
+        }
+
+        private async void PrintVehiclesWithDecorators(IEnumerable<int> vehiclesList)
+        {
+            IEnumerable<int> entities = vehiclesList.Where(entity => HasDecorators(entity));
+
+            Debug.WriteLine($"HANDLING EDITOR: Vehicles with decorators: {entities.Count()}");
+
+            foreach (var item in entities)
+                PrintDecoratorsInfo(item);
 
             await Delay(0);
         }
