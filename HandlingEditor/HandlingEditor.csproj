@@ -52,7 +52,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CHandlingData.cs" />
     <Compile Include="CHandlingDataInfo.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="HandlingPreset.cs" />

@@ -44,9 +44,11 @@ namespace handling_editor
 
         private async Task<string> GetOnScreenValue(string defaultText)
         {
+            DisableAllControlActions(1);
             AddTextEntry("ENTER_VALUE", "Enter value");
             DisplayOnscreenKeyboard(1, "ENTER_VALUE", "", defaultText, "", "", "", 128);
             while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(0);
+            EnableAllControlActions(1);
             return GetOnscreenKeyboardResult();
         }
 
@@ -103,7 +105,7 @@ namespace handling_editor
                     }else
                         CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldInfo.Name}~w~");
 
-                    InitialiseMenu();
+                    InitialiseMenu(); //Should just update the current item instead
                     EditorMenu.Visible = true;
                 }
             };
@@ -165,7 +167,7 @@ namespace handling_editor
                     else
                         CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldInfo.Name}~w~");
 
-                    InitialiseMenu();
+                    InitialiseMenu(); //Should just update the current item instead
                     EditorMenu.Visible = true;
                 }
             };
@@ -224,7 +226,7 @@ namespace handling_editor
             EditorMenu.MouseEdgeEnabled = false;
             EditorMenu.ControlDisablingEnabled = false;
             EditorMenu.MouseControlsEnabled = false;
-
+            _menuPool.ResetCursorOnOpen = true;
             _menuPool.Add(EditorMenu);
             _menuPool.RefreshIndex();
         }
@@ -282,13 +284,14 @@ namespace handling_editor
             Tick += OnTick;
             Tick += ScriptTask;
         }
+
         private async Task OnTick()
         {
             _menuPool.ProcessMenus();
 
             if (currentVehicle != -1)
             {
-                if (IsControlJustPressed(1, toggleMenu) || IsDisabledControlJustPressed(1, toggleMenu)) // TOGGLE MENU VISIBLE
+                if (IsControlJustPressed(1, toggleMenu)/* || IsDisabledControlJustPressed(1, toggleMenu)*/) // TOGGLE MENU VISIBLE
                     EditorMenu.Visible = !EditorMenu.Visible;
             }
             else
