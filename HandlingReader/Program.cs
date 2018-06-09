@@ -1,8 +1,10 @@
 ﻿using HandlingEditor;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Xml.Linq;
 
 namespace HandlingReader
@@ -11,6 +13,7 @@ namespace HandlingReader
     {
         static void Main(string[] args)
         {
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             /*
              if (args.Length <= 0)
                 return;
@@ -26,11 +29,11 @@ namespace HandlingReader
 
             //GetCHandlingDataFields(files);
             //GetSubHandlingDataFields(files);
-            //CHandlingDataPreset.SaveXML("HandlingInfo.xml");
-            string text = File.ReadAllText("HandlingInfo_wip.xml");
+            CHandlingDataPreset.SaveXML("HandlingInfo.xml", "handling_merged.meta");
+            //string text = File.ReadAllText("HandlingInfo_wip.xml");
             //string text = File.ReadAllText("HandlingInfo.json");
-            CHandlingDataInfo dataInfo = new CHandlingDataInfo();
-            dataInfo.ParseXML(text);
+            //CHandlingDataInfo dataInfo = new CHandlingDataInfo();
+            //dataInfo.ParseXML(text);
 
             Console.ReadKey();
         }
@@ -150,7 +153,7 @@ namespace HandlingReader
         }
 
 
-        /*static void CollectValues(string[] filenames)
+        static void CollectValues(string[] filenames)
         {
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             if (filenames.Length == 0)
@@ -188,7 +191,7 @@ namespace HandlingReader
                     foreach (string s in result)
                         writer.WriteLine(s);
             }
-        }*/
+        }
     }
 
     public class CHandlingDataPreset
@@ -314,34 +317,51 @@ namespace HandlingReader
             else return null;
         }
 
-        public static void SaveXML(string filename)
+        public static void SaveXML(string filename, string handlingFile)
         {
+            IEnumerable<XElement> handlings = XDocument.Load(handlingFile).Element("CHandlingDataMgr").Element("HandlingData").Elements();
+
             XDocument doc = new XDocument();
             doc.Add(new XComment(" https://www.gtamodding.com/wiki/Handling.meta "));
             XElement chandlingfields = new XElement("CHandlingData");
             foreach (var item in FieldsNames)
             {
+                var values = handlings.Descendants(item);
                 XElement e = new XElement(item);
                 bool editable;
+                dynamic min = 0, max = 0;
 
                 Type fieldType = GetFieldType(item);
                 if (fieldType == typeof(float))
                 {
                     editable = true;
-                    e.Add(CreateProperty("Min", 0));
-                    e.Add(CreateProperty("Max", 0));
+                    min = values.Select(a => float.Parse(a.Attribute("value").Value)).Min();
+                    max = values.Select(a => float.Parse(a.Attribute("value").Value)).Max();
+                    e.Add(CreateProperty("Min", min));
+                    e.Add(CreateProperty("Max", max));
                 }
                 else if(fieldType == typeof(int))
                 {
-                    editable = true;
-                    e.Add(CreateProperty("Min", 0));
-                    e.Add(CreateProperty("Max", 0));
+                    editable = false;
+                    min = values.Select(a => int.Parse(a.Attribute("value").Value)).Min();
+                    max = values.Select(a => int.Parse(a.Attribute("value").Value)).Max();
+                    e.Add(CreateProperty("Min", min));
+                    e.Add(CreateProperty("Max", max));
                 }
                 else if(fieldType == typeof(Vector3))
                 {
-                    editable = true;
-                    e.Add(CreateProperty("Min", new Vector3(0, 0, 0)));
-                    e.Add(CreateProperty("Max", new Vector3(0, 0, 0)));
+                    editable = false;
+                    var minX = values.Select(a => float.Parse(a.Attribute("x").Value)).Min();
+                    var minY = values.Select(a => float.Parse(a.Attribute("y").Value)).Min();
+                    var minZ = values.Select(a => float.Parse(a.Attribute("z").Value)).Min();
+                    var maxX = values.Select(a => float.Parse(a.Attribute("x").Value)).Max();
+                    var maxY = values.Select(a => float.Parse(a.Attribute("y").Value)).Max();
+                    var maxZ = values.Select(a => float.Parse(a.Attribute("z").Value)).Max();
+
+                    min = new Vector3(minX,minY,minZ);
+                    max = new Vector3(maxX, maxY, maxZ);
+                    e.Add(CreateProperty("Min", min));
+                    e.Add(CreateProperty("Max", max));
                 }
                 else
                 {
@@ -398,6 +418,11 @@ namespace HandlingReader
         public float X;
         public float Y;
         public float Z;
-        public Vector3(float x, float y, float z) { }
+        public Vector3(float x, float y, float z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
     }
 }
