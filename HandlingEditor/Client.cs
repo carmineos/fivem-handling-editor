@@ -24,10 +24,6 @@ namespace handling_editor
         private static int toggleMenu;
         private static float screenPosX;
         private static float screenPosY;
-        public static string title;
-        public static string description;
-        public static uint bannerColor;
-        private static bool EnableBannerColor;
         #endregion
 
 
@@ -45,45 +41,15 @@ namespace handling_editor
         private MenuPool _menuPool;
         private UIMenu EditorMenu;
         #endregion
-        /*
-        private List<dynamic> BuildFloatList(float min, float max)
+
+        private async Task<string> GetOnScreenValue(string defaultText)
         {
-            var values = new List<dynamic>();
+            AddTextEntry("ENTER_VALUE", "Enter value");
+            DisplayOnscreenKeyboard(1, "ENTER_VALUE", "", defaultText, "", "", "", 128);
+            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(0);
+            return GetOnscreenKeyboardResult();
+        }
 
-            for (float i = min; i <= max; i += editingFactor)
-                values.Add((float)Math.Round(i, 3));
-
-            return values;
-        }*/
-        /*
-        private List<dynamic> BuildIntList(int min, int max)
-        {
-            var values = new List<dynamic>();
-
-            for (int i = min; i <= max; i++)
-                values.Add(i);
-
-            return values;
-        }*/
-
-        /*
-        private UIMenuListItem AddList(UIMenu menu, FloatFieldInfo fieldInfo)
-        {
-            List<dynamic> values = BuildFloatList(fieldInfo.Min, fieldInfo.Max);
-            //var currentIndex = values.IndexOf((float)Math.Round(currentValue, 3));
-            var newitem = new UIMenuListItem(fieldInfo.Name, values, 0, fieldInfo.Description);
-            menu.AddItem(newitem);
-            return newitem;
-        }*/
-        /*
-        private UIMenuListItem AddList(UIMenu menu, IntFieldInfo fieldInfo)
-        {
-            List<dynamic> values = BuildIntList(fieldInfo.Min, fieldInfo.Max);
-            //var currentIndex = values.IndexOf((float)Math.Round(currentValue, 3));
-            var newitem = new UIMenuListItem(fieldInfo.Name, values, 0, fieldInfo.Description);
-            menu.AddItem(newitem);
-            return newitem;
-        }*/
         private UIMenuDynamicListItem AddDynamicFloatList(UIMenu menu, FloatFieldInfo fieldInfo)
         {
             if (!currentPreset.Fields.ContainsKey(fieldInfo.Name))
@@ -118,6 +84,30 @@ namespace handling_editor
             });
 
             menu.AddItem(newitem);
+
+            EditorMenu.OnItemSelect += async (sender, item, index) =>
+            {
+                if (item == newitem)
+                {
+                    EditorMenu.Visible = false;
+
+                    string text = await GetOnScreenValue(value.ToString());
+                    float newvalue = value;
+
+                    if (float.TryParse(text, out newvalue))
+                    {
+                        if(newvalue >= fieldInfo.Min && newvalue <= fieldInfo.Max)
+                            currentPreset.Fields[fieldInfo.Name] = newvalue;
+                        else
+                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of range for ~b~{fieldInfo.Name}~w~, Min:{fieldInfo.Min}, Max:{fieldInfo.Max}");
+                    }else
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldInfo.Name}~w~");
+
+                    InitialiseMenu();
+                    EditorMenu.Visible = true;
+                }
+            };
+
             return newitem;
         }
 
@@ -155,10 +145,35 @@ namespace handling_editor
             });
 
             menu.AddItem(newitem);
+
+            EditorMenu.OnItemSelect += async (sender, item, index) =>
+            {
+                if (item == newitem)
+                {
+                    EditorMenu.Visible = false;
+
+                    string text = await GetOnScreenValue(value.ToString());
+                    int newvalue = value;
+
+                    if (int.TryParse(text, out newvalue))
+                    {
+                        if (newvalue >= fieldInfo.Min && newvalue <= fieldInfo.Max)
+                            currentPreset.Fields[fieldInfo.Name] = newvalue;
+                        else
+                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of range for ~b~{fieldInfo.Name}~w~, Min:{fieldInfo.Min}, Max:{fieldInfo.Max}");
+                    }
+                    else
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldInfo.Name}~w~");
+
+                    InitialiseMenu();
+                    EditorMenu.Visible = true;
+                }
+            };
+
             return newitem;
         }
         
-        private void AddMenuReset(UIMenu menu)
+        private UIMenuItem AddMenuReset(UIMenu menu)
         {
             var newitem = new UIMenuItem("Reset", "Restores the default values");
             menu.AddItem(newitem);
@@ -175,19 +190,23 @@ namespace handling_editor
                     EditorMenu.Visible = true;
                 }
             };
+            return newitem;
+        }
+
+        private UIMenu AddPresetsSubMenu(UIMenu menu)
+        {
+            var newitem = _menuPool.AddSubMenu(menu, "Saved Presets", "The saved handling presets");
+            newitem.MouseEdgeEnabled = false;
+            newitem.ControlDisablingEnabled = false;
+            newitem.MouseControlsEnabled = false;
+
+            return newitem;
         }
 
         private void InitialiseMenu()
         {
             _menuPool = new MenuPool();
-            EditorMenu = new UIMenu(title, description, new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height));
-
-            if (EnableBannerColor)
-            {
-                var banner = new UIResRectangle();
-                banner.Color = Color.FromArgb((int)bannerColor);
-                EditorMenu.SetBannerType(banner);
-            }
+            EditorMenu = new UIMenu("Handling Editor", "Beta", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height));
 
             foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable == true))
             {
@@ -200,6 +219,7 @@ namespace handling_editor
             }
 
             AddMenuReset(EditorMenu);
+            AddPresetsSubMenu(EditorMenu);
 
             EditorMenu.MouseEdgeEnabled = false;
             EditorMenu.ControlDisablingEnabled = false;
@@ -207,15 +227,6 @@ namespace handling_editor
 
             _menuPool.Add(EditorMenu);
             _menuPool.RefreshIndex();
-            
-            /*
-            EditorMenu.OnListChange += (sender, item, index) =>
-            {
-                var value = item.IndexToItem(index);
-
-                if (debug)
-                    Debug.WriteLine($"Edited {item.Text} => [value:{value} index:{index}]");
-            };*/
         }
 
         public Client()
@@ -328,7 +339,6 @@ namespace handling_editor
             // Check if decorators needs to be updated
             if (currentTime > timer)
             {
-                
                 // Current vehicle could be updated each tick to show the edited fields live
                 // Check if current vehicle needs to be refreshed
                 if (currentVehicle != -1 && currentPreset != null)
@@ -347,10 +357,6 @@ namespace handling_editor
 
                 lastTime = GetGameTimer();
             }
-
-
-            
-
             await Delay(0);
         }
 
@@ -451,6 +457,16 @@ namespace handling_editor
                 {
                     DecorRegister(item.Key, 3);
                     DecorRegister(defDecorName, 3);
+                }
+                else if (type == typeof(Vector3))
+                {
+                    DecorRegister($"{item.Key}_x", 1);
+                    DecorRegister($"{item.Key}_y", 1);
+                    DecorRegister($"{item.Key}_z", 1);
+
+                    DecorRegister($"{defDecorName}_x", 1);
+                    DecorRegister($"{defDecorName}_y", 1);
+                    DecorRegister($"{defDecorName}_z", 1);
                 }*/
             }
         }
@@ -492,9 +508,15 @@ namespace handling_editor
                         SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, value);
                     }
                     else if (type == typeof(Vector3))
-                    { }*/
+                    {
+                        var x = DecorGetFloat(vehicle, $"{item.Key}_x");
+                        var y = DecorGetFloat(vehicle, $"{item.Key}_y");
+                        var z = DecorGetFloat(vehicle, $"{item.Key}_z");
+                        Vector3 vector = new Vector3(x, y, z);
+                        SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, value);
+                    }*/
 
-                }
+                }   
             }
 
             await Delay(0);
@@ -643,10 +665,6 @@ namespace handling_editor
                 debug = config.debug;
                 screenPosX = config.screenPosX;
                 screenPosY = config.screenPosY;
-                title = config.title;
-                description = config.description;
-                bannerColor = config.bannerColor;
-                EnableBannerColor = config.EnableBannerColor;
             }
         }
  
@@ -686,10 +704,6 @@ namespace handling_editor
         public bool debug { get; set; }
         public float screenPosX { get; set; }
         public float screenPosY { get; set; }
-        public string title { get; set; }
-        public string description { get; set; }
-        public uint bannerColor { get; set; }
-        public bool EnableBannerColor { get; set; }
 
         public Config()
         {
@@ -700,10 +714,6 @@ namespace handling_editor
             debug = false;
             screenPosX = 1.0f;
             screenPosY = 0.0f;
-            title = "Wheels Editor";
-            description = "~b~Track Width & Camber";
-            bannerColor = 0xFFF04040;
-            EnableBannerColor = false;
         }
 
         public void ParseConfigFile(string content)
@@ -742,18 +752,6 @@ namespace handling_editor
 
             if (Entries.ContainsKey("screenPosY"))
                 screenPosY = float.Parse(Entries["screenPosY"]);
-
-            if (Entries.ContainsKey("title"))
-                title = Entries["title"].Trim();
-
-            if (Entries.ContainsKey("description"))
-                description = Entries["description"].Trim();
-
-            if (Entries.ContainsKey("bannerColor"))
-                bannerColor = Convert.ToUInt32(Entries["bannerColor"], 16);
-
-            if (Entries.ContainsKey("EnableBannerColor"))
-                EnableBannerColor = bool.Parse(Entries["EnableBannerColor"]);
         }
     }
 }
