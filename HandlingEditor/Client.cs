@@ -325,27 +325,31 @@ namespace handling_editor
                 currentPreset = null;
             }
 
-            // Check if current vehicle needs to be refreshed
-            if (currentVehicle != -1 && currentPreset != null)
-            {
-                if (currentPreset.IsEdited)
-                    //Debug.WriteLine("Current preset is edited");
-                    RefreshVehicleUsingPreset(currentVehicle, currentPreset);
-            }
-
             // Check if decorators needs to be updated
             if (currentTime > timer)
             {
+                
+                // Current vehicle could be updated each tick to show the edited fields live
+                // Check if current vehicle needs to be refreshed
+                if (currentVehicle != -1 && currentPreset != null)
+                {
+                    if (currentPreset.IsEdited)
+                        RefreshVehicleUsingPreset(currentVehicle, currentPreset);
+                }
+
                 if (currentVehicle != -1 && currentPreset != null)
                     UpdateVehicleDecorators(currentVehicle, currentPreset);
 
                 vehicles = new VehicleList();
 
+                // Refreshes the iterated vehicles
+                RefreshVehicles(vehicles.Except(new List<int> { currentVehicle }));
+
                 lastTime = GetGameTimer();
             }
 
-            // Refreshes the iterated vehicles
-            RefreshVehicles(vehicles.Except(new List<int> { currentVehicle }));
+
+            
 
             await Delay(0);
         }
@@ -457,7 +461,7 @@ namespace handling_editor
 
             foreach (int entity in vehiclesList)
             {
-                //if (entity != currentVehicle)
+                if (entity != currentVehicle)
                 if (DoesEntityExist(entity))
                 {
                     Vector3 coords = GetEntityCoords(entity, true);
