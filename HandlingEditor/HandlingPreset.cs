@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CitizenFX.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,10 +28,26 @@ namespace handling_editor
         {
             get
             {
-                foreach(string name in DefaultFields.Keys)
+                foreach(var item in Fields.Keys)
                 {
-                    if ((Fields[name] != DefaultFields[name]))
-                        return true;
+                    var value = Fields[item];
+                    var defaultValue = DefaultFields[item];
+
+                    Type fieldType = value.GetType();
+
+                    if (fieldType == typeof(float) || fieldType == typeof(int))
+                    {
+                        if (defaultValue != value)
+                            return true;
+                    }
+                    else if (fieldType == typeof(Vector3))
+                    {
+                        value = (Vector3)value;
+                        defaultValue = (Vector3)defaultValue;
+
+                        if (value.Equals(defaultValue))
+                            return true;
+                    }
                 }
                 return false;
             }
