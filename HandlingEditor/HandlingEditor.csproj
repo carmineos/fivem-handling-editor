@@ -53,7 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CHandlingDataInfo.cs" />
-    <Compile Include="Client.cs" />
+    <Compile Include="HandlingEditor.cs" />
     <Compile Include="HandlingPreset.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

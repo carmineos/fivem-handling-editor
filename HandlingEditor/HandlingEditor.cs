@@ -15,7 +15,7 @@ using System.Xml;
 
 namespace handling_editor
 {
-    public class Client : BaseScript
+    public class HandlingEditor : BaseScript
     {
         #region CONFIG_FIEDS
         private static float editingFactor;
@@ -199,7 +199,7 @@ namespace handling_editor
 
         private UIMenu AddPresetsSubMenu(UIMenu menu)
         {
-            var newitem = _menuPool.AddSubMenu(menu, "Saved Presets", "The saved handling presets");
+            var newitem = _menuPool.AddSubMenu(menu, "Saved Presets", "The saved handling presets saved by you");
             newitem.MouseEdgeEnabled = false;
             newitem.ControlDisablingEnabled = false;
             newitem.MouseControlsEnabled = false;
@@ -257,7 +257,7 @@ namespace handling_editor
             _menuPool.RefreshIndex();
         }
 
-        public Client()
+        public HandlingEditor()
         {
             Debug.WriteLine("HANDLING EDITOR: Script by Neos7");
             handlingInfo = new CHandlingDataInfo();
@@ -336,13 +336,18 @@ namespace handling_editor
                     }
                     else if (IsControlJustPressed(1, 178))
                     {
-                        string key = $"{kvpPrefix}{presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text}";
-                        if (GetResourceKvpString(key) != null)
+                        if(presetsMenu.MenuItems.Count > 0)
                         {
-                            DeleteResourceKvp(key);
-                            InitialiseMenu();
-                            presetsMenu.Visible = true;
+                            string key = $"{kvpPrefix}{presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text}";
+                            if (GetResourceKvpString(key) != null)
+                            {
+                                DeleteResourceKvp(key);
+                                InitialiseMenu();
+                                presetsMenu.Visible = true;
+                            }
                         }
+                        else
+                            CitizenFX.Core.UI.Screen.ShowNotification("Nothing to delete.");
                     }
                 }
                 
@@ -429,8 +434,8 @@ namespace handling_editor
                         SetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key, item.Value);
                     /*
                     if (type == typeof(int))
-                        SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, item.Value);
-
+                        SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, item.Value);*/
+                    /*
                     if (type == typeof(Vector3))
                         SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, item.Value);*/
                 }
@@ -473,8 +478,14 @@ namespace handling_editor
                             DecorSetFloat(vehicle, defDecorName, defaultValue);
                     }
                 }
-                if(fieldType == typeof(int))
-                { }
+                else if(fieldType == typeof(int))
+                {
+
+                }
+                else if(fieldType == typeof(Vector3))
+                {
+
+                }
 
 
             }
@@ -485,12 +496,20 @@ namespace handling_editor
         {
             foreach (var item in handlingInfo.FieldsInfo)
             {
-                string defDecorName = $"{item.Key}_def";
+                if(item.Value.Type != typeof(Vector3))
+                {
+                    string defDecorName = $"{item.Key}_def";
 
-                if (DecorExistOn(vehicle, item.Key))
-                    DecorRemove(vehicle, item.Key);
-                if (DecorExistOn(vehicle, defDecorName))
-                    DecorRemove(vehicle, defDecorName);
+                    if (DecorExistOn(vehicle, item.Key))
+                        DecorRemove(vehicle, item.Key);
+                    if (DecorExistOn(vehicle, defDecorName))
+                        DecorRemove(vehicle, defDecorName);
+                }
+                else
+                {
+                    // TODO: Remove xyz decors
+                }
+                
             }
 
             await Delay(0);
@@ -526,13 +545,16 @@ namespace handling_editor
             }
         }
 
+        /// <summary>
+        /// Refreshes the handling for the vehicles in <paramref name="vehiclesList"/> if they are close enough.
+        /// </summary>
+        /// <param name="vehiclesList"></param>
         private async void RefreshVehicles(IEnumerable<int> vehiclesList)
         {
             Vector3 currentCoords = GetEntityCoords(playerPed, true);
 
             foreach (int entity in vehiclesList)
             {
-                if (entity != currentVehicle)
                 if (DoesEntityExist(entity))
                 {
                     Vector3 coords = GetEntityCoords(entity, true);
@@ -544,36 +566,53 @@ namespace handling_editor
             await Delay(0);
         }
 
+
+        /// <summary>
+        /// Refreshes the handling for <paramref name="vehicle"/> using the decorators attached to it.
+        /// </summary>
+        /// <param name="vehicle"></param>
         private async void RefreshVehicleUsingDecorators(int vehicle)
         {
-            foreach (var item in handlingInfo.FieldsInfo)
+            foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable))
             {
-                if (DecorExistOn(vehicle, item.Key))
-                {
-                    Type type = item.Value.Type;
+                Type fieldType = item.Value.Type;
 
-                    if (type == typeof(float))
+                if (fieldType == typeof(float))
+                {
+                    if (DecorExistOn(vehicle, item.Key))
                     {
                         var value = DecorGetFloat(vehicle, item.Key);
                         SetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key, value);
-                    }/*
-                    else if (type == typeof(int))
+                    }
+                }
+                else if (fieldType == typeof(int))
+                {
+                    if (DecorExistOn(vehicle, item.Key))
                     {
                         var value = DecorGetInt(vehicle, item.Key);
                         SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, value);
                     }
-                    else if (type == typeof(Vector3))
-                    {
-                        var x = DecorGetFloat(vehicle, $"{item.Key}_x");
-                        var y = DecorGetFloat(vehicle, $"{item.Key}_y");
-                        var z = DecorGetFloat(vehicle, $"{item.Key}_z");
-                        Vector3 vector = new Vector3(x, y, z);
-                        SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, value);
-                    }*/
+                }
+                else if (fieldType == typeof(Vector3))
+                {
+                    string decorX = $"{item.Key}_x";
+                    string decorY = $"{item.Key}_y";
+                    string decorZ = $"{item.Key}_z";
 
-                }   
+                    Vector3 vector = GetVehicleHandlingVector(vehicle, "CHandlingData", item.Key);
+
+                    if (DecorExistOn(vehicle, decorX))
+                        vector.X = DecorGetFloat(vehicle, decorX);
+
+                    if (DecorExistOn(vehicle, decorY))
+                        vector.Y = DecorGetFloat(vehicle, decorY);
+
+                    if (DecorExistOn(vehicle, decorZ))
+                        vector.Z = DecorGetFloat(vehicle, decorZ);
+
+                        SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, vector);
+                }
             }
-
             await Delay(0);
         }
 
@@ -599,8 +638,7 @@ namespace handling_editor
                     if (DecorExistOn(vehicle, item.Key))
                         fields[item.Key] = DecorGetFloat(vehicle, item.Key);
                     else fields[item.Key] = defaultFields[item.Key];
-                }
-                /*
+                }/*
                 else if (item.Value.Type == typeof(int))
                 {
                     if (DecorExistOn(vehicle, defDecorName))
@@ -611,6 +649,21 @@ namespace handling_editor
                         fields[item.Key] = DecorGetInt(vehicle, item.Key);
                     else fields[item.Key] = defaultFields[item.Key];
                 }*/
+                else if (item.Value.Type == typeof(Vector3))
+                {
+                    string decorX = $"{defDecorName}_x";
+                    string decorY = $"{defDecorName}_y";
+                    string decorZ = $"{defDecorName}_z";
+
+                    if (DecorExistOn(vehicle, decorX) && DecorExistOn(vehicle, decorY) && DecorExistOn(vehicle, decorZ))
+                    {
+                        var x = DecorGetFloat(vehicle, decorX);
+                        var y = DecorGetFloat(vehicle, decorY);
+                        var z = DecorGetFloat(vehicle, decorZ);
+                        defaultFields[item.Key] = new Vector3(x, y, z);
+                    }
+                    else defaultFields[item.Key] = GetVehicleHandlingVector(vehicle, "CHandlingData", item.Key);
+                }
             }
 
             HandlingPreset preset = new HandlingPreset(defaultFields, fields);
@@ -823,7 +876,7 @@ namespace handling_editor
    
     public class KvpList : IEnumerable<string>
     {
-        public string prefix = Client.kvpPrefix;
+        public string prefix = HandlingEditor.kvpPrefix;
 
         public IEnumerator<string> GetEnumerator()
         {
