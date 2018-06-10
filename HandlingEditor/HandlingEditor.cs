@@ -420,24 +420,193 @@ namespace handling_editor
             await Delay(0);
         }
 
+        /// <summary>
+        /// Refreshes the handling for the <paramref name="vehicle"/> using the <paramref name="preset"/>.
+        /// </summary>
+        /// <param name="vehicle"></param>
+        /// <param name="preset"></param>
         private async void RefreshVehicleUsingPreset(int vehicle, HandlingPreset preset)
         {
             if (DoesEntityExist(vehicle))
             {
                 foreach (var item in preset.Fields)
                 {
-                    //Debug.Write($"Refreshing {item.Key}, default:{preset.DefaultFields[item.Key]}, current:{item.Value}");
+                    Type fieldType = handlingInfo.FieldsInfo[item.Key].Type;
 
-                    Type type = handlingInfo.FieldsInfo[item.Key].Type;
-
-                    if (type == typeof(float))
+                    if (fieldType == typeof(float))
                         SetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key, item.Value);
-                    /*
-                    if (type == typeof(int))
-                        SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, item.Value);*/
-                    /*
-                    if (type == typeof(Vector3))
-                        SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, item.Value);*/
+                    
+                    if (fieldType == typeof(int))
+                        SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, item.Value);
+                    
+                    if (fieldType == typeof(Vector3))
+                        SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, item.Value);
+                }
+            }
+            await Delay(0);
+        }
+
+        /// <summary>
+        /// Refreshes the handling for the vehicles in <paramref name="vehiclesList"/> if they are close enough.
+        /// </summary>
+        /// <param name="vehiclesList"></param>
+        private async void RefreshVehicles(IEnumerable<int> vehiclesList)
+        {
+            Vector3 currentCoords = GetEntityCoords(playerPed, true);
+
+            foreach (int entity in vehiclesList)
+            {
+                if (DoesEntityExist(entity))
+                {
+                    Vector3 coords = GetEntityCoords(entity, true);
+
+                    if (Vector3.Distance(currentCoords, coords) <= maxSyncDistance)
+                        RefreshVehicleUsingDecorators(entity);
+                }
+            }
+            await Delay(0);
+        }
+
+        /// <summary>
+        /// Refreshes the handling for the <paramref name="vehicle"/> using the decorators attached to it.
+        /// </summary>
+        /// <param name="vehicle"></param>
+        private async void RefreshVehicleUsingDecorators(int vehicle)
+        {
+            foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable))
+            {
+                Type fieldType = item.Value.Type;
+
+                if (fieldType == typeof(float))
+                {
+                    if (DecorExistOn(vehicle, item.Key))
+                    {
+                        var value = DecorGetFloat(vehicle, item.Key);
+                        SetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key, value);
+                    }
+                }
+                else if (fieldType == typeof(int))
+                {
+                    if (DecorExistOn(vehicle, item.Key))
+                    {
+                        var value = DecorGetInt(vehicle, item.Key);
+                        SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, value);
+                    }
+                }
+                else if (fieldType == typeof(Vector3))
+                {
+                    string decorX = $"{item.Key}_x";
+                    string decorY = $"{item.Key}_y";
+                    string decorZ = $"{item.Key}_z";
+
+                    Vector3 vector = GetVehicleHandlingVector(vehicle, "CHandlingData", item.Key);
+
+                    if (DecorExistOn(vehicle, decorX))
+                        vector.X = DecorGetFloat(vehicle, decorX);
+
+                    if (DecorExistOn(vehicle, decorY))
+                        vector.Y = DecorGetFloat(vehicle, decorY);
+
+                    if (DecorExistOn(vehicle, decorZ))
+                        vector.Z = DecorGetFloat(vehicle, decorZ);
+
+                    SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, vector);
+                }
+            }
+            await Delay(0);
+        }
+
+        /// <summary>
+        /// Returns true if the <paramref name="vehicle"/> has any handling decorator attached to it.
+        /// </summary>
+        /// <param name="vehicle"></param>
+        /// <returns></returns>
+        private bool HasDecorators(int vehicle)
+        {
+            foreach (var item in handlingInfo.FieldsInfo)
+            {
+                Type fieldType = item.Value.Type;
+
+                if (fieldType == typeof(Vector3))
+                {
+                    if (DecorExistOn(vehicle, $"{item.Key}_x") || DecorExistOn(vehicle, $"{item.Key}_y") || DecorExistOn(vehicle, $"{item.Key}_z"))
+                        return true;
+                }
+                else if (DecorExistOn(vehicle, item.Key))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Registers the decorators for this script
+        /// </summary>
+        private async void RegisterDecorators()
+        {
+            foreach (var item in handlingInfo.FieldsInfo)
+            {
+                Type type = item.Value.Type;
+
+                if (type == typeof(float))
+                {
+                    DecorRegister(item.Key, 1);
+                    DecorRegister($"{item.Key}_def", 1);
+                }
+                else if (type == typeof(int))
+                {
+                    DecorRegister(item.Key, 3);
+                    DecorRegister($"{item.Key}_def", 3);
+                }
+                else if (type == typeof(Vector3))
+                {
+                    string decorX = $"{item.Key}_x";
+                    string decorY = $"{item.Key}_y";
+                    string decorZ = $"{item.Key}_z";
+
+                    DecorRegister(decorX, 1);
+                    DecorRegister(decorY, 1);
+                    DecorRegister(decorZ, 1);
+
+                    DecorRegister($"{decorX}_def", 1);
+                    DecorRegister($"{decorY}_def", 1);
+                    DecorRegister($"{decorZ}_def", 1);
+                }
+            }
+            await Delay(0);
+        }
+
+        /// <summary>
+        /// Remove the handling decorators attached to the <paramref name="vehicle"/>.
+        /// </summary>
+        /// <param name="vehicle"></param>
+        private async void RemoveDecorators(int vehicle)
+        {
+            foreach (var item in handlingInfo.FieldsInfo)
+            {
+                Type fieldType = item.Value.Type;
+
+                if (fieldType == typeof(int) || fieldType == typeof(float))
+                {
+                    string defDecorName = $"{item.Key}_def";
+
+                    if (DecorExistOn(vehicle, item.Key))
+                        DecorRemove(vehicle, item.Key);
+                    if (DecorExistOn(vehicle, defDecorName))
+                        DecorRemove(vehicle, defDecorName);
+                }
+                else if (fieldType == typeof(Vector3))
+                {
+                    string decorX = $"{item.Key}_x";
+                    string decorY = $"{item.Key}_y";
+                    string decorZ = $"{item.Key}_z";
+
+                    DecorRemove(vehicle, decorX);
+                    DecorRemove(vehicle, decorY);
+                    DecorRemove(vehicle, decorZ);
+
+                    DecorRemove(vehicle, $"{decorX}_def");
+                    DecorRemove(vehicle, $"{decorY}_def");
+                    DecorRemove(vehicle, $"{decorZ}_def");
                 }
             }
             await Delay(0);
@@ -488,130 +657,6 @@ namespace handling_editor
                 }
 
 
-            }
-            await Delay(0);
-        }
-
-        private async void RemoveDecorators(int vehicle)
-        {
-            foreach (var item in handlingInfo.FieldsInfo)
-            {
-                if(item.Value.Type != typeof(Vector3))
-                {
-                    string defDecorName = $"{item.Key}_def";
-
-                    if (DecorExistOn(vehicle, item.Key))
-                        DecorRemove(vehicle, item.Key);
-                    if (DecorExistOn(vehicle, defDecorName))
-                        DecorRemove(vehicle, defDecorName);
-                }
-                else
-                {
-                    // TODO: Remove xyz decors
-                }
-                
-            }
-
-            await Delay(0);
-        }
-
-        private void RegisterDecorators()
-        {
-            foreach (var item in handlingInfo.FieldsInfo)
-            {
-                string defDecorName = $"{item.Key}_def";
-                Type type = item.Value.Type;
-
-                if (type == typeof(float))
-                {
-                    DecorRegister(item.Key, 1);
-                    DecorRegister(defDecorName, 1);
-                }/*
-                else if (type == typeof(int))
-                {
-                    DecorRegister(item.Key, 3);
-                    DecorRegister(defDecorName, 3);
-                }
-                else if (type == typeof(Vector3))
-                {
-                    DecorRegister($"{item.Key}_x", 1);
-                    DecorRegister($"{item.Key}_y", 1);
-                    DecorRegister($"{item.Key}_z", 1);
-
-                    DecorRegister($"{defDecorName}_x", 1);
-                    DecorRegister($"{defDecorName}_y", 1);
-                    DecorRegister($"{defDecorName}_z", 1);
-                }*/
-            }
-        }
-
-        /// <summary>
-        /// Refreshes the handling for the vehicles in <paramref name="vehiclesList"/> if they are close enough.
-        /// </summary>
-        /// <param name="vehiclesList"></param>
-        private async void RefreshVehicles(IEnumerable<int> vehiclesList)
-        {
-            Vector3 currentCoords = GetEntityCoords(playerPed, true);
-
-            foreach (int entity in vehiclesList)
-            {
-                if (DoesEntityExist(entity))
-                {
-                    Vector3 coords = GetEntityCoords(entity, true);
-
-                    if (Vector3.Distance(currentCoords, coords) <= maxSyncDistance)
-                        RefreshVehicleUsingDecorators(entity);
-                }
-            }
-            await Delay(0);
-        }
-
-
-        /// <summary>
-        /// Refreshes the handling for <paramref name="vehicle"/> using the decorators attached to it.
-        /// </summary>
-        /// <param name="vehicle"></param>
-        private async void RefreshVehicleUsingDecorators(int vehicle)
-        {
-            foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable))
-            {
-                Type fieldType = item.Value.Type;
-
-                if (fieldType == typeof(float))
-                {
-                    if (DecorExistOn(vehicle, item.Key))
-                    {
-                        var value = DecorGetFloat(vehicle, item.Key);
-                        SetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key, value);
-                    }
-                }
-                else if (fieldType == typeof(int))
-                {
-                    if (DecorExistOn(vehicle, item.Key))
-                    {
-                        var value = DecorGetInt(vehicle, item.Key);
-                        SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, value);
-                    }
-                }
-                else if (fieldType == typeof(Vector3))
-                {
-                    string decorX = $"{item.Key}_x";
-                    string decorY = $"{item.Key}_y";
-                    string decorZ = $"{item.Key}_z";
-
-                    Vector3 vector = GetVehicleHandlingVector(vehicle, "CHandlingData", item.Key);
-
-                    if (DecorExistOn(vehicle, decorX))
-                        vector.X = DecorGetFloat(vehicle, decorX);
-
-                    if (DecorExistOn(vehicle, decorY))
-                        vector.Y = DecorGetFloat(vehicle, decorY);
-
-                    if (DecorExistOn(vehicle, decorZ))
-                        vector.Z = DecorGetFloat(vehicle, decorZ);
-
-                        SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, vector);
-                }
             }
             await Delay(0);
         }
@@ -707,16 +752,6 @@ namespace handling_editor
             else Debug.WriteLine("HANDLING_EDITOR: Current vehicle doesn't exist");
 
             await Delay(0);
-        }
-
-        private bool HasDecorators(int entity)
-        {
-            foreach (var item in handlingInfo.FieldsInfo)
-            {
-                if (DecorExistOn(entity, item.Key))
-                    return true;
-            }
-            return false;
         }
 
         private async void PrintVehiclesWithDecorators(IEnumerable<int> vehiclesList)
