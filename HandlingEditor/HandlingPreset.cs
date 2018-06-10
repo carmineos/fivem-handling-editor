@@ -64,10 +64,28 @@ namespace handling_editor
             if (Fields.Count != other.Fields.Count)
                 return false;
 
-            foreach (string name in Fields.Keys)
+            foreach (var item in Fields.Keys)
             {
-                if ((Fields[name] != other.Fields[name]))
+                if (!other.Fields.ContainsKey(item))
                     return false;
+
+                var value = Fields[item];
+                var otherValue = other.Fields[item];
+
+                Type fieldType = value.GetType();
+
+                if (fieldType == typeof(float) || fieldType == typeof(int))
+                {
+                    if (value != otherValue)
+                        return false;
+                }
+                else if (fieldType == typeof(Vector3))
+                {
+                    value = (Vector3)value;
+                    otherValue = (Vector3)otherValue;
+                    if (!value.Equals(otherValue))
+                        return false;
+                }
             }
             return true;
         }
