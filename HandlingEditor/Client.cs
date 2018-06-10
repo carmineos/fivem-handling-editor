@@ -25,8 +25,8 @@ namespace handling_editor
         private static int toggleMenu;
         private static float screenPosX;
         private static float screenPosY;
+        internal static string kvpPrefix = "handling_";
         #endregion
-
 
         #region FIELDS
         private static CHandlingDataInfo handlingInfo;
@@ -205,13 +205,13 @@ namespace handling_editor
             newitem.MouseControlsEnabled = false;
             newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneExtraOption, "Save"));
             newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, "Delete"));
+
             KvpList kvpList = new KvpList();
             foreach(var key in kvpList)
             {
                 string value = GetResourceKvpString(key);
-                newitem.AddItem(new UIMenuItem(key));
+                newitem.AddItem(new UIMenuItem(key.Remove(0, kvpPrefix.Length)));  
             }
-
             return newitem;
         }
 
@@ -232,6 +232,22 @@ namespace handling_editor
 
             AddMenuReset(EditorMenu);
             presetsMenu = AddPresetsSubMenu(EditorMenu);
+
+            presetsMenu.OnItemSelect += (sender, item, index) =>
+            {
+                string key = $"{kvpPrefix}{item.Text}";
+                string value = GetResourceKvpString(key);
+                if (value != null)
+                {
+                    currentPreset = GetPresetFromXml(value, currentPreset);
+                    CitizenFX.Core.UI.Screen.ShowNotification("Preset applied");
+                    InitialiseMenu();
+                    presetsMenu.Visible = true;
+                }
+                else
+                    CitizenFX.Core.UI.Screen.ShowNotification("~r~ERROR~w~: Preset corrupted");
+                
+            };
 
             EditorMenu.MouseEdgeEnabled = false;
             EditorMenu.ControlDisablingEnabled = false;
@@ -320,7 +336,7 @@ namespace handling_editor
                     }
                     else if (IsControlJustPressed(1, 178))
                     {
-                        string key = presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text;
+                        string key = $"{kvpPrefix}{presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text}";
                         if (GetResourceKvpString(key) != null)
                         {
                             DeleteResourceKvp(key);
@@ -333,11 +349,8 @@ namespace handling_editor
             }
             else
             {
-                _menuPool.CloseAllMenus();
-                
-                /*// Close menu if opened
-                if (presetsMenu.Visible)
-                    EditorMenu.Visible = false;*/
+                if(_menuPool.IsAnyMenuOpen())
+                    _menuPool.CloseAllMenus();
             }
 
 
@@ -703,23 +716,23 @@ namespace handling_editor
             handlingData.AppendChild(handlingItem);
             doc.AppendChild(handlingData);
 
-            return doc.ToString();
+            return doc.OuterXml;
         }
 
         private async void SavePreset(string name, HandlingPreset preset)
         {
-            string kvpName = $"handling_{name}";
+            string kvpName = $"{kvpPrefix}{name}";
             if(GetResourceKvpString(kvpName) != null)
                 CitizenFX.Core.UI.Screen.ShowNotification($"The name {name} is already used for another preset.");
             else
             {
-                string xml = GetXmlFromPreset(name, preset);
+                string xml = GetXmlFromPreset(name, preset);;
                 SetResourceKvp(kvpName, xml);
                 await Delay(0);
             }
         }
-        /*
-        private HandlingPreset GetPresetFromXml(string xml)
+        
+        private HandlingPreset GetPresetFromXml(string xml, HandlingPreset preset)
         {
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(xml);
@@ -727,8 +740,39 @@ namespace handling_editor
             var handling = doc["HandlingData"]["Item"];
             string name = handling.GetAttribute("presetName");
 
-            return new HandlingPreset();
-        }*/
+            foreach (XmlNode item in handling.ChildNodes)
+            {
+                if (item.NodeType != XmlNodeType.Element)
+                    continue;
+
+                string fieldName = item.Name;
+                Type fieldType = FieldInfo.GetFieldType(fieldName);
+
+                XmlElement elem = (XmlElement)item;
+
+                if (fieldType == typeof(float))
+                {
+                    preset.Fields[fieldName] = float.Parse(elem.GetAttribute("value"));
+                }/*
+                else if (fieldType == typeof(int))
+                {
+                    preset.Fields[fieldName] = int.Parse(elem.GetAttribute("value"));
+                }
+                else if (fieldType == typeof(Vector3))
+                {
+                    float x = float.Parse(elem.GetAttribute("x"));
+                    float y = float.Parse(elem.GetAttribute("y"));
+                    float z = float.Parse(elem.GetAttribute("z"));
+                    preset.Fields[fieldName] = new Vector3(x, y, z);
+                }
+                else if (fieldType == typeof(string))
+                {
+                    preset.Fields[fieldName] = elem.InnerText;
+                }
+                else { }*/
+            }
+            return preset;
+        }
 
         private void ReadFieldInfo()
         {
@@ -779,7 +823,7 @@ namespace handling_editor
    
     public class KvpList : IEnumerable<string>
     {
-        public string prefix = "handling_";
+        public string prefix = Client.kvpPrefix;
 
         public IEnumerator<string> GetEnumerator()
         {
