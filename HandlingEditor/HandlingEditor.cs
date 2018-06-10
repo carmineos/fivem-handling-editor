@@ -60,7 +60,7 @@ namespace handling_editor
                 return null;
 
             float value = currentPreset.Fields[fieldInfo.Name];
-            var newitem = new UIMenuDynamicListItem(fieldInfo.Name, fieldInfo.Description, value.ToString("F2"), (sender, direction) =>
+            var newitem = new UIMenuDynamicListItem(fieldInfo.Name, fieldInfo.Description, value.ToString("F3"), (sender, direction) =>
             {
                 if (direction == ChangeDirection.Left)
                 {
@@ -84,7 +84,7 @@ namespace handling_editor
                         currentPreset.Fields[fieldInfo.Name] = newvalue;
                     }
                 }
-                return value.ToString("F2");
+                return value.ToString("F3");
             });
 
             menu.AddItem(newitem);
@@ -121,7 +121,7 @@ namespace handling_editor
                 return null;
 
             int value = currentPreset.Fields[fieldInfo.Name]; //TODO: Get value from current preset
-            var newitem = new UIMenuDynamicListItem(fieldInfo.Name, fieldInfo.Description, value.ToString("F2"), (sender, direction) =>
+            var newitem = new UIMenuDynamicListItem(fieldInfo.Name, fieldInfo.Description, value.ToString(), (sender, direction) =>
             {
                 if (direction == ChangeDirection.Left)
                 {
@@ -145,7 +145,7 @@ namespace handling_editor
                         currentPreset.Fields[fieldInfo.Name] = newvalue;
                     }
                 }
-                return value.ToString("F2");
+                return value.ToString();
             });
 
             menu.AddItem(newitem);
@@ -199,7 +199,7 @@ namespace handling_editor
 
         private UIMenu AddPresetsSubMenu(UIMenu menu)
         {
-            var newitem = _menuPool.AddSubMenu(menu, "Saved Presets", "The saved handling presets saved by you");
+            var newitem = _menuPool.AddSubMenu(menu, "Saved Presets", "The handling presets saved by you.");
             newitem.MouseEdgeEnabled = false;
             newitem.ControlDisablingEnabled = false;
             newitem.MouseControlsEnabled = false;
@@ -246,8 +246,9 @@ namespace handling_editor
                 }
                 else
                     CitizenFX.Core.UI.Screen.ShowNotification("~r~ERROR~w~: Preset corrupted");
-                
             };
+
+            EditorMenu.AddItem(new UIMenuItem("Server Presets", "The handling presets loaded from the server."));
 
             EditorMenu.MouseEdgeEnabled = false;
             EditorMenu.ControlDisablingEnabled = false;
