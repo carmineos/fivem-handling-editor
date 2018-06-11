@@ -114,6 +114,15 @@ namespace HandlingEditor
     }
     */
 
+    public static class FieldType
+    {
+        // TODO: Replace FieldType everywhere
+        public static Type FloatType = typeof(float);
+        public static Type IntType = typeof(int);
+        public static Type Vector3Type = typeof(Vector3);
+        public static Type StringType = typeof(string);
+    }
+
     public abstract class FieldInfo
     {
         public string Name;
