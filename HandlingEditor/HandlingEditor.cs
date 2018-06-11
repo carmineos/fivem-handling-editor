@@ -349,14 +349,22 @@ namespace handling_editor
 
             }), false);
 
-            RegisterCommand("handling_info", new Action<int, dynamic>((source, args) =>
+            RegisterCommand("handling_decorators", new Action<int, dynamic>((source, args) =>
             {
-                PrintDecoratorsInfo(currentVehicle);
+                PrintDecorators(currentVehicle);
             }), false);
 
-            RegisterCommand("handling_print", new Action<int, dynamic>((source, args) =>
+            RegisterCommand("handling_list", new Action<int, dynamic>((source, args) =>
             {
                 PrintVehiclesWithDecorators(vehicles);
+            }), false);
+
+
+            RegisterCommand("handling_preset", new Action<int, dynamic>((source, args) =>
+            {
+                if (currentPreset != null)
+                    Debug.Write(currentPreset.ToString());
+                else Debug.WriteLine("Current preset doesn't exist");
             }), false);
 
             Tick += OnTick;
@@ -708,17 +716,115 @@ namespace handling_editor
                         if (defaultValue != fieldValue)
                             DecorSetFloat(vehicle, defDecorName, defaultValue);
                     }
-                }
+                }/*
                 else if(fieldType == typeof(int))
                 {
+                    if (DecorExistOn(vehicle, fieldName))
+                    {
+                        int value = DecorGetInt(vehicle, fieldName);
+                        if (value != fieldValue)
+                            DecorSetInt(vehicle, fieldName, fieldValue);
+                    }
+                    else
+                    {
+                        if (defaultValue != fieldValue)
+                            DecorSetInt(vehicle, fieldName, fieldValue);
+                    }
 
-                }
+                    if (DecorExistOn(vehicle, defDecorName))
+                    {
+                        int value = DecorGetInt(vehicle, defDecorName);
+                        if (value != defaultValue)
+                            DecorSetInt(vehicle, defDecorName, defaultValue);
+                    }
+                    else
+                    {
+                        if (defaultValue != fieldValue)
+                            DecorSetInt(vehicle, defDecorName, defaultValue);
+                    }
+                }*/
                 else if(fieldType == typeof(Vector3))
                 {
+                    fieldValue = (Vector3)fieldValue;
+                    defaultValue = (Vector3)defaultValue;
 
+                    string decorX = $"{fieldName}_x";
+                    if (DecorExistOn(vehicle, decorX))
+                    {
+                        float value = DecorGetFloat(vehicle, decorX);
+                        if (value != fieldValue.X)
+                            DecorSetFloat(vehicle, decorX, fieldValue.X);
+                    }
+                    else
+                    {
+                        if (defaultValue.X != fieldValue.X)
+                            DecorSetFloat(vehicle, decorX, fieldValue.X);
+                    }
+
+                    string defDecorNameX = $"{decorX}_def";
+                    if (DecorExistOn(vehicle, defDecorNameX))
+                    {
+                        float value = DecorGetFloat(vehicle, defDecorNameX);
+                        if (value != defaultValue.X)
+                            DecorSetFloat(vehicle, defDecorNameX, defaultValue.X);
+                    }
+                    else
+                    {
+                        if (defaultValue.X != fieldValue.X)
+                            DecorSetFloat(vehicle, defDecorNameX, defaultValue.X);
+                    }
+
+                    string decorY = $"{fieldName}_y";
+                    if (DecorExistOn(vehicle, decorY))
+                    {
+                        float value = DecorGetFloat(vehicle, decorY);
+                        if (value != fieldValue.Y)
+                            DecorSetFloat(vehicle, decorY, fieldValue.Y);
+                    }
+                    else
+                    {
+                        if (defaultValue.Y != fieldValue.Y)
+                            DecorSetFloat(vehicle, decorY, fieldValue.Y);
+                    }
+
+                    string defDecorNameY = $"{decorY}_def";
+                    if (DecorExistOn(vehicle, defDecorNameY))
+                    {
+                        float value = DecorGetFloat(vehicle, defDecorNameY);
+                        if (value != defaultValue.Y)
+                            DecorSetFloat(vehicle, defDecorNameY, defaultValue.Y);
+                    }
+                    else
+                    {
+                        if (defaultValue.Y != fieldValue.Y)
+                            DecorSetFloat(vehicle, defDecorNameY, defaultValue.Y);
+                    }
+                    string decorZ = $"{fieldName}_z";
+                    if (DecorExistOn(vehicle, decorZ))
+                    {
+                        float value = DecorGetFloat(vehicle, decorZ);
+                        if (value != fieldValue.Z)
+                            DecorSetFloat(vehicle, decorZ, fieldValue.Z);
+                    }
+                    else
+                    {
+                        if (defaultValue.Z != fieldValue.Z)
+                            DecorSetFloat(vehicle, decorZ, fieldValue.Z);
+                    }
+
+                    string defDecorNameZ = $"{decorZ}_def";
+                    if (DecorExistOn(vehicle, defDecorNameZ))
+                    {
+                        float value = DecorGetFloat(vehicle, defDecorNameZ);
+                        if (value != defaultValue.Z)
+                            DecorSetFloat(vehicle, defDecorNameZ, defaultValue.Z);
+                    }
+                    else
+                    {
+                        if (defaultValue.Z != fieldValue.Z)
+                            DecorSetFloat(vehicle, defDecorNameZ, defaultValue.Z);
+                    }
                 }
-
-
             }
             await Delay(0);
         }
@@ -760,18 +866,33 @@ namespace handling_editor
                 }*/
                 else if (fieldType == typeof(Vector3))
                 {
-                    string decorX = $"{defDecorName}_x";
-                    string decorY = $"{defDecorName}_y";
-                    string decorZ = $"{defDecorName}_z";
+                    Vector3 vec = GetVehicleHandlingVector(vehicle, className, fieldName);
 
-                    if (DecorExistOn(vehicle, decorX) && DecorExistOn(vehicle, decorY) && DecorExistOn(vehicle, decorZ))
-                    {
-                        var x = DecorGetFloat(vehicle, decorX);
-                        var y = DecorGetFloat(vehicle, decorY);
-                        var z = DecorGetFloat(vehicle, decorZ);
-                        defaultFields[fieldName] = new Vector3(x, y, z);
-                    }
-                    else defaultFields[fieldName] = GetVehicleHandlingVector(vehicle, className, fieldName);
+                    string decorX = $"{fieldName}_x";
+                    string decorY = $"{fieldName}_y";
+                    string decorZ = $"{fieldName}_z";
+
+                    string defDecorNameX = $"{decorX}_def";
+                    string defDecorNameY = $"{decorY}_def";
+                    string defDecorNameZ = $"{decorZ}_def";
+
+                    if (DecorExistOn(vehicle, defDecorNameX))
+                        vec.X = DecorGetFloat(vehicle, defDecorNameX);
+                    if ( DecorExistOn(vehicle, defDecorNameY))
+                        vec.Y = DecorGetFloat(vehicle, defDecorNameY);
+                    if (DecorExistOn(vehicle, defDecorNameZ))
+                        vec.Z = DecorGetFloat(vehicle, defDecorNameZ);
+
+                    defaultFields[fieldName] = vec;
+
+                    if (DecorExistOn(vehicle, decorX))
+                        vec.X = DecorGetFloat(vehicle, decorX);
+                    if (DecorExistOn(vehicle, decorY))
+                        vec.Y = DecorGetFloat(vehicle, decorY);
+                    if (DecorExistOn(vehicle, decorZ))
+                        vec.Z = DecorGetFloat(vehicle, decorZ);
+
+                    fields[fieldName] = vec;
                 }
             }
 
@@ -780,37 +901,71 @@ namespace handling_editor
             return preset;
         }
 
-        private async void PrintDecoratorsInfo(int vehicle)
+        private async void PrintDecorators(int vehicle)
         {
             if (DoesEntityExist(vehicle))
             {
                 int netID = NetworkGetNetworkIdFromEntity(vehicle);
                 StringBuilder s = new StringBuilder();
-                s.Append($"HANDLING EDITOR: Vehicle:{vehicle} netID:{netID} ");
+                s.AppendLine($"HANDLING EDITOR: Vehicle:{vehicle} netID:{netID}");
+                s.AppendLine("DECORATORS:");
 
                 foreach (var item in handlingInfo.FieldsInfo)
                 {
-                    if (DecorExistOn(vehicle, item.Key))
+                    string fieldName = item.Key;
+                    Type fieldType = item.Value.Type;
+                    string defDecorName = $"{fieldName}_def";
+
+                    dynamic value = 0, defaultValue = 0;
+
+                    if (fieldType == typeof(float))
                     {
-                        string fieldName = item.Key;
-                        Type fieldType = item.Value.Type;
-                        string defDecorName = $"{fieldName}_def";
-
-                        dynamic value = 0, defaultValue = 0;
-
-                        if (fieldType == typeof(float))
+                        if (DecorExistOn(vehicle, item.Key))
                         {
                             value = DecorGetFloat(vehicle, fieldName);
                             defaultValue = DecorGetFloat(vehicle, defDecorName);
+                            s.AppendLine($"{fieldName}:{value}({defaultValue})");
                         }
-                        if (fieldType == typeof(int))
+                    }
+                    else if (fieldType == typeof(int))
+                    {
+                        if (DecorExistOn(vehicle, item.Key))
                         {
                             value = DecorGetInt(vehicle, fieldName);
                             defaultValue = DecorGetInt(vehicle, defDecorName);
+                            s.AppendLine($"{fieldName}:{value}({defaultValue})");
                         }
-                        s.Append($"{fieldName}:{value}({defaultValue}) ");
                     }
+                    else if (fieldType == typeof(Vector3))
+                    {
+                        string decorX = $"{fieldName}_x";
+                        if (DecorExistOn(vehicle, decorX))
+                        {
+                            string defDecorNameX = $"{decorX}_def";
+                            var x = DecorGetFloat(vehicle, decorX);
+                            var defX = DecorGetFloat(vehicle, defDecorNameX);
+                            s.AppendLine($"{decorX}:{x}({defX})");
+                        }
+
+                        string decorY = $"{fieldName}_y";
+                        if (DecorExistOn(vehicle, decorY))
+                        {
+                            string defDecorNameY = $"{decorY}_def";
+                            var y = DecorGetFloat(vehicle, decorY);
+                            var defY = DecorGetFloat(vehicle, defDecorNameY);
+                            s.AppendLine($"{decorY}:{y}({defY})");
+                        }
+
+                        string decorZ = $"{fieldName}_z";
+                        if (DecorExistOn(vehicle, decorZ))
+                        {
+                            string defDecorNameZ = $"{decorZ}_def";
+                            var z = DecorGetFloat(vehicle, decorZ);
+                            var defZ = DecorGetFloat(vehicle, defDecorNameZ);
+                            s.AppendLine($"{decorZ}:{z}({defZ})");
+                        }
                         
+                    }
                 }
                 Debug.WriteLine(s.ToString());
             }
@@ -825,8 +980,13 @@ namespace handling_editor
 
             Debug.WriteLine($"HANDLING EDITOR: Vehicles with decorators: {entities.Count()}");
 
-            foreach (var item in entities)
-                PrintDecoratorsInfo(item);
+            StringBuilder s = new StringBuilder();
+            foreach (var vehicle in entities)
+            {
+                int netID = NetworkGetNetworkIdFromEntity(vehicle);      
+                s.AppendLine($"Vehicle:{vehicle} netID:{netID}");
+            }
+            Debug.WriteLine(s.ToString());
 
             await Delay(0);
         }
@@ -906,19 +1066,18 @@ namespace handling_editor
                 else if (fieldType == typeof(int))
                 {
                     preset.Fields[fieldName] = int.Parse(elem.GetAttribute("value"));
-                }
+                }*/
                 else if (fieldType == typeof(Vector3))
                 {
                     float x = float.Parse(elem.GetAttribute("x"));
                     float y = float.Parse(elem.GetAttribute("y"));
                     float z = float.Parse(elem.GetAttribute("z"));
                     preset.Fields[fieldName] = new Vector3(x, y, z);
-                }
+                }/*
                 else if (fieldType == typeof(string))
                 {
                     preset.Fields[fieldName] = elem.InnerText;
-                }
-                else { }*/
+                }*/
             }
         }
 

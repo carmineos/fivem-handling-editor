@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using CitizenFX.Core;
 
 namespace handling_editor
@@ -85,6 +86,18 @@ namespace handling_editor
                 }
             }
             return true;
+        }
+
+        public override string ToString()
+        {
+            StringBuilder s = new StringBuilder();
+            s.AppendLine("PRESET FIELDS:");
+            foreach (var item in Fields)
+            {
+                s.AppendLine($"{item.Key}: {item.Value}({DefaultFields[item.Key]})");
+            }
+
+            return s.ToString();
         }
     }
 }
