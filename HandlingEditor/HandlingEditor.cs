@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Drawing;
+using System.Text;
+using System.Collections;
 using NativeUI;
 using CitizenFX.Core;
 using CitizenFX.Core.UI;
 using static CitizenFX.Core.Native.API;
-using System.Collections;
 using HandlingEditor;
-using static NativeUI.UIMenuDynamicListItem;
-using System.Text;
 using System.Xml;
 
 namespace handling_editor
@@ -62,7 +61,7 @@ namespace handling_editor
             float value = currentPreset.Fields[fieldInfo.Name];
             var newitem = new UIMenuDynamicListItem(fieldInfo.Name, fieldInfo.Description, value.ToString("F3"), (sender, direction) =>
             {
-                if (direction == ChangeDirection.Left)
+                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
                 {
                     var newvalue = value - editingFactor;
                     if (newvalue < fieldInfo.Min)
@@ -123,7 +122,7 @@ namespace handling_editor
             int value = currentPreset.Fields[fieldInfo.Name]; //TODO: Get value from current preset
             var newitem = new UIMenuDynamicListItem(fieldInfo.Name, fieldInfo.Description, value.ToString(), (sender, direction) =>
             {
-                if (direction == ChangeDirection.Left)
+                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
                 {
                     var newvalue = value - 1;
                     if (newvalue < fieldInfo.Min)
@@ -888,7 +887,8 @@ namespace handling_editor
                 strings = LoadResourceFile("handling_editor", "HandlingInfo.xml");
                 //handlingInfo.ParseXMLLinq(strings);           
                 handlingInfo.ParseXML(strings);
-                Debug.WriteLine($"Loaded HandlingInfo.xml, found {handlingInfo.FieldsInfo.Count} fields info");
+                var editableFields = handlingInfo.FieldsInfo.Where(a => a.Value.Editable);
+                Debug.WriteLine($"Loaded HandlingInfo.xml, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
             }
             catch (Exception e)
             {
@@ -978,66 +978,6 @@ namespace handling_editor
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
-        }
-    }
-
-    public class Config
-    {
-        public float editingFactor { get; set; }
-        public float maxSyncDistance { get; set; }
-        public int toggleMenu { get; set; }
-        public long timer { get; set; }
-        public bool debug { get; set; }
-        public float screenPosX { get; set; }
-        public float screenPosY { get; set; }
-
-        public Config()
-        {
-            editingFactor = 0.01f;
-            maxSyncDistance = 150.0f;
-            toggleMenu = 167;
-            timer = 1000;
-            debug = false;
-            screenPosX = 1.0f;
-            screenPosY = 0.0f;
-        }
-
-        public void ParseConfigFile(string content)
-        {
-            Dictionary<string, string> Entries = new Dictionary<string, string>();
-
-            if (content?.Any() ?? false)
-            {
-                var splitted = content
-                 .Split('\n')
-                 .Where((line) => !line.Trim().StartsWith("#"))
-                 .Select((line) => line.Trim().Split('='))
-                 .Where((line) => line.Length == 2);
-
-                foreach (var tuple in splitted)
-                    Entries.Add(tuple[0], tuple[1]);
-            }
-
-            if (Entries.ContainsKey("editingFactor"))
-                editingFactor = float.Parse(Entries["editingFactor"]);
-
-            if (Entries.ContainsKey("maxSyncDistance"))
-                maxSyncDistance = float.Parse(Entries["maxSyncDistance"]);
-
-            if (Entries.ContainsKey("toggleMenu"))
-                toggleMenu = int.Parse(Entries["toggleMenu"]);
-
-            if (Entries.ContainsKey("timer"))
-                timer = long.Parse(Entries["timer"]);
-
-            if (Entries.ContainsKey("debug"))
-                debug = bool.Parse(Entries["debug"]);
-
-            if (Entries.ContainsKey("screenPosX"))
-                screenPosX = float.Parse(Entries["screenPosX"]);
-
-            if (Entries.ContainsKey("screenPosY"))
-                screenPosY = float.Parse(Entries["screenPosY"]);
         }
     }
 }
