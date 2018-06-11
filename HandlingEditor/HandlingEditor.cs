@@ -29,7 +29,7 @@ namespace handling_editor
         #endregion
 
         #region FIELDS
-        private static CHandlingDataInfo handlingInfo;
+        private static HandlingInfo handlingInfo;
         private long currentTime;
         private long lastTime;
         private int playerPed;
@@ -103,7 +103,7 @@ namespace handling_editor
                         if(newvalue >= fieldInfo.Min && newvalue <= fieldInfo.Max)
                             currentPreset.Fields[fieldInfo.Name] = newvalue;
                         else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of range for ~b~{fieldInfo.Name}~w~, Min:{fieldInfo.Min}, Max:{fieldInfo.Max}");
+                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldInfo.Name}~w~, Min:{fieldInfo.Min}, Max:{fieldInfo.Max}");
                     }else
                         CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldInfo.Name}~w~");
 
@@ -164,7 +164,7 @@ namespace handling_editor
                         if (newvalue >= fieldInfo.Min && newvalue <= fieldInfo.Max)
                             currentPreset.Fields[fieldInfo.Name] = newvalue;
                         else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of range for ~b~{fieldInfo.Name}~w~, Min:{fieldInfo.Min}, Max:{fieldInfo.Max}");
+                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldInfo.Name}~w~, Min:{fieldInfo.Min}, Max:{fieldInfo.Max}");
                     }
                     else
                         CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldInfo.Name}~w~");
@@ -222,11 +222,13 @@ namespace handling_editor
 
             foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable == true))
             {
-                if(item.Value.Type == typeof(float))
+                Type fieldType = item.Value.Type;
+
+                if(fieldType == typeof(float))
                     AddDynamicFloatList(EditorMenu, (FloatFieldInfo)item.Value);
-                else if(item.Value.Type == typeof(int))
+                else if(fieldType == typeof(int))
                     AddDynamicIntList(EditorMenu, (IntFieldInfo)item.Value);
-                /*else if (item.Value.Type == typeof(VectorFieldInfo))
+                /*else if (fieldType == typeof(VectorFieldInfo))
                     AddDynamicVectorList(EditorMenu, (VectorFieldInfo)item.Value);*/
             }
 
@@ -261,7 +263,7 @@ namespace handling_editor
         public HandlingEditor()
         {
             Debug.WriteLine("HANDLING EDITOR: Script by Neos7");
-            handlingInfo = new CHandlingDataInfo();
+            handlingInfo = new HandlingInfo();
             ReadFieldInfo();
             LoadConfig();
             RegisterDecorators();
@@ -432,16 +434,19 @@ namespace handling_editor
             {
                 foreach (var item in preset.Fields)
                 {
-                    Type fieldType = handlingInfo.FieldsInfo[item.Key].Type;
+                    string fieldName = item.Key;
+                    dynamic fieldValue = item.Value;
+                    Type fieldType = handlingInfo.FieldsInfo[fieldName].Type;
+                    string className = handlingInfo.FieldsInfo[fieldName].ClassName;
 
                     if (fieldType == typeof(float))
-                        SetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key, item.Value);
+                        SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
                     
-                    if (fieldType == typeof(int))
-                        SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, item.Value);
+                    else if (fieldType == typeof(int))
+                        SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
                     
-                    if (fieldType == typeof(Vector3))
-                        SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, item.Value);
+                    else if (fieldType == typeof(Vector3))
+                        SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
                 }
             }
             await Delay(0);
@@ -476,31 +481,33 @@ namespace handling_editor
         {
             foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable))
             {
+                string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
+                string className = item.Value.ClassName;
 
                 if (fieldType == typeof(float))
                 {
-                    if (DecorExistOn(vehicle, item.Key))
+                    if (DecorExistOn(vehicle, fieldName))
                     {
-                        var value = DecorGetFloat(vehicle, item.Key);
-                        SetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key, value);
+                        var value = DecorGetFloat(vehicle, fieldName);
+                        SetVehicleHandlingFloat(vehicle, className, fieldName, value);
                     }
                 }
                 else if (fieldType == typeof(int))
                 {
-                    if (DecorExistOn(vehicle, item.Key))
+                    if (DecorExistOn(vehicle, fieldName))
                     {
-                        var value = DecorGetInt(vehicle, item.Key);
-                        SetVehicleHandlingInt(vehicle, "CHandlingData", item.Key, value);
+                        var value = DecorGetInt(vehicle, fieldName);
+                        SetVehicleHandlingInt(vehicle, className, fieldName, value);
                     }
                 }
                 else if (fieldType == typeof(Vector3))
                 {
-                    string decorX = $"{item.Key}_x";
-                    string decorY = $"{item.Key}_y";
-                    string decorZ = $"{item.Key}_z";
+                    string decorX = $"{fieldName}_x";
+                    string decorY = $"{fieldName}_y";
+                    string decorZ = $"{fieldName}_z";
 
-                    Vector3 vector = GetVehicleHandlingVector(vehicle, "CHandlingData", item.Key);
+                    Vector3 vector = GetVehicleHandlingVector(vehicle, className, fieldName);
 
                     if (DecorExistOn(vehicle, decorX))
                         vector.X = DecorGetFloat(vehicle, decorX);
@@ -511,7 +518,7 @@ namespace handling_editor
                     if (DecorExistOn(vehicle, decorZ))
                         vector.Z = DecorGetFloat(vehicle, decorZ);
 
-                    SetVehicleHandlingVector(vehicle, "CHandlingData", item.Key, vector);
+                    SetVehicleHandlingVector(vehicle, className, fieldName, vector);
                 }
             }
             await Delay(0);
@@ -526,14 +533,15 @@ namespace handling_editor
         {
             foreach (var item in handlingInfo.FieldsInfo)
             {
+                string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
 
                 if (fieldType == typeof(Vector3))
                 {
-                    if (DecorExistOn(vehicle, $"{item.Key}_x") || DecorExistOn(vehicle, $"{item.Key}_y") || DecorExistOn(vehicle, $"{item.Key}_z"))
+                    if (DecorExistOn(vehicle, $"{fieldName}_x") || DecorExistOn(vehicle, $"{fieldName}_y") || DecorExistOn(vehicle, $"{fieldName}_z"))
                         return true;
                 }
-                else if (DecorExistOn(vehicle, item.Key))
+                else if (DecorExistOn(vehicle, fieldName))
                     return true;
             }
             return false;
@@ -546,23 +554,24 @@ namespace handling_editor
         {
             foreach (var item in handlingInfo.FieldsInfo)
             {
+                string fieldName = item.Key;
                 Type type = item.Value.Type;
 
                 if (type == typeof(float))
                 {
-                    DecorRegister(item.Key, 1);
-                    DecorRegister($"{item.Key}_def", 1);
+                    DecorRegister(fieldName, 1);
+                    DecorRegister($"{fieldName}_def", 1);
                 }
                 else if (type == typeof(int))
                 {
-                    DecorRegister(item.Key, 3);
-                    DecorRegister($"{item.Key}_def", 3);
+                    DecorRegister(fieldName, 3);
+                    DecorRegister($"{fieldName}_def", 3);
                 }
                 else if (type == typeof(Vector3))
                 {
-                    string decorX = $"{item.Key}_x";
-                    string decorY = $"{item.Key}_y";
-                    string decorZ = $"{item.Key}_z";
+                    string decorX = $"{fieldName}_x";
+                    string decorY = $"{fieldName}_y";
+                    string decorZ = $"{fieldName}_z";
 
                     DecorRegister(decorX, 1);
                     DecorRegister(decorY, 1);
@@ -584,22 +593,23 @@ namespace handling_editor
         {
             foreach (var item in handlingInfo.FieldsInfo)
             {
+                string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
 
                 if (fieldType == typeof(int) || fieldType == typeof(float))
                 {
-                    string defDecorName = $"{item.Key}_def";
+                    string defDecorName = $"{fieldName}_def";
 
-                    if (DecorExistOn(vehicle, item.Key))
-                        DecorRemove(vehicle, item.Key);
+                    if (DecorExistOn(vehicle, fieldName))
+                        DecorRemove(vehicle, fieldName);
                     if (DecorExistOn(vehicle, defDecorName))
                         DecorRemove(vehicle, defDecorName);
                 }
                 else if (fieldType == typeof(Vector3))
                 {
-                    string decorX = $"{item.Key}_x";
-                    string decorY = $"{item.Key}_y";
-                    string decorZ = $"{item.Key}_z";
+                    string decorX = $"{fieldName}_x";
+                    string decorY = $"{fieldName}_y";
+                    string decorZ = $"{fieldName}_z";
 
                     DecorRemove(vehicle, decorX);
                     DecorRemove(vehicle, decorY);
@@ -617,23 +627,25 @@ namespace handling_editor
         {
             foreach (var item in preset.Fields)
             {
-                string defDecorName = $"{item.Key}_def";
-                Type fieldType = handlingInfo.FieldsInfo[item.Key].Type;
+                string fieldName = item.Key;
+                Type fieldType = handlingInfo.FieldsInfo[fieldName].Type;
+                dynamic fieldValue = item.Value;
 
-                dynamic defaultValue = preset.DefaultFields[item.Key];
+                string defDecorName = $"{fieldName}_def";
+                dynamic defaultValue = preset.DefaultFields[fieldName];
 
                 if (fieldType == typeof(float))
                 {
-                    if (DecorExistOn(vehicle, item.Key))
+                    if (DecorExistOn(vehicle, fieldName))
                     {
-                        float value = DecorGetFloat(vehicle, item.Key);
-                        if (value != item.Value)
-                            DecorSetFloat(vehicle, item.Key, item.Value);
+                        float value = DecorGetFloat(vehicle, fieldName);
+                        if (value != fieldValue)
+                            DecorSetFloat(vehicle, fieldName, fieldValue);
                     }
                     else
                     {
-                        if (defaultValue != item.Value)
-                            DecorSetFloat(vehicle, item.Key, item.Value);
+                        if (defaultValue != fieldValue)
+                            DecorSetFloat(vehicle, fieldName, fieldValue);
                     }
 
                     if (DecorExistOn(vehicle, defDecorName))
@@ -644,7 +656,7 @@ namespace handling_editor
                     }
                     else
                     {
-                        if (defaultValue != item.Value)
+                        if (defaultValue != fieldValue)
                             DecorSetFloat(vehicle, defDecorName, defaultValue);
                     }
                 }
@@ -672,30 +684,32 @@ namespace handling_editor
                 /*
                 if ()//vehicle hasn't such handling field
                     continue;*/
+                string fieldName = item.Key;
+                string className = item.Value.ClassName;
+                Type fieldType = item.Value.Type;
+                string defDecorName = $"{fieldName}_def";
 
-                string defDecorName = $"{item.Key}_def";
-
-                if (item.Value.Type == typeof(float))
+                if (fieldType == typeof(float))
                 {
                     if (DecorExistOn(vehicle, defDecorName))
-                        defaultFields[item.Key] = DecorGetFloat(vehicle, defDecorName);
-                    else defaultFields[item.Key] = GetVehicleHandlingFloat(vehicle, "CHandlingData", item.Key);
+                        defaultFields[fieldName] = DecorGetFloat(vehicle, defDecorName);
+                    else defaultFields[fieldName] = GetVehicleHandlingFloat(vehicle, className, fieldName);
 
-                    if (DecorExistOn(vehicle, item.Key))
-                        fields[item.Key] = DecorGetFloat(vehicle, item.Key);
-                    else fields[item.Key] = defaultFields[item.Key];
+                    if (DecorExistOn(vehicle, fieldName))
+                        fields[fieldName] = DecorGetFloat(vehicle, fieldName);
+                    else fields[fieldName] = defaultFields[fieldName];
                 }/*
-                else if (item.Value.Type == typeof(int))
+                else if (fieldType == typeof(int))
                 {
                     if (DecorExistOn(vehicle, defDecorName))
-                        defaultFields[item.Key] = DecorGetInt(vehicle, defDecorName);
-                    else defaultFields[item.Key] = GetVehicleHandlingInt(vehicle, "CHandlingData", item.Key);
+                        defaultFields[fieldName] = DecorGetInt(vehicle, defDecorName);
+                    else defaultFields[fieldName] = GetVehicleHandlingInt(vehicle, className, fieldName);
 
-                    if (DecorExistOn(vehicle, item.Key))
-                        fields[item.Key] = DecorGetInt(vehicle, item.Key);
-                    else fields[item.Key] = defaultFields[item.Key];
+                    if (DecorExistOn(vehicle, fieldName))
+                        fields[fieldName] = DecorGetInt(vehicle, fieldName);
+                    else fields[fieldName] = defaultFields[fieldName];
                 }*/
-                else if (item.Value.Type == typeof(Vector3))
+                else if (fieldType == typeof(Vector3))
                 {
                     string decorX = $"{defDecorName}_x";
                     string decorY = $"{defDecorName}_y";
@@ -706,9 +720,9 @@ namespace handling_editor
                         var x = DecorGetFloat(vehicle, decorX);
                         var y = DecorGetFloat(vehicle, decorY);
                         var z = DecorGetFloat(vehicle, decorZ);
-                        defaultFields[item.Key] = new Vector3(x, y, z);
+                        defaultFields[fieldName] = new Vector3(x, y, z);
                     }
-                    else defaultFields[item.Key] = GetVehicleHandlingVector(vehicle, "CHandlingData", item.Key);
+                    else defaultFields[fieldName] = GetVehicleHandlingVector(vehicle, className, fieldName);
                 }
             }
 
@@ -729,22 +743,23 @@ namespace handling_editor
                 {
                     if (DecorExistOn(vehicle, item.Key))
                     {
-                        string defDecorName = $"{item.Key}_def";
-                        Type type = item.Value.Type;
+                        string fieldName = item.Key;
+                        Type fieldType = item.Value.Type;
+                        string defDecorName = $"{fieldName}_def";
 
                         dynamic value = 0, defaultValue = 0;
 
-                        if (type == typeof(float))
+                        if (fieldType == typeof(float))
                         {
-                            value = DecorGetFloat(vehicle, item.Key);
+                            value = DecorGetFloat(vehicle, fieldName);
                             defaultValue = DecorGetFloat(vehicle, defDecorName);
                         }
-                        if (type == typeof(int))
+                        if (fieldType == typeof(int))
                         {
-                            value = DecorGetInt(vehicle, item.Key);
+                            value = DecorGetInt(vehicle, fieldName);
                             defaultValue = DecorGetInt(vehicle, defDecorName);
                         }
-                        s.Append($"{item.Key}:{value}({defaultValue}) ");
+                        s.Append($"{fieldName}:{value}({defaultValue}) ");
                     }
                         
                 }
@@ -777,26 +792,28 @@ namespace handling_editor
 
             foreach (var item in preset.Fields)
             {
-                XmlElement field = doc.CreateElement(item.Key);
+                string fieldName = item.Key;
+                dynamic fieldValue = item.Value;
+                XmlElement field = doc.CreateElement(fieldName);
 
-                Type fieldType = handlingInfo.FieldsInfo[item.Key].Type;
+                Type fieldType = handlingInfo.FieldsInfo[fieldName].Type;
                 if(fieldType == typeof(float))
                 {
-                    field.SetAttribute("value", ((float)(item.Value)).ToString());
+                    field.SetAttribute("value", ((float)(fieldValue)).ToString());
                 }
                 else if (fieldType == typeof(int))
                 {
-                    field.SetAttribute("value", ((int)(item.Value)).ToString());
+                    field.SetAttribute("value", ((int)(fieldValue)).ToString());
                 }
                 else if (fieldType == typeof(Vector3))
                 {
-                    field.SetAttribute("x", ((Vector3)(item.Value)).X.ToString());
-                    field.SetAttribute("y", ((Vector3)(item.Value)).Y.ToString());
-                    field.SetAttribute("z", ((Vector3)(item.Value)).Z.ToString());
+                    field.SetAttribute("x", ((Vector3)(fieldValue)).X.ToString());
+                    field.SetAttribute("y", ((Vector3)(fieldValue)).Y.ToString());
+                    field.SetAttribute("z", ((Vector3)(fieldValue)).Z.ToString());
                 }
                 else if (fieldType == typeof(string))
                 {
-                    field.InnerText = item.Value;
+                    field.InnerText = fieldValue;
                 }
                 else { }
                 handlingItem.AppendChild(field);

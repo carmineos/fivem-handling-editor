@@ -117,13 +117,15 @@ namespace HandlingEditor
     public abstract class FieldInfo
     {
         public string Name;
+        public string ClassName;
         public Type Type;
         public bool Editable;
         public string Description;
 
-        public FieldInfo(string name, string description, bool editable)
+        public FieldInfo(string name, string className, string description, bool editable)
         {
             Name = name;
+            ClassName = className;
             Type = GetFieldType(name);
             Description = description;
             Editable = editable;
@@ -144,7 +146,7 @@ namespace HandlingEditor
         public float Min;
         public float Max;
 
-        public FloatFieldInfo(string name, string description, bool editable, float min, float max) : base(name, description, editable)
+        public FloatFieldInfo(string name, string className, string description, bool editable, float min, float max) : base(name, className, description, editable)
         {
             Min = min;
             Max = max;
@@ -156,7 +158,7 @@ namespace HandlingEditor
         public int Min;
         public int Max;
 
-        public IntFieldInfo(string name, string description, bool editable, int min, int max) : base(name, description, editable)
+        public IntFieldInfo(string name, string className, string description, bool editable, int min, int max) : base(name, className, description, editable)
         {
             Min = min;
             Max = max;
@@ -168,7 +170,7 @@ namespace HandlingEditor
         public Vector3 Min;
         public Vector3 Max;
 
-        public VectorFieldInfo(string name, string description, bool editable, Vector3 min, Vector3 max) : base(name, description, editable)
+        public VectorFieldInfo(string name, string className, string description, bool editable, Vector3 min, Vector3 max) : base(name, className, description, editable)
         {
             Min = min;
             Max = max;
@@ -177,16 +179,16 @@ namespace HandlingEditor
 
     public class StringFieldInfo : FieldInfo
     {
-        public StringFieldInfo(string name, string description, bool editable) : base(name, description, editable)
+        public StringFieldInfo(string name, string className, string description, bool editable) : base(name, className, description, editable)
         {
         }
     }
 
-    public class CHandlingDataInfo
+    public class HandlingInfo
     {
         public Dictionary<string, FieldInfo> FieldsInfo;
 
-        public CHandlingDataInfo()
+        public HandlingInfo()
         {
             FieldsInfo = new Dictionary<string, FieldInfo>();
         }
@@ -204,65 +206,75 @@ namespace HandlingEditor
             
             doc.LoadXml(xml);
             
-            foreach (XmlNode item in doc["CHandlingData"].ChildNodes)
+            foreach (XmlNode classNode in doc.ChildNodes)
             {
-                if (item.NodeType == XmlNodeType.Comment)
+                if (classNode.NodeType == XmlNodeType.Comment)
                     continue;
 
-                string name = item.Name;
-                Type type = FieldInfo.GetFieldType(name);
+                string className = classNode.Name;
 
-                bool editable = bool.Parse(item.Attributes["Editable"].Value);
-                string description = item["Description"].InnerText;
-                
-                var minNode = item["Min"];
-                var maxNode = item["Max"];
-                
-                if (type == typeof(float))
+                foreach (XmlNode item in classNode.ChildNodes)
                 {
-                    float min = float.Parse(minNode.Attributes["value"].Value);
-                    float max = float.Parse(maxNode.Attributes["value"].Value);
 
-                    FloatFieldInfo fieldInfo = new FloatFieldInfo(name, description, editable, min, max);
-                    FieldsInfo[name] = fieldInfo;
+                    if (item.NodeType == XmlNodeType.Comment)
+                        continue;
+
+                    string name = item.Name;
+                    Type type = FieldInfo.GetFieldType(name);
+
+                    bool editable = bool.Parse(item.Attributes["Editable"].Value);
+                    string description = item["Description"].InnerText;
+
+                    var minNode = item["Min"];
+                    var maxNode = item["Max"];
+
+                    if (type == typeof(float))
+                    {
+                        float min = float.Parse(minNode.Attributes["value"].Value);
+                        float max = float.Parse(maxNode.Attributes["value"].Value);
+
+                        FloatFieldInfo fieldInfo = new FloatFieldInfo(name, className, description, editable, min, max);
+                        FieldsInfo[name] = fieldInfo;
+                    }
+
+                    else if (type == typeof(int))
+                    {
+                        int min = int.Parse(minNode.Attributes["value"].Value);
+                        int max = int.Parse(maxNode.Attributes["value"].Value);
+
+                        IntFieldInfo fieldInfo = new IntFieldInfo(name, className, description, editable, min, max);
+                        FieldsInfo[name] = fieldInfo;
+                    }
+
+                    else if (type == typeof(Vector3))
+                    {
+                        Vector3 min = new Vector3(
+                            float.Parse(minNode.Attributes["x"].Value),
+                            float.Parse(minNode.Attributes["y"].Value),
+                            float.Parse(minNode.Attributes["z"].Value));
+
+                        Vector3 max = new Vector3(
+                            float.Parse(maxNode.Attributes["x"].Value),
+                            float.Parse(maxNode.Attributes["y"].Value),
+                            float.Parse(maxNode.Attributes["z"].Value));
+
+                        VectorFieldInfo fieldInfo = new VectorFieldInfo(name, className, description, editable, min, max);
+                        FieldsInfo[name] = fieldInfo;
+                    }
+
+                    else if (type == typeof(string))
+                    {
+                        StringFieldInfo fieldInfo = new StringFieldInfo(name, className, description, editable);
+                        FieldsInfo[name] = fieldInfo;
+                    }
+
+                    else
+                    {
+                        StringFieldInfo fieldInfo = new StringFieldInfo(name, className, description, editable);
+                        FieldsInfo[name] = fieldInfo;
+                    }
                 }
-                
-                else if (type == typeof(int))
-                {
-                    int min = int.Parse(minNode.Attributes["value"].Value);
-                    int max = int.Parse(maxNode.Attributes["value"].Value);
 
-                    IntFieldInfo fieldInfo = new IntFieldInfo(name, description, editable, min, max);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else if (type == typeof(Vector3))
-                {
-                    Vector3 min = new Vector3(
-                        float.Parse(minNode.Attributes["x"].Value),
-                        float.Parse(minNode.Attributes["y"].Value),
-                        float.Parse(minNode.Attributes["z"].Value));
-
-                    Vector3 max = new Vector3(
-                        float.Parse(maxNode.Attributes["x"].Value),
-                        float.Parse(maxNode.Attributes["y"].Value),
-                        float.Parse(maxNode.Attributes["z"].Value));
-
-                    VectorFieldInfo fieldInfo = new VectorFieldInfo(name, description, editable, min, max);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else if (type == typeof(string))
-                {
-                    StringFieldInfo fieldInfo = new StringFieldInfo(name, description, editable);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else
-                {
-                    StringFieldInfo fieldInfo = new StringFieldInfo(name, description, editable);
-                    FieldsInfo[name] = fieldInfo;
-                }
             }
         }
 
