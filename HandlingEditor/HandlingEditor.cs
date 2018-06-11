@@ -29,6 +29,7 @@ namespace handling_editor
 
         #region FIELDS
         private static HandlingInfo handlingInfo;
+        private Dictionary<string,HandlingPreset> serverPresets;
         private long currentTime;
         private long lastTime;
         private int playerPed;
@@ -41,6 +42,7 @@ namespace handling_editor
         private MenuPool _menuPool;
         private UIMenu EditorMenu;
         private UIMenu presetsMenu;
+        private UIMenu serverPresetsMenu;
         #endregion
 
         private async Task<string> GetOnScreenValue(string defaultText)
@@ -214,6 +216,20 @@ namespace handling_editor
             return newitem;
         }
 
+        private UIMenu AddServerPresetsSubMenu(UIMenu menu)
+        {
+            var newitem = _menuPool.AddSubMenu(menu, "Server Presets", "The handling presets loaded from the server.");
+            newitem.MouseEdgeEnabled = false;
+            newitem.ControlDisablingEnabled = false;
+            newitem.MouseControlsEnabled = false;
+
+            foreach (var preset in serverPresets)
+            {
+                newitem.AddItem(new UIMenuItem(preset.Key));
+            }
+            return newitem;
+        }
+
         private void InitialiseMenu()
         {
             _menuPool = new MenuPool();
@@ -233,23 +249,55 @@ namespace handling_editor
 
             AddMenuReset(EditorMenu);
             presetsMenu = AddPresetsSubMenu(EditorMenu);
+            serverPresetsMenu = AddServerPresetsSubMenu(EditorMenu);
 
             presetsMenu.OnItemSelect += (sender, item, index) =>
             {
-                string key = $"{kvpPrefix}{item.Text}";
-                string value = GetResourceKvpString(key);
-                if (value != null)
+                if(sender == presetsMenu)
                 {
-                    currentPreset = GetPresetFromXml(value, currentPreset);
-                    CitizenFX.Core.UI.Screen.ShowNotification("Preset applied");
-                    InitialiseMenu();
-                    presetsMenu.Visible = true;
+                    string key = $"{kvpPrefix}{item.Text}";
+                    string value = GetResourceKvpString(key);
+                    if (value != null)
+                    {
+                        XmlDocument doc = new XmlDocument();
+                        doc.LoadXml(value);
+                        var handling = doc["HandlingData"]["Item"];
+                        GetPresetFromXml(handling, currentPreset);
+
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Personal preset ~b~{item.Text}~w~ applied");
+                        InitialiseMenu();
+                        presetsMenu.Visible = true;
+                    }
+                    else
+                        CitizenFX.Core.UI.Screen.ShowNotification($"~r~ERROR~w~: Personal preset ~b~{item.Text}~w~ corrupted");
                 }
-                else
-                    CitizenFX.Core.UI.Screen.ShowNotification("~r~ERROR~w~: Preset corrupted");
             };
 
-            EditorMenu.AddItem(new UIMenuItem("Server Presets", "The handling presets loaded from the server."));
+            serverPresetsMenu.OnItemSelect += (sender, item, index) =>
+            {
+                if(sender == serverPresetsMenu)
+                {
+                    string key = item.Text;
+                    if (serverPresets.ContainsKey(key))
+                    {
+                        foreach (var field in serverPresets[key].Fields.Keys)
+                        {
+                            if (currentPreset.Fields.ContainsKey(field))
+                            {
+                                currentPreset.Fields[field] = serverPresets[key].Fields[field];
+                            }
+                            else Debug.Write($"Missing {field} field in currentPreset");
+                        }
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Server preset ~b~{key}~w~ applied");
+                        InitialiseMenu();
+                        serverPresetsMenu.Visible = true;
+                    }
+                    else
+                        CitizenFX.Core.UI.Screen.ShowNotification($"~r~ERROR~w~: Server preset ~b~{key}~w~ corrupted");
+                }
+            };
+
+
 
             EditorMenu.MouseEdgeEnabled = false;
             EditorMenu.ControlDisablingEnabled = false;
@@ -266,6 +314,8 @@ namespace handling_editor
             ReadFieldInfo();
             LoadConfig();
             RegisterDecorators();
+            serverPresets = new Dictionary<string, HandlingPreset>();
+            ReadServerPresets();
 
             currentTime = GetGameTimer();
             lastTime = GetGameTimer();
@@ -837,15 +887,9 @@ namespace handling_editor
             }
         }
         
-        private HandlingPreset GetPresetFromXml(string xml, HandlingPreset preset)
+        private void GetPresetFromXml(XmlNode node, HandlingPreset preset)
         {
-            XmlDocument doc = new XmlDocument();
-            doc.LoadXml(xml);
-
-            var handling = doc["HandlingData"]["Item"];
-            string name = handling.GetAttribute("presetName");
-
-            foreach (XmlNode item in handling.ChildNodes)
+            foreach (XmlNode item in node.ChildNodes)
             {
                 if (item.NodeType != XmlNodeType.Element)
                     continue;
@@ -876,7 +920,6 @@ namespace handling_editor
                 }
                 else { }*/
             }
-            return preset;
         }
 
         private void ReadFieldInfo()
@@ -885,7 +928,6 @@ namespace handling_editor
             try
             {
                 strings = LoadResourceFile("handling_editor", "HandlingInfo.xml");
-                //handlingInfo.ParseXMLLinq(strings);           
                 handlingInfo.ParseXML(strings);
                 var editableFields = handlingInfo.FieldsInfo.Where(a => a.Value.Editable);
                 Debug.WriteLine($"Loaded HandlingInfo.xml, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
@@ -895,6 +937,39 @@ namespace handling_editor
                 Debug.WriteLine(e.Message);
                 Debug.WriteLine(e.StackTrace);
                 Debug.WriteLine("HANDLING_EDITOR: Error loading HandlingInfo.xml");
+            }
+        }
+
+        private void ReadServerPresets()
+        {
+            string strings = null;
+            try
+            {
+                strings = LoadResourceFile("handling_editor", "HandlingPresets.xml");
+                XmlDocument doc = new XmlDocument();
+                doc.LoadXml(strings);
+
+                foreach (XmlElement node in doc["CHandlingDataMgr"]["HandlingData"].ChildNodes)
+                {
+                    if (node.NodeType != XmlNodeType.Element)
+                        continue;
+                    
+                    if (node.HasAttribute("presetName"))
+                    {
+                        string name = node.GetAttribute("presetName");
+                        HandlingPreset preset = new HandlingPreset();
+
+                        GetPresetFromXml(node, preset);
+                        serverPresets[name] = preset;
+                    }
+                }
+                Debug.WriteLine($"Loaded HandlingPresets.xml, found {serverPresets.Count} server presets.");
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.Message);
+                Debug.WriteLine(e.StackTrace);
+                Debug.WriteLine("HANDLING_EDITOR: Error loading HandlingPresets.xml");
             }
         }
 
