@@ -1,0 +1,278 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- Config file for the handling editor, reference from handling.dat and https://www.gtamodding.com/wiki/Handling.meta -->
+<CHandlingData>
+  <!-- Physical -->
+  <handlingName Editable="false">
+    <Description>This is used by the vehicles.meta file to identify the handling line of the vehicle.</Description>
+  </handlingName>
+  <fMass Editable="true">
+    <Min value="100" />
+    <Max value="60000" />
+    <Description>This is the weight of the vehicle in kilograms. Only used when the vehicle collides with another vehicle or non-static object.</Description>
+  </fMass>
+  <fInitialDragCoeff Editable="true">
+    <Min value="0.9" />
+    <Max value="300" />
+    <Description>Sets the drag coefficient on the rage physics archetype of the vehicle (proportional to velocity squared). Increase to simulate aerodynamic drag.</Description>
+  </fInitialDragCoeff>
+  <fPercentSubmerged Editable="true">
+    <Min value="45" />
+    <Max value="200" />
+    <Description>A percentage of vehicle height in the water before vehicle 'floats'. So as the vehicle falls into the water, at 85% vehicle height (seemingly the default for road vehicles) it will stop sinking to float for a moment before it sinks (boats excluded).</Description>
+  </fPercentSubmerged>
+  <vecCentreOfMassOffset Editable="false">
+    <Min x="0" y="-4.3" z="-5" />
+    <Max x="0.025" y="7.8" z="1" />
+    <Description>This value shifts the center of gravity in meters from side to side (when in vehicle looking forward).</Description>
+  </vecCentreOfMassOffset>
+  <vecInertiaMultiplier Editable="false">
+    <Min x="0.5" y="0.4" z="0.5" />
+    <Max x="1.8" y="3" z="10" />
+    <Description />
+  </vecInertiaMultiplier>
+  <!-- Transmission -->
+  <fDriveBiasFront Editable="true">
+    <Min value="0" />
+    <Max value="1" />
+    <Description>This value is used to determine whether a vehicle is front, rear, or four wheel drive.</Description>
+  </fDriveBiasFront>
+  <nInitialDriveGears Editable="false">
+    <Min value="1" />
+    <Max value="6" />
+    <Description>How many forward speeds a transmission contains.</Description>
+  </nInitialDriveGears>
+  <fInitialDriveForce Editable="true">
+    <Min value="0" />
+    <Max value="18" />
+    <Description>This multiplier modifies the game's calculation of drive force (from the output of the transmission).</Description>
+  </fInitialDriveForce>
+  <fDriveInertia Editable="true">
+    <Min value="0.1" />
+    <Max value="2.5" />
+    <Description>Describes how fast an engine will rev. For example an engine with a long stroke crank and heavy flywheel will take longer to redline than an engine with a short stroke and light flywheel.</Description>
+  </fDriveInertia>
+  <fClutchChangeRateScaleUpShift Editable="true">
+    <Min value="0.3" />
+    <Max value="9" />
+    <Description>Clutch speed multiplier on up shifts, bigger number = faster shifts.</Description>
+  </fClutchChangeRateScaleUpShift>
+  <fClutchChangeRateScaleDownShift Editable="true">
+    <Min value="0.3" />
+    <Max value="9" />
+    <Description>Clutch speed multiplier on down shifts, bigger number = faster shifts.</Description>
+  </fClutchChangeRateScaleDownShift>
+  <fInitialDriveMaxFlatVel Editable="true">
+    <Min value="10" />
+    <Max value="328.6" />
+    <Description>Determines the speed at redline in top gear. Setting this value does not guarantee the vehicle will reach this speed. Multiply the number in the file by 0-82 to get the speed in mph or multiply by 1.32 to get kph.</Description>
+  </fInitialDriveMaxFlatVel>
+  <fBrakeForce Editable="true">
+    <Min value="0.001" />
+    <Max value="5" />
+    <Description>Multiplies the game's calculation of deceleration. Bigger number = harder braking.</Description>
+  </fBrakeForce>
+  <fBrakeBiasFront Editable="true">
+    <Min value="0" />
+    <Max value="0.8" />
+    <Description>This controls the distribution of braking force between the front and rear axles.</Description>
+  </fBrakeBiasFront>
+  <fHandBrakeForce Editable="true">
+    <Min value="0.01" />
+    <Max value="6" />
+    <Description>Braking power for handbrake. Bigger number = harder braking.</Description>
+  </fHandBrakeForce>
+  <fSteeringLock Editable="true">
+    <Min value="20" />
+    <Max value="55" />
+    <Description>This value is a multiplier of the game's calculation of the angle a steer wheel will turn while at full turn. Steering lock is directly related to over or understeer / turning radius.</Description>
+  </fSteeringLock>
+  <!-- Wheel Traction -->
+  <fTractionCurveMax Editable="true">
+    <Min value="0" />
+    <Max value="3.7" />
+    <Description>Cornering grip of the vehicle as a multiplier of the tire surface friction.</Description>
+  </fTractionCurveMax>
+  <fTractionCurveMin Editable="true">
+    <Min value="0" />
+    <Max value="3.5" />
+    <Description>Accelerating/braking grip of the vehicle as a multiplier of the tire surface friction.</Description>
+  </fTractionCurveMin>
+  <fTractionCurveLateral Editable="true">
+    <Min value="1" />
+    <Max value="120" />
+    <Description>Shape of lateral traction curve (peak traction position in degrees).</Description>
+  </fTractionCurveLateral>
+  <fTractionSpringDeltaMax Editable="true">
+    <Min value="0.02" />
+    <Max value="0.5" />
+    <Description>This value denotes at what distance above the ground the car will lose traction.</Description>
+  </fTractionSpringDeltaMax>
+  <fLowSpeedTractionLossMult Editable="true">
+    <Min value="0" />
+    <Max value="2.2" />
+    <Description>How much traction is reduced at low speed, 0.0 means normal traction. It affects mainly car burnout (spinning wheels when car doesn't move) when pressing gas. Decreasing value will cause less burnout, less sliding at start. However, the higher value, the more burnout car gets. Optimal is 1.0.</Description>
+  </fLowSpeedTractionLossMult>
+  <fCamberStiffnesss Editable="true">
+    <Min value="0" />
+    <Max value="1.12" />
+    <Description>This value modify the grip of the car when you're drifting and you release the gas. In general, it makes your car slide more on sideways movement. More than 0 make the car sliding on the same angle you're drifting and less than 0 make your car oversteer (not recommend to use more than 0.1 / -0.1 if you don't know what you're doing).</Description>
+  </fCamberStiffnesss>
+  <fTractionBiasFront Editable="true">
+    <Min value="0.325" />
+    <Max value="0.95" />
+    <Description>Determines the distribution of traction from front to rear.</Description>
+  </fTractionBiasFront>
+  <fTractionLossMult Editable="true">
+    <Min value="0" />
+    <Max value="1.4" />
+    <Description>How much is traction affected by material grip differences from 1.0. Basically it affects how much grip is changed when driving on asphalt and mud (the higher, the more grip you loose, making car less responsive and prone to sliding).</Description>
+  </fTractionLossMult>
+  <!-- Suspension -->
+  <fSuspensionForce Editable="true">
+    <Min value="0" />
+    <Max value="9" />
+    <Description>1 / (Force * NumWheels) = Lower limit for zero force at full extension. Affects how strong suspension is. Can help if car is easily flipped over when turning.</Description>
+  </fSuspensionForce>
+  <fSuspensionCompDamp Editable="true">
+    <Min value="0" />
+    <Max value="8" />
+    <Description>Damping during strut compression. Bigger = stiffer.</Description>
+  </fSuspensionCompDamp>
+  <fSuspensionReboundDamp Editable="true">
+    <Min value="0" />
+    <Max value="10.8" />
+    <Description>Damping during strut rebound. Bigger = stiffer.</Description>
+  </fSuspensionReboundDamp>
+  <fSuspensionUpperLimit Editable="true">
+    <Min value="0" />
+    <Max value="0.8" />
+    <Description>Visual limit... how far can wheels move up / down from original position.</Description>
+  </fSuspensionUpperLimit>
+  <fSuspensionLowerLimit Editable="true">
+    <Min value="-0.36" />
+    <Max value="0.1" />
+    <Description>Visual limit... how far can wheels move up / down from original position.</Description>
+  </fSuspensionLowerLimit>
+  <fSuspensionRaise Editable="true">
+    <Min value="-0.085" />
+    <Max value="0.35" />
+    <Description>The amount that the suspension raises the body off the wheels. Recommend adjusting at second decimal unless vehicle has room to move. ie -0.02 is plenty of drop on an already low car. Too much will show the wheels clipping through or if positive, no suspension joining the body to wheels.</Description>
+  </fSuspensionRaise>
+  <fSuspensionBiasFront Editable="true">
+    <Min value="0" />
+    <Max value="0.85" />
+    <Description>Force damping scale front/back. If more wheels at back (e.g. trucks) need front suspension to be stronger. This value determines which suspension is stronger, front or rear. If value is above 0.50 then front is stiffer, when below, rear.</Description>
+  </fSuspensionBiasFront>
+  <fAntiRollBarForce Editable="true">
+    <Min value="0" />
+    <Max value="3" />
+    <Description>The spring constant that is transmitted to the opposite wheel when under compression larger numbers are a larger force. Larger Numbers = less body roll.</Description>
+  </fAntiRollBarForce>
+  <fAntiRollBarBiasFront Editable="true">
+    <Min value="0" />
+    <Max value="1" />
+    <Description>The bias between front and rear for the antiroll bar(0 front, 1 rear).</Description>
+  </fAntiRollBarBiasFront>
+  <fRollCentreHeightFront Editable="true">
+    <Min value="0" />
+    <Max value="1.2" />
+    <Description>This value modify the weight transmission during an acceleration between the left and right.</Description>
+  </fRollCentreHeightFront>
+  <fRollCentreHeightRear Editable="true">
+    <Min value="0" />
+    <Max value="1.2" />
+    <Description>This value modify the weight transmission during an acceleration between the front and rear (and can affect the acceleration speed).</Description>
+  </fRollCentreHeightRear>
+  <!-- Damage -->
+  <fCollisionDamageMult Editable="false">
+    <Min value="0.005" />
+    <Max value="2" />
+    <Description>Multiplies the game's calculation of damage to the vehicle through collision.</Description>
+  </fCollisionDamageMult>
+  <fWeaponDamageMult Editable="false">
+    <Min value="0.03" />
+    <Max value="4" />
+    <Description>Multiplies the game's calculation of damage to the vehicle through weapon damage.</Description>
+  </fWeaponDamageMult>
+  <fDeformationDamageMult Editable="false">
+    <Min value="0" />
+    <Max value="5" />
+    <Description>Multiplies the game's calculation of deformation-causing damage.</Description>
+  </fDeformationDamageMult>
+  <fEngineDamageMult Editable="false">
+    <Min value="0.01" />
+    <Max value="2.5" />
+    <Description>Multiplies the game's calculation of damage to the engine, causing explosion or engine failure.</Description>
+  </fEngineDamageMult>
+  <fPetrolTankVolume Editable="false">
+    <Min value="0" />
+    <Max value="5000" />
+    <Description>Amount of petrol that will leak after shooting the vehicle's petrol tank.</Description>
+  </fPetrolTankVolume>
+  <fOilVolume Editable="false">
+    <Min value="0" />
+    <Max value="10" />
+    <Description>Black smoke time before engine dies?</Description>
+  </fOilVolume>
+  <!-- Misc -->
+  <fSeatOffsetDistX Editable="false">
+    <Min value="-0.2" />
+    <Max value="0.3" />
+    <Description>The distance from the door to the car seat.</Description>
+  </fSeatOffsetDistX>
+  <fSeatOffsetDistY Editable="false">
+    <Min value="-0.6" />
+    <Max value="0.3" />
+    <Description>The distance from the door to the car seat.</Description>
+  </fSeatOffsetDistY>
+  <fSeatOffsetDistZ Editable="false">
+    <Min value="-0.4" />
+    <Max value="0.5" />
+    <Description>The distance from the door to the car seat.</Description>
+  </fSeatOffsetDistZ>
+  <nMonetaryValue Editable="false">
+    <Min value="10000" />
+    <Max value="500000" />
+    <Description>Vehicle worth.</Description>
+  </nMonetaryValue>
+  <strModelFlags Editable="false">
+    <Description>Model flags. Written in HEX. Rightmost digit is the first one.</Description>
+  </strModelFlags>
+  <strHandlingFlags Editable="false">
+    <Description>Handling flags. Written in HEX. Rightmost digit is the first one.</Description>
+  </strHandlingFlags>
+  <strDamageFlags Editable="false">
+    <Description>Indicates the doors that are nonbreakable. Written in HEX. Rightmost digit is the first one.</Description>
+  </strDamageFlags>
+  <AIHandling Editable="false">
+    <Description>Tells the AI which driving profile it should use when driving the vehicle. Use AVERAGE for boats, bikes, aircraft, etc.</Description>
+  </AIHandling>
+  <SubHandlingData Editable="false">
+    <Description />
+  </SubHandlingData>
+  <fWeaponDamageScaledToVehHealthMult Editable="false">
+    <Min value="0.34" />
+    <Max value="0.34" />
+    <Description />
+  </fWeaponDamageScaledToVehHealthMult>
+  <fPopUpLightRotation Editable="true">
+    <Min value="17.5" />
+    <Max value="45" />
+    <Description />
+  </fPopUpLightRotation>
+  <fDownforceModifier Editable="false">
+    <Min value="1.15" />
+    <Max value="300" />
+    <Description />
+  </fDownforceModifier>
+  <fRocketBoostCapacity Editable="false">
+    <Min value="3" />
+    <Max value="20" />
+    <Description />
+  </fRocketBoostCapacity>
+  <fBoostMaxSpeed Editable="false">
+    <Min value="15" />
+    <Max value="87.5" />
+    <Description />
+  </fBoostMaxSpeed>
+</CHandlingData>
