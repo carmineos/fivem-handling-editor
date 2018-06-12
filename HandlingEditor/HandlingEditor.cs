@@ -497,13 +497,34 @@ namespace handling_editor
                     string className = handlingInfo.FieldsInfo[fieldName].ClassName;
 
                     if (fieldType == typeof(float))
-                        SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
+                    {
+                        var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
+                        if (value != fieldValue)
+                            SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
+
+                        if (debug)
+                            Debug.WriteLine($"{fieldName} updated from {fieldValue} to {value}");
+                    }
                     
                     else if (fieldType == typeof(int))
-                        SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
+                    {
+                        var value = GetVehicleHandlingInt(vehicle, className, fieldName);
+                        if (value != fieldValue)
+                            SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
+
+                        if (debug)
+                            Debug.WriteLine($"{fieldName} updated from {fieldValue} to {value}");
+                    }
                     
                     else if (fieldType == typeof(Vector3))
-                        SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
+                    {
+                        var value = GetVehicleHandlingVector(vehicle, className, fieldName);
+                        if (value != fieldValue)
+                            SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
+
+                        if (debug)
+                            Debug.WriteLine($"{fieldName} updated from {fieldValue} to {value}");
+                    }
                 }
             }
             await Delay(0);
@@ -546,16 +567,26 @@ namespace handling_editor
                 {
                     if (DecorExistOn(vehicle, fieldName))
                     {
-                        var value = DecorGetFloat(vehicle, fieldName);
-                        SetVehicleHandlingFloat(vehicle, className, fieldName, value);
+                        var decorValue = DecorGetFloat(vehicle, fieldName);
+                        var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
+                        if (value != decorValue)
+                            SetVehicleHandlingFloat(vehicle, className, fieldName, decorValue);
+
+                        if (debug)
+                            Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                     }
                 }
                 else if (fieldType == typeof(int))
                 {
                     if (DecorExistOn(vehicle, fieldName))
                     {
-                        var value = DecorGetInt(vehicle, fieldName);
-                        SetVehicleHandlingInt(vehicle, className, fieldName, value);
+                        var decorValue = DecorGetInt(vehicle, fieldName);
+                        var value = GetVehicleHandlingInt(vehicle, className, fieldName);
+                        if (value != decorValue)
+                            SetVehicleHandlingInt(vehicle, className, fieldName, decorValue);
+
+                        if (debug)
+                            Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                     }
                 }
                 else if (fieldType == typeof(Vector3))
@@ -564,18 +595,23 @@ namespace handling_editor
                     string decorY = $"{fieldName}_y";
                     string decorZ = $"{fieldName}_z";
 
-                    Vector3 vector = GetVehicleHandlingVector(vehicle, className, fieldName);
+                    Vector3 value = GetVehicleHandlingVector(vehicle, className, fieldName);
+                    Vector3 decorValue = new Vector3(value.X, value.Y, value.Z);
 
                     if (DecorExistOn(vehicle, decorX))
-                        vector.X = DecorGetFloat(vehicle, decorX);
+                        decorValue.X = DecorGetFloat(vehicle, decorX);
 
                     if (DecorExistOn(vehicle, decorY))
-                        vector.Y = DecorGetFloat(vehicle, decorY);
+                        decorValue.Y = DecorGetFloat(vehicle, decorY);
 
                     if (DecorExistOn(vehicle, decorZ))
-                        vector.Z = DecorGetFloat(vehicle, decorZ);
+                        decorValue.Z = DecorGetFloat(vehicle, decorZ);
 
-                    SetVehicleHandlingVector(vehicle, className, fieldName, vector);
+                    if(!value.Equals(decorValue))
+                        SetVehicleHandlingVector(vehicle, className, fieldName, decorValue);
+
+                    if (debug)
+                        Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                 }
             }
             await Delay(0);
@@ -924,7 +960,7 @@ namespace handling_editor
                         {
                             value = DecorGetFloat(vehicle, fieldName);
                             defaultValue = DecorGetFloat(vehicle, defDecorName);
-                            s.AppendLine($"{fieldName}:{value}({defaultValue})");
+                            s.AppendLine($"{fieldName}: {value}({defaultValue})");
                         }
                     }
                     else if (fieldType == typeof(int))
@@ -933,7 +969,7 @@ namespace handling_editor
                         {
                             value = DecorGetInt(vehicle, fieldName);
                             defaultValue = DecorGetInt(vehicle, defDecorName);
-                            s.AppendLine($"{fieldName}:{value}({defaultValue})");
+                            s.AppendLine($"{fieldName}: {value}({defaultValue})");
                         }
                     }
                     else if (fieldType == typeof(Vector3))
@@ -944,7 +980,7 @@ namespace handling_editor
                             string defDecorNameX = $"{decorX}_def";
                             var x = DecorGetFloat(vehicle, decorX);
                             var defX = DecorGetFloat(vehicle, defDecorNameX);
-                            s.AppendLine($"{decorX}:{x}({defX})");
+                            s.AppendLine($"{decorX}: {x}({defX})");
                         }
 
                         string decorY = $"{fieldName}_y";
@@ -953,7 +989,7 @@ namespace handling_editor
                             string defDecorNameY = $"{decorY}_def";
                             var y = DecorGetFloat(vehicle, decorY);
                             var defY = DecorGetFloat(vehicle, defDecorNameY);
-                            s.AppendLine($"{decorY}:{y}({defY})");
+                            s.AppendLine($"{decorY}: {y}({defY})");
                         }
 
                         string decorZ = $"{fieldName}_z";
@@ -962,12 +998,12 @@ namespace handling_editor
                             string defDecorNameZ = $"{decorZ}_def";
                             var z = DecorGetFloat(vehicle, decorZ);
                             var defZ = DecorGetFloat(vehicle, defDecorNameZ);
-                            s.AppendLine($"{decorZ}:{z}({defZ})");
+                            s.AppendLine($"{decorZ}: {z}({defZ})");
                         }
                         
                     }
                 }
-                Debug.WriteLine(s.ToString());
+                Debug.Write(s.ToString());
             }
             else Debug.WriteLine("HANDLING_EDITOR: Current vehicle doesn't exist");
 
