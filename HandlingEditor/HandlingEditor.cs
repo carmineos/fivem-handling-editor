@@ -25,6 +25,7 @@ namespace handling_editor
         private static float screenPosX;
         private static float screenPosY;
         internal static string kvpPrefix = "handling_";
+        private static string ResourceName;
         #endregion
 
         #region FIELDS
@@ -490,6 +491,7 @@ namespace handling_editor
 
         public HandlingEditor()
         {
+            ResourceName = GetCurrentResourceName();
             Debug.WriteLine("HANDLING EDITOR: Script by Neos7");
             handlingInfo = new HandlingInfo();
             ReadFieldInfo();
@@ -1266,7 +1268,7 @@ namespace handling_editor
             string strings = null;
             try
             {
-                strings = LoadResourceFile("handling_editor", "HandlingInfo.xml");
+                strings = LoadResourceFile(ResourceName, "HandlingInfo.xml");
                 handlingInfo.ParseXML(strings);
                 var editableFields = handlingInfo.FieldsInfo.Where(a => a.Value.Editable);
                 Debug.WriteLine($"Loaded HandlingInfo.xml, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
@@ -1284,7 +1286,7 @@ namespace handling_editor
             string strings = null;
             try
             {
-                strings = LoadResourceFile("handling_editor", "HandlingPresets.xml");
+                strings = LoadResourceFile(ResourceName, "HandlingPresets.xml");
                 XmlDocument doc = new XmlDocument();
                 doc.LoadXml(strings);
 
@@ -1318,7 +1320,7 @@ namespace handling_editor
             Config config = new Config();
             try
             {
-                strings = LoadResourceFile("handling_editor", "config.ini");
+                strings = LoadResourceFile(ResourceName, "config.ini");
                 config.ParseConfigFile(strings);
                 Debug.WriteLine("HANDLING_EDITOR: Loaded settings from config.ini");
             }
