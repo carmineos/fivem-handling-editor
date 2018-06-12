@@ -210,7 +210,6 @@ namespace HandlingEditor
                 xml = xml.Remove(0, bom.Lenght);
             }*/
 
-            xml = xml.Remove(0, 1);
             XmlDocument doc = new XmlDocument();
             
             doc.LoadXml(xml);
