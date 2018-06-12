@@ -54,7 +54,19 @@ namespace handling_editor
         public void Reset()
         {
             foreach (string name in DefaultFields.Keys)
-                Fields[name] = DefaultFields[name];
+            {
+                Type fieldType = DefaultFields[name].GetType();
+
+                if (fieldType == typeof(float) || fieldType == typeof(int))
+                {
+                    Fields[name] = DefaultFields[name];
+                }
+                else if (fieldType == typeof(Vector3))
+                {
+                    Vector3 vec = (Vector3)DefaultFields[name];
+                    Fields[name] = new Vector3(vec.X, vec.Y, vec.Z);
+                }
+            }
         }
 
         public bool Equals(HandlingPreset other)

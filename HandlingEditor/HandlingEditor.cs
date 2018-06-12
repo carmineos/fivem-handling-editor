@@ -177,6 +177,187 @@ namespace handling_editor
 
             return newitem;
         }
+
+        private void AddDynamicVector3List(UIMenu menu, VectorFieldInfo fieldInfo)
+        {
+            if (!currentPreset.Fields.ContainsKey(fieldInfo.Name))
+                return;
+
+            string fieldDescription = fieldInfo.Description;
+            string fieldNameX = $"{fieldInfo.Name}_x";
+            float valueX = currentPreset.Fields[fieldInfo.Name].X;
+            float minValueX = fieldInfo.Min.X;
+            float maxValueX = fieldInfo.Max.X;
+
+            var newitemX = new UIMenuDynamicListItem(fieldNameX, fieldDescription, valueX.ToString("F3"), (sender, direction) =>
+            {
+                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
+                {
+                    var newvalue = valueX - editingFactor;
+                    if (newvalue < minValueX)
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldNameX}~w~ is {minValueX}");
+                    else
+                    {
+                        valueX = newvalue;
+                        currentPreset.Fields[fieldInfo.Name].X = newvalue;
+                    }
+                }
+                else
+                {
+                    var newvalue = valueX + editingFactor;
+                    if (newvalue > maxValueX)
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldNameX}~w~ is {maxValueX}");
+                    else
+                    {
+                        valueX = newvalue;
+                        currentPreset.Fields[fieldInfo.Name].X = newvalue;
+                    }
+                }
+                return valueX.ToString("F3");
+            });
+
+            menu.AddItem(newitemX);
+
+            EditorMenu.OnItemSelect += async (sender, item, index) =>
+            {
+                if (item == newitemX)
+                {
+                    EditorMenu.Visible = false;
+
+                    string text = await GetOnScreenValue(valueX.ToString());
+                    float newvalue = valueX;
+
+                    if (float.TryParse(text, out newvalue))
+                    {
+                        if (newvalue >= minValueX && newvalue <= maxValueX)
+                            currentPreset.Fields[fieldInfo.Name].X = newvalue;
+                        else
+                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameX}~w~, Min:{minValueX}, Max:{maxValueX}");
+                    }
+                    else
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameX}~w~");
+
+                    InitialiseMenu(); //Should just update the current item instead
+                    EditorMenu.Visible = true;
+                }
+            };
+
+            string fieldNameY = $"{fieldInfo.Name}_y";
+            float valueY = currentPreset.Fields[fieldInfo.Name].Y;
+            float minValueY = fieldInfo.Min.X;
+            float maxValueY = fieldInfo.Max.X;
+
+            var newitemY = new UIMenuDynamicListItem(fieldNameY, fieldDescription, valueY.ToString("F3"), (sender, direction) =>
+            {
+                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
+                {
+                    var newvalue = valueY - editingFactor;
+                    if (newvalue < minValueY)
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldNameY}~w~ is {minValueY}");
+                    else
+                    {
+                        valueY = newvalue;
+                        currentPreset.Fields[fieldInfo.Name].Y = newvalue;
+                    }
+                }
+                else
+                {
+                    var newvalue = valueY + editingFactor;
+                    if (newvalue > maxValueY)
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldNameY}~w~ is {maxValueY}");
+                    else
+                    {
+                        valueY = newvalue;
+                        currentPreset.Fields[fieldInfo.Name].Y = newvalue;
+                    }
+                }
+                return valueY.ToString("F3");
+            });
+
+            menu.AddItem(newitemY);
+
+            EditorMenu.OnItemSelect += async (sender, item, index) =>
+            {
+                if (item == newitemY)
+                {
+                    EditorMenu.Visible = false;
+
+                    string text = await GetOnScreenValue(valueY.ToString());
+                    float newvalue = valueY;
+
+                    if (float.TryParse(text, out newvalue))
+                    {
+                        if (newvalue >= minValueY && newvalue <= maxValueY)
+                            currentPreset.Fields[fieldInfo.Name].Y = newvalue;
+                        else
+                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameY}~w~, Min:{minValueY}, Max:{maxValueY}");
+                    }
+                    else
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameY}~w~");
+
+                    InitialiseMenu(); //Should just update the current item instead
+                    EditorMenu.Visible = true;
+                }
+            };
+
+            string fieldNameZ = $"{fieldInfo.Name}_z";
+            float valueZ = currentPreset.Fields[fieldInfo.Name].Z;
+            float minValueZ = fieldInfo.Min.Z;
+            float maxValueZ = fieldInfo.Max.Z;
+
+            var newitemZ = new UIMenuDynamicListItem(fieldNameZ, fieldDescription, valueZ.ToString("F3"), (sender, direction) =>
+            {
+                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
+                {
+                    var newvalue = valueZ - editingFactor;
+                    if (newvalue < minValueZ)
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldNameZ}~w~ is {minValueZ}");
+                    else
+                    {
+                        valueZ = newvalue;
+                        currentPreset.Fields[fieldInfo.Name].Z = newvalue;
+                    }
+                }
+                else
+                {
+                    var newvalue = valueZ + editingFactor;
+                    if (newvalue > maxValueZ)
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldNameZ}~w~ is {maxValueZ}");
+                    else
+                    {
+                        valueZ = newvalue;
+                        currentPreset.Fields[fieldInfo.Name].Z = newvalue;
+                    }
+                }
+                return valueZ.ToString("F3");
+            });
+
+            menu.AddItem(newitemZ);
+
+            EditorMenu.OnItemSelect += async (sender, item, index) =>
+            {
+                if (item == newitemZ)
+                {
+                    EditorMenu.Visible = false;
+
+                    string text = await GetOnScreenValue(valueZ.ToString());
+                    float newvalue = valueZ;
+
+                    if (float.TryParse(text, out newvalue))
+                    {
+                        if (newvalue >= minValueZ && newvalue <= maxValueZ)
+                            currentPreset.Fields[fieldInfo.Name].Z = newvalue;
+                        else
+                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameZ}~w~, Min:{minValueZ}, Max:{maxValueZ}");
+                    }
+                    else
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameZ}~w~");
+
+                    InitialiseMenu(); //Should just update the current item instead
+                    EditorMenu.Visible = true;
+                }
+            };
+        }
         
         private UIMenuItem AddMenuReset(UIMenu menu)
         {
@@ -239,12 +420,12 @@ namespace handling_editor
             {
                 Type fieldType = item.Value.Type;
 
-                if(fieldType == typeof(float))
+                if (fieldType == typeof(float))
                     AddDynamicFloatList(EditorMenu, (FloatFieldInfo)item.Value);
-                else if(fieldType == typeof(int))
+                else if (fieldType == typeof(int))
                     AddDynamicIntList(EditorMenu, (IntFieldInfo)item.Value);
-                /*else if (fieldType == typeof(VectorFieldInfo))
-                    AddDynamicVectorList(EditorMenu, (VectorFieldInfo)item.Value);*/
+                else if (fieldType == typeof(Vector3))
+                    AddDynamicVector3List(EditorMenu, (VectorFieldInfo)item.Value);
             }
 
             AddMenuReset(EditorMenu);
@@ -715,14 +896,67 @@ namespace handling_editor
                     string decorX = $"{fieldName}_x";
                     string decorY = $"{fieldName}_y";
                     string decorZ = $"{fieldName}_z";
+                    string defDecorX = $"{decorX}_def";
+                    string defDecorY = $"{decorY}_def";
+                    string defDecorZ = $"{decorZ}_def";
 
-                    DecorRemove(vehicle, decorX);
-                    DecorRemove(vehicle, decorY);
-                    DecorRemove(vehicle, decorZ);
+                    if (DecorExistOn(vehicle, decorX)) DecorRemove(vehicle, decorX);
+                    if (DecorExistOn(vehicle, decorY)) DecorRemove(vehicle, decorY);
+                    if (DecorExistOn(vehicle, decorZ)) DecorRemove(vehicle, decorZ);
 
-                    DecorRemove(vehicle, $"{decorX}_def");
-                    DecorRemove(vehicle, $"{decorY}_def");
-                    DecorRemove(vehicle, $"{decorZ}_def");
+                    if (DecorExistOn(vehicle, defDecorX)) DecorRemove(vehicle, defDecorX);
+                    if (DecorExistOn(vehicle, defDecorY)) DecorRemove(vehicle, defDecorY);
+                    if (DecorExistOn(vehicle, defDecorZ)) DecorRemove(vehicle, defDecorZ);
+                }
+            }
+            await Delay(0);
+        }
+
+        public async void UpdateFloatDecorator(int vehicle, string name, float currentValue, float defaultValue)
+        {
+            // Decorator exists but needs to be updated
+            if (DecorExistOn(vehicle, name))
+            {
+                float decorValue = DecorGetFloat(vehicle, name);
+                if (Math.Abs(currentValue - decorValue) > 0.001f)
+                {
+                    DecorSetFloat(vehicle, name, currentValue);
+                    if (debug)
+                        Debug.WriteLine($"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
+                }
+            }
+            else // Decorator doesn't exist, create it if required
+            {
+                if (Math.Abs(currentValue - defaultValue) > 0.001f)
+                {
+                    DecorSetFloat(vehicle, name, currentValue);
+                    if (debug)
+                        Debug.WriteLine($"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
+                }
+            }
+            await Delay(0);
+        }
+
+        public async void UpdateIntDecorator(int vehicle, string name, int currentValue, int defaultValue)
+        {
+            // Decorator exists but needs to be updated
+            if (DecorExistOn(vehicle, name))
+            {
+                int decorValue = DecorGetInt(vehicle, name);
+                if (currentValue != decorValue)
+                {
+                    DecorSetInt(vehicle, name, currentValue);
+                    if (debug)
+                        Debug.WriteLine($"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
+                }
+            }
+            else // Decorator doesn't exist, create it if required
+            {
+                if (currentValue != defaultValue)
+                {
+                    DecorSetInt(vehicle, name, currentValue);
+                    if (debug)
+                        Debug.WriteLine($"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
             await Delay(0);
@@ -742,218 +976,34 @@ namespace handling_editor
 
                 if (fieldType == typeof(float))
                 {
-                    if (DecorExistOn(vehicle, fieldName))
-                    {
-                        float value = DecorGetFloat(vehicle, fieldName);
-                        if (Math.Abs(value - fieldValue) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, fieldName, fieldValue);
-                            if (debug)
-                                Debug.WriteLine($"Updated decorator {fieldName} updated from {value} to {fieldValue} for vehicle {vehicle} (netID: {netID})");
-                        }
-                            
-                    }
-                    else
-                    {
-                        if (Math.Abs(defaultValue - fieldValue) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, fieldName, fieldValue);
-                            if (debug)
-                                Debug.WriteLine($"Added decorator {fieldName} with value {fieldValue} to vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-
-                    if (DecorExistOn(vehicle, defDecorName))
-                    {
-                        float value = DecorGetFloat(vehicle, defDecorName);
-                        if (Math.Abs(value - defaultValue) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, defDecorName, defaultValue);
-                            if (debug)
-                                Debug.WriteLine($"Updated decorator {defDecorName} updated from {value} to {defaultValue} for vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                    else
-                    {
-                        if (Math.Abs(defaultValue - fieldValue) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, defDecorName, defaultValue);
-                            if (debug)
-                                Debug.WriteLine($"Added decorator {defDecorName} with value {defaultValue} to vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                }/*
+                    UpdateFloatDecorator(vehicle, fieldName, fieldValue, defaultValue);
+                    UpdateFloatDecorator(vehicle, defDecorName, defaultValue, fieldValue);
+                }
                 else if(fieldType == typeof(int))
                 {
-                    if (DecorExistOn(vehicle, fieldName))
-                    {
-                        int value = DecorGetInt(vehicle, fieldName);
-                        if (value != fieldValue)
-                        {
-                            DecorSetInt(vehicle, fieldName, fieldValue);
-                            if (debug)
-                                Debug.WriteLine($"Updated decorator {fieldName} updated from {value} to {defaultValue} for vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                    else
-                    {
-                        if (defaultValue != fieldValue)
-                        {
-                            DecorSetInt(vehicle, fieldName, fieldValue);
-                            if (debug)
-                                Debug.WriteLine($"Added decorator {fieldName} with value {fieldValue} to vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-
-                    if (DecorExistOn(vehicle, defDecorName))
-                    {
-                        int value = DecorGetInt(vehicle, defDecorName);
-                        if (value != defaultValue)
-                        {
-                            DecorSetInt(vehicle, defDecorName, defaultValue);
-                            if (debug)
-                                Debug.WriteLine($"Updated decorator {defDecorName} updated from {value} to {defaultValue} for vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                    else
-                    {
-                        if (defaultValue != fieldValue)
-                        {
-                            DecorSetInt(vehicle, defDecorName, defaultValue);
-                            if (debug)
-                                Debug.WriteLine($"Added decorator {defDecorName} with value {defaultValue} to vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                }*/
+                    UpdateIntDecorator(vehicle, fieldName, fieldValue, defaultValue);
+                    UpdateIntDecorator(vehicle, defDecorName, defaultValue, fieldValue);
+                }
                 else if (fieldType == typeof(Vector3))
                 {
                     fieldValue = (Vector3)fieldValue;
                     defaultValue = (Vector3)defaultValue;
 
                     string decorX = $"{fieldName}_x";
-                    if (DecorExistOn(vehicle, decorX))
-                    {
-                        float value = DecorGetFloat(vehicle, decorX);
-                        if (Math.Abs(value - fieldValue.X) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, decorX, fieldValue.X);
-                            if (debug)
-                                Debug.WriteLine($"Updated decorator {decorX} updated from {value} to {fieldValue.X} for vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                    else
-                    {
-                        if (Math.Abs(defaultValue.X - fieldValue.X) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, decorX, fieldValue.X);
-                            if (debug)
-                                Debug.WriteLine($"Added decorator {decorX} with value {fieldValue.X} to vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-
                     string defDecorNameX = $"{decorX}_def";
-                    if (DecorExistOn(vehicle, defDecorNameX))
-                    {
-                        float value = DecorGetFloat(vehicle, defDecorNameX);
-                        if (Math.Abs(value - defaultValue.X) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, defDecorNameX, defaultValue.X);
-                            if (debug)
-                                Debug.WriteLine($"Updated decorator {defDecorNameX} updated from {value} to {defaultValue.X} for vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                    else
-                    {
-                        if (Math.Abs(defaultValue.X - fieldValue.X) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, defDecorNameX, defaultValue.X);
-                            if (debug)
-                                Debug.WriteLine($"Added decorator {defDecorNameX} with value {defaultValue.X} to vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-
                     string decorY = $"{fieldName}_y";
-                    if (DecorExistOn(vehicle, decorY))
-                    {
-                        float value = DecorGetFloat(vehicle, decorY);
-                        if (Math.Abs(value - fieldValue.Y) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, decorY, fieldValue.Y);
-                            if (debug)
-                                Debug.WriteLine($"Updated decorator {decorY} updated from {value} to {fieldValue.Y} for vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                    else
-                    {
-                        if (Math.Abs(defaultValue.Y - fieldValue.Y) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, decorY, fieldValue.Y);
-                            if (debug)
-                                Debug.WriteLine($"Added decorator {decorY} with value {fieldValue.Y} to vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-
                     string defDecorNameY = $"{decorY}_def";
-                    if (DecorExistOn(vehicle, defDecorNameY))
-                    {
-                        float value = DecorGetFloat(vehicle, defDecorNameY);
-                        if (Math.Abs(value - defaultValue.Y) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, defDecorNameY, defaultValue.Y);
-                            if (debug)
-                                Debug.WriteLine($"Updated decorator {defDecorNameY} updated from {value} to {defaultValue.Y} for vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                    else
-                    {
-                        if (Math.Abs(defaultValue.Y - fieldValue.Y) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, defDecorNameY, defaultValue.Y);
-                            if (debug)
-                                Debug.WriteLine($"Added decorator {defDecorNameY} with value {defaultValue.Y} to vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
                     string decorZ = $"{fieldName}_z";
-                    if (DecorExistOn(vehicle, decorZ))
-                    {
-                        float value = DecorGetFloat(vehicle, decorZ);
-                        if (Math.Abs(value - fieldValue.Z) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, decorZ, fieldValue.Z);
-                            if (debug)
-                                Debug.WriteLine($"Updated decorator {decorZ} updated from {value} to {fieldValue.Z} for vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                    else
-                    {
-                        if (Math.Abs(defaultValue.Z - fieldValue.Z) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, decorZ, fieldValue.Z);
-                            if (debug)
-                                Debug.WriteLine($"Added decorator {decorZ} with value {fieldValue.Z} to vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-
                     string defDecorNameZ = $"{decorZ}_def";
-                    if (DecorExistOn(vehicle, defDecorNameZ))
-                    {
-                        float value = DecorGetFloat(vehicle, defDecorNameZ);
-                        if (Math.Abs(value - defaultValue.Z) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, defDecorNameZ, defaultValue.Z);
-                            if (debug)
-                                Debug.WriteLine($"Updated decorator {defDecorNameZ} updated from {value} to {defaultValue.Z} for vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
-                    else
-                    {
-                        if (Math.Abs(defaultValue.Z - fieldValue.Z) > 0.001f)
-                        {
-                            DecorSetFloat(vehicle, defDecorNameZ, defaultValue.Z);
-                            if (debug)
-                                Debug.WriteLine($"Added decorator {defDecorNameZ} with value {defaultValue.Z} to vehicle {vehicle} (netID: {netID})");
-                        }
-                    }
+
+                    UpdateFloatDecorator(vehicle, decorX, fieldValue.X, defaultValue.X);
+                    UpdateFloatDecorator(vehicle, defDecorNameX, defaultValue.X, fieldValue.X);
+
+                    UpdateFloatDecorator(vehicle, decorY, fieldValue.Y, defaultValue.Y);
+                    UpdateFloatDecorator(vehicle, defDecorNameY, defaultValue.Y, fieldValue.Y);
+
+                    UpdateFloatDecorator(vehicle, decorZ, fieldValue.Z, defaultValue.Z);
+                    UpdateFloatDecorator(vehicle, defDecorNameZ, defaultValue.Z, fieldValue.Z);
                 }
             }
             await Delay(0);

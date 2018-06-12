@@ -20,12 +20,12 @@
     <Max value="200" />
     <Description>A percentage of vehicle height in the water before vehicle 'floats'. So as the vehicle falls into the water, at 85% vehicle height (seemingly the default for road vehicles) it will stop sinking to float for a moment before it sinks (boats excluded).</Description>
   </fPercentSubmerged>
-  <vecCentreOfMassOffset Editable="false">
+  <vecCentreOfMassOffset Editable="true">
     <Min x="0" y="-4.3" z="-5" />
     <Max x="0.025" y="7.8" z="1" />
     <Description>This value shifts the center of gravity in meters from side to side (when in vehicle looking forward).</Description>
   </vecCentreOfMassOffset>
-  <vecInertiaMultiplier Editable="false">
+  <vecInertiaMultiplier Editable="true">
     <Min x="0.5" y="0.4" z="0.5" />
     <Max x="1.8" y="3" z="10" />
     <Description />
