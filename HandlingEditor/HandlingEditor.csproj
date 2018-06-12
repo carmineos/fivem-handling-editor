@@ -59,6 +59,7 @@
     <PostBuildEvent>copy $(TargetFileName) E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor
 copy "$(SolutionDir)config.ini" E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor
 copy "$(SolutionDir)__resource.lua" E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor
-copy "$(SolutionDir)HandlingInfo.xml" E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor</PostBuildEvent>
+copy "$(SolutionDir)HandlingInfo.xml" E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor
+copy "$(SolutionDir)HandlingPresets.xml" E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor</PostBuildEvent>
   </PropertyGroup>
 </Project>
