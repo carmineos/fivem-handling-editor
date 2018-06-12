@@ -499,31 +499,37 @@ namespace handling_editor
                     if (fieldType == typeof(float))
                     {
                         var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                        if (value != fieldValue)
+                        if (Math.Abs(value - fieldValue) > 0.001f)
+                        {
                             SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
 
-                        if (debug)
-                            Debug.WriteLine($"{fieldName} updated from {fieldValue} to {value}");
+                            if (debug)
+                                Debug.WriteLine($"{fieldName} updated from {value} to {fieldValue}");
+                        }     
                     }
                     
                     else if (fieldType == typeof(int))
                     {
                         var value = GetVehicleHandlingInt(vehicle, className, fieldName);
                         if (value != fieldValue)
+                        {
                             SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
 
-                        if (debug)
-                            Debug.WriteLine($"{fieldName} updated from {fieldValue} to {value}");
+                            if (debug)
+                                Debug.WriteLine($"{fieldName} updated from {value} to {fieldValue}");
+                        }
                     }
                     
                     else if (fieldType == typeof(Vector3))
                     {
                         var value = GetVehicleHandlingVector(vehicle, className, fieldName);
                         if (value != fieldValue)
+                        {
                             SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
 
-                        if (debug)
-                            Debug.WriteLine($"{fieldName} updated from {fieldValue} to {value}");
+                            if (debug)
+                                Debug.WriteLine($"{fieldName} updated from {value} to {fieldValue}");
+                        }
                     }
                 }
             }
@@ -569,11 +575,13 @@ namespace handling_editor
                     {
                         var decorValue = DecorGetFloat(vehicle, fieldName);
                         var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                        if (value != decorValue)
+                        if (Math.Abs(value - decorValue) > 0.001f)
+                        {
                             SetVehicleHandlingFloat(vehicle, className, fieldName, decorValue);
 
-                        if (debug)
-                            Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                            if (debug)
+                                Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                        }
                     }
                 }
                 else if (fieldType == typeof(int))
@@ -583,10 +591,12 @@ namespace handling_editor
                         var decorValue = DecorGetInt(vehicle, fieldName);
                         var value = GetVehicleHandlingInt(vehicle, className, fieldName);
                         if (value != decorValue)
+                        {
                             SetVehicleHandlingInt(vehicle, className, fieldName, decorValue);
 
-                        if (debug)
-                            Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                            if (debug)
+                                Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                        }
                     }
                 }
                 else if (fieldType == typeof(Vector3))
@@ -608,10 +618,12 @@ namespace handling_editor
                         decorValue.Z = DecorGetFloat(vehicle, decorZ);
 
                     if(!value.Equals(decorValue))
+                    {
                         SetVehicleHandlingVector(vehicle, className, fieldName, decorValue);
 
-                    if (debug)
-                        Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                        if (debug)
+                            Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                    }
                 }
             }
             await Delay(0);
@@ -718,6 +730,7 @@ namespace handling_editor
 
         private async void UpdateVehicleDecorators(int vehicle, HandlingPreset preset)
         {
+            int netID = NetworkGetNetworkIdFromEntity(vehicle);
             foreach (var item in preset.Fields)
             {
                 string fieldName = item.Key;
@@ -732,25 +745,42 @@ namespace handling_editor
                     if (DecorExistOn(vehicle, fieldName))
                     {
                         float value = DecorGetFloat(vehicle, fieldName);
-                        if (value != fieldValue)
+                        if (Math.Abs(value - fieldValue) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, fieldName, fieldValue);
+                            if (debug)
+                                Debug.WriteLine($"Updated decorator {fieldName} updated from {value} to {fieldValue} for vehicle {vehicle} (netID: {netID})");
+                        }
+                            
                     }
                     else
                     {
-                        if (defaultValue != fieldValue)
+                        if (Math.Abs(defaultValue - fieldValue) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, fieldName, fieldValue);
+                            if (debug)
+                                Debug.WriteLine($"Added decorator {fieldName} with value {fieldValue} to vehicle {vehicle} (netID: {netID})");
+                        }
                     }
 
                     if (DecorExistOn(vehicle, defDecorName))
                     {
                         float value = DecorGetFloat(vehicle, defDecorName);
-                        if (value != defaultValue)
+                        if (Math.Abs(value - defaultValue) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, defDecorName, defaultValue);
+                            if (debug)
+                                Debug.WriteLine($"Updated decorator {defDecorName} updated from {value} to {defaultValue} for vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                     else
                     {
-                        if (defaultValue != fieldValue)
+                        if (Math.Abs(defaultValue - fieldValue) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, defDecorName, defaultValue);
+                            if (debug)
+                                Debug.WriteLine($"Added decorator {defDecorName} with value {defaultValue} to vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                 }/*
                 else if(fieldType == typeof(int))
@@ -759,27 +789,43 @@ namespace handling_editor
                     {
                         int value = DecorGetInt(vehicle, fieldName);
                         if (value != fieldValue)
+                        {
                             DecorSetInt(vehicle, fieldName, fieldValue);
+                            if (debug)
+                                Debug.WriteLine($"Updated decorator {fieldName} updated from {value} to {defaultValue} for vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                     else
                     {
                         if (defaultValue != fieldValue)
+                        {
                             DecorSetInt(vehicle, fieldName, fieldValue);
+                            if (debug)
+                                Debug.WriteLine($"Added decorator {fieldName} with value {fieldValue} to vehicle {vehicle} (netID: {netID})");
+                        }
                     }
 
                     if (DecorExistOn(vehicle, defDecorName))
                     {
                         int value = DecorGetInt(vehicle, defDecorName);
                         if (value != defaultValue)
+                        {
                             DecorSetInt(vehicle, defDecorName, defaultValue);
+                            if (debug)
+                                Debug.WriteLine($"Updated decorator {defDecorName} updated from {value} to {defaultValue} for vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                     else
                     {
                         if (defaultValue != fieldValue)
+                        {
                             DecorSetInt(vehicle, defDecorName, defaultValue);
+                            if (debug)
+                                Debug.WriteLine($"Added decorator {defDecorName} with value {defaultValue} to vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                 }*/
-                else if(fieldType == typeof(Vector3))
+                else if (fieldType == typeof(Vector3))
                 {
                     fieldValue = (Vector3)fieldValue;
                     defaultValue = (Vector3)defaultValue;
@@ -788,77 +834,125 @@ namespace handling_editor
                     if (DecorExistOn(vehicle, decorX))
                     {
                         float value = DecorGetFloat(vehicle, decorX);
-                        if (value != fieldValue.X)
+                        if (Math.Abs(value - fieldValue.X) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, decorX, fieldValue.X);
+                            if (debug)
+                                Debug.WriteLine($"Updated decorator {decorX} updated from {value} to {fieldValue.X} for vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                     else
                     {
-                        if (defaultValue.X != fieldValue.X)
+                        if (Math.Abs(defaultValue.X - fieldValue.X) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, decorX, fieldValue.X);
+                            if (debug)
+                                Debug.WriteLine($"Added decorator {decorX} with value {fieldValue.X} to vehicle {vehicle} (netID: {netID})");
+                        }
                     }
 
                     string defDecorNameX = $"{decorX}_def";
                     if (DecorExistOn(vehicle, defDecorNameX))
                     {
                         float value = DecorGetFloat(vehicle, defDecorNameX);
-                        if (value != defaultValue.X)
+                        if (Math.Abs(value - defaultValue.X) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, defDecorNameX, defaultValue.X);
+                            if (debug)
+                                Debug.WriteLine($"Updated decorator {defDecorNameX} updated from {value} to {defaultValue.X} for vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                     else
                     {
-                        if (defaultValue.X != fieldValue.X)
+                        if (Math.Abs(defaultValue.X - fieldValue.X) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, defDecorNameX, defaultValue.X);
+                            if (debug)
+                                Debug.WriteLine($"Added decorator {defDecorNameX} with value {defaultValue.X} to vehicle {vehicle} (netID: {netID})");
+                        }
                     }
 
                     string decorY = $"{fieldName}_y";
                     if (DecorExistOn(vehicle, decorY))
                     {
                         float value = DecorGetFloat(vehicle, decorY);
-                        if (value != fieldValue.Y)
+                        if (Math.Abs(value - fieldValue.Y) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, decorY, fieldValue.Y);
+                            if (debug)
+                                Debug.WriteLine($"Updated decorator {decorY} updated from {value} to {fieldValue.Y} for vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                     else
                     {
-                        if (defaultValue.Y != fieldValue.Y)
+                        if (Math.Abs(defaultValue.Y - fieldValue.Y) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, decorY, fieldValue.Y);
+                            if (debug)
+                                Debug.WriteLine($"Added decorator {decorY} with value {fieldValue.Y} to vehicle {vehicle} (netID: {netID})");
+                        }
                     }
 
                     string defDecorNameY = $"{decorY}_def";
                     if (DecorExistOn(vehicle, defDecorNameY))
                     {
                         float value = DecorGetFloat(vehicle, defDecorNameY);
-                        if (value != defaultValue.Y)
+                        if (Math.Abs(value - defaultValue.Y) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, defDecorNameY, defaultValue.Y);
+                            if (debug)
+                                Debug.WriteLine($"Updated decorator {defDecorNameY} updated from {value} to {defaultValue.Y} for vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                     else
                     {
-                        if (defaultValue.Y != fieldValue.Y)
+                        if (Math.Abs(defaultValue.Y - fieldValue.Y) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, defDecorNameY, defaultValue.Y);
+                            if (debug)
+                                Debug.WriteLine($"Added decorator {defDecorNameY} with value {defaultValue.Y} to vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                     string decorZ = $"{fieldName}_z";
                     if (DecorExistOn(vehicle, decorZ))
                     {
                         float value = DecorGetFloat(vehicle, decorZ);
-                        if (value != fieldValue.Z)
+                        if (Math.Abs(value - fieldValue.Z) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, decorZ, fieldValue.Z);
+                            if (debug)
+                                Debug.WriteLine($"Updated decorator {decorZ} updated from {value} to {fieldValue.Z} for vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                     else
                     {
-                        if (defaultValue.Z != fieldValue.Z)
+                        if (Math.Abs(defaultValue.Z - fieldValue.Z) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, decorZ, fieldValue.Z);
+                            if (debug)
+                                Debug.WriteLine($"Added decorator {decorZ} with value {fieldValue.Z} to vehicle {vehicle} (netID: {netID})");
+                        }
                     }
 
                     string defDecorNameZ = $"{decorZ}_def";
                     if (DecorExistOn(vehicle, defDecorNameZ))
                     {
                         float value = DecorGetFloat(vehicle, defDecorNameZ);
-                        if (value != defaultValue.Z)
+                        if (Math.Abs(value - defaultValue.Z) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, defDecorNameZ, defaultValue.Z);
+                            if (debug)
+                                Debug.WriteLine($"Updated decorator {defDecorNameZ} updated from {value} to {defaultValue.Z} for vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                     else
                     {
-                        if (defaultValue.Z != fieldValue.Z)
+                        if (Math.Abs(defaultValue.Z - fieldValue.Z) > 0.001f)
+                        {
                             DecorSetFloat(vehicle, defDecorNameZ, defaultValue.Z);
+                            if (debug)
+                                Debug.WriteLine($"Added decorator {defDecorNameZ} with value {defaultValue.Z} to vehicle {vehicle} (netID: {netID})");
+                        }
                     }
                 }
             }
