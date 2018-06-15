@@ -16,6 +16,10 @@ namespace handling_editor
 {
     public class HandlingEditor : BaseScript
     {
+        private static string ResourceName;
+        private static readonly string ScriptName = "Handling Editor";
+        internal static readonly string kvpPrefix = "handling_";
+
         #region CONFIG_FIEDS
         private static float editingFactor;
         private static float maxSyncDistance;
@@ -24,8 +28,6 @@ namespace handling_editor
         private static int toggleMenu;
         private static float screenPosX;
         private static float screenPosY;
-        internal static string kvpPrefix = "handling_";
-        private static string ResourceName;
         #endregion
 
         #region FIELDS
@@ -46,6 +48,7 @@ namespace handling_editor
         private UIMenu serverPresetsMenu;
         #endregion
 
+        #region GUI_METHODS
         private async Task<string> GetOnScreenValue(string defaultText)
         {
             DisableAllControlActions(1);
@@ -415,7 +418,16 @@ namespace handling_editor
         private void InitialiseMenu()
         {
             _menuPool = new MenuPool();
+            {
+                _menuPool.ResetCursorOnOpen = true;
+            }
+
             EditorMenu = new UIMenu("Handling Editor", "Beta", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height));
+            {
+                EditorMenu.MouseEdgeEnabled = false;
+                EditorMenu.ControlDisablingEnabled = false;
+                EditorMenu.MouseControlsEnabled = false;
+            }
 
             foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable == true))
             {
@@ -479,24 +491,20 @@ namespace handling_editor
                 }
             };
 
-
-
-            EditorMenu.MouseEdgeEnabled = false;
-            EditorMenu.ControlDisablingEnabled = false;
-            EditorMenu.MouseControlsEnabled = false;
-            _menuPool.ResetCursorOnOpen = true;
             _menuPool.Add(EditorMenu);
             _menuPool.RefreshIndex();
         }
+        #endregion
 
         public HandlingEditor()
         {
             ResourceName = GetCurrentResourceName();
-            Debug.WriteLine("HANDLING EDITOR: Script by Neos7");
-            handlingInfo = new HandlingInfo();
-            ReadFieldInfo();
+            Debug.WriteLine($"{ScriptName}: Script by Neos7");
             LoadConfig();
             RegisterDecorators();
+
+            handlingInfo = new HandlingInfo();
+            ReadFieldInfo();
             serverPresets = new Dictionary<string, HandlingPreset>();
             ReadServerPresets();
 
@@ -514,9 +522,9 @@ namespace handling_editor
                 if (result)
                 {
                     maxSyncDistance = value;
-                    Debug.WriteLine("HANDLING EDITOR: Received new maxSyncDistance value {0}", value);
+                    Debug.WriteLine($"{ScriptName}: Received new {nameof(maxSyncDistance)} value {value}");
                 }
-                else Debug.WriteLine("HANDLING EDITOR: Can't parse {0}", value);
+                else Debug.WriteLine($"{ScriptName}: Error parsing new value {value} for {nameof(maxSyncDistance)}");
 
             }), false);
 
@@ -526,9 +534,9 @@ namespace handling_editor
                 if (result)
                 {
                     debug = value;
-                    Debug.WriteLine("HANDLING EDITOR: Received new debug value {0}", value);
+                    Debug.WriteLine($"{ScriptName}: Received new {nameof(debug)} value {value}");
                 }
-                else Debug.WriteLine("HANDLING EDITOR: Can't parse {0}", value);
+                else Debug.WriteLine($"{ScriptName}: Error parsing new value {value} for {nameof(debug)}");
 
             }), false);
 
@@ -537,23 +545,39 @@ namespace handling_editor
                 PrintDecorators(currentVehicle);
             }), false);
 
-            RegisterCommand("handling_list", new Action<int, dynamic>((source, args) =>
+            RegisterCommand("handling_decorators_on", new Action<int, dynamic>((source, args) =>
+            {
+
+                bool result = int.TryParse(args[0], out int value);
+                if (result)
+                {
+                    PrintDecorators(value);
+                }
+                else Debug.WriteLine($"{ScriptName}: Error parsing entity handle {value}");
+
+            }), false);
+
+            RegisterCommand("handling_print", new Action<int, dynamic>((source, args) =>
             {
                 PrintVehiclesWithDecorators(vehicles);
             }), false);
 
-
             RegisterCommand("handling_preset", new Action<int, dynamic>((source, args) =>
             {
                 if (currentPreset != null)
-                    Debug.Write(currentPreset.ToString());
-                else Debug.WriteLine("Current preset doesn't exist");
+                    Debug.WriteLine(currentPreset.ToString());
+                else
+                    Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
             }), false);
 
             Tick += OnTick;
             Tick += ScriptTask;
         }
 
+        /// <summary>
+        /// The GUI task of the script
+        /// </summary>
+        /// <returns></returns>
         private async Task OnTick()
         {
             _menuPool.ProcessMenus();
@@ -605,6 +629,10 @@ namespace handling_editor
             await Task.FromResult(0);
         }
 
+        /// <summary>
+        /// The main task of the script
+        /// </summary>
+        /// <returns></returns>
         private async Task ScriptTask()
         {
             currentTime = (GetGameTimer() - lastTime);
@@ -687,7 +715,7 @@ namespace handling_editor
                             SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
 
                             if (debug)
-                                Debug.WriteLine($"{fieldName} updated from {value} to {fieldValue}");
+                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
                         }     
                     }
                     
@@ -699,7 +727,7 @@ namespace handling_editor
                             SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
 
                             if (debug)
-                                Debug.WriteLine($"{fieldName} updated from {value} to {fieldValue}");
+                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
                         }
                     }
                     
@@ -711,7 +739,7 @@ namespace handling_editor
                             SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
 
                             if (debug)
-                                Debug.WriteLine($"{fieldName} updated from {value} to {fieldValue}");
+                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
                         }
                     }
                 }
@@ -763,7 +791,7 @@ namespace handling_editor
                             SetVehicleHandlingFloat(vehicle, className, fieldName, decorValue);
 
                             if (debug)
-                                Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                         }
                     }
                 }
@@ -778,7 +806,7 @@ namespace handling_editor
                             SetVehicleHandlingInt(vehicle, className, fieldName, decorValue);
 
                             if (debug)
-                                Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                         }
                     }
                 }
@@ -805,7 +833,7 @@ namespace handling_editor
                         SetVehicleHandlingVector(vehicle, className, fieldName, decorValue);
 
                         if (debug)
-                            Debug.WriteLine($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                            Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                     }
                 }
             }
@@ -914,7 +942,14 @@ namespace handling_editor
             await Delay(0);
         }
 
-        public async void UpdateFloatDecorator(int vehicle, string name, float currentValue, float defaultValue)
+        /// <summary>
+        /// It checks if the <paramref name="vehicle"/> has a decorator named <paramref name="name"/> and updates its value with <paramref name="currentValue"/>, otherwise if <paramref name="currentValue"/> isn't equal to <paramref name="defaultValue"/> it adds the decorator <paramref name="name"/>
+        /// </summary>
+        /// <param name="vehicle"></param>
+        /// <param name="name"></param>
+        /// <param name="currentValue"></param>
+        /// <param name="defaultValue"></param>
+        private async void UpdateFloatDecorator(int vehicle, string name, float currentValue, float defaultValue)
         {
             // Decorator exists but needs to be updated
             if (DecorExistOn(vehicle, name))
@@ -924,7 +959,7 @@ namespace handling_editor
                 {
                     DecorSetFloat(vehicle, name, currentValue);
                     if (debug)
-                        Debug.WriteLine($"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
+                        Debug.WriteLine($"{ScriptName}: Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
                 }
             }
             else // Decorator doesn't exist, create it if required
@@ -933,13 +968,20 @@ namespace handling_editor
                 {
                     DecorSetFloat(vehicle, name, currentValue);
                     if (debug)
-                        Debug.WriteLine($"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
+                        Debug.WriteLine($"{ScriptName}: Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
             await Delay(0);
         }
 
-        public async void UpdateIntDecorator(int vehicle, string name, int currentValue, int defaultValue)
+        /// <summary>
+        /// It checks if the <paramref name="vehicle"/> has a decorator named <paramref name="name"/> and updates its value with <paramref name="currentValue"/>, otherwise if <paramref name="currentValue"/> isn't equal to <paramref name="defaultValue"/> it adds the decorator <paramref name="name"/>
+        /// </summary>
+        /// <param name="vehicle"></param>
+        /// <param name="name"></param>
+        /// <param name="currentValue"></param>
+        /// <param name="defaultValue"></param>
+        private async void UpdateIntDecorator(int vehicle, string name, int currentValue, int defaultValue)
         {
             // Decorator exists but needs to be updated
             if (DecorExistOn(vehicle, name))
@@ -949,7 +991,7 @@ namespace handling_editor
                 {
                     DecorSetInt(vehicle, name, currentValue);
                     if (debug)
-                        Debug.WriteLine($"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
+                        Debug.WriteLine($"{ScriptName}: Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
                 }
             }
             else // Decorator doesn't exist, create it if required
@@ -958,12 +1000,16 @@ namespace handling_editor
                 {
                     DecorSetInt(vehicle, name, currentValue);
                     if (debug)
-                        Debug.WriteLine($"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
+                        Debug.WriteLine($"{ScriptName}: Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
             await Delay(0);
         }
 
+        /// <summary>
+        /// Updates the decorators on the <paramref name="vehicle"/> with updated values from the <paramref name="preset"/>
+        /// </summary>
+        /// <param name="vehicle"></param>
         private async void UpdateVehicleDecorators(int vehicle, HandlingPreset preset)
         {
             int netID = NetworkGetNetworkIdFromEntity(vehicle);
@@ -1011,6 +1057,11 @@ namespace handling_editor
             await Delay(0);
         }
 
+        /// <summary>
+        /// Creates a preset for the <paramref name="vehicle"/> to edit it locally
+        /// </summary>
+        /// <param name="vehicle"></param>
+        /// <returns></returns>
         private HandlingPreset CreateHandlingPreset(int vehicle)
         {
             Dictionary<string, dynamic> defaultFields = new Dictionary<string, dynamic>();
@@ -1083,14 +1134,17 @@ namespace handling_editor
             return preset;
         }
 
+        /// <summary>
+        /// Prints the values of the decorators used on the <paramref name="vehicle"/>
+        /// </summary>
         private async void PrintDecorators(int vehicle)
         {
             if (DoesEntityExist(vehicle))
             {
                 int netID = NetworkGetNetworkIdFromEntity(vehicle);
                 StringBuilder s = new StringBuilder();
-                s.AppendLine($"HANDLING EDITOR: Vehicle:{vehicle} netID:{netID}");
-                s.AppendLine("DECORATORS:");
+                s.AppendLine($"{ScriptName}: Vehicle:{vehicle} netID:{netID}");
+                s.AppendLine("Decorators List:");
 
                 foreach (var item in handlingInfo.FieldsInfo)
                 {
@@ -1151,11 +1205,14 @@ namespace handling_editor
                 }
                 Debug.Write(s.ToString());
             }
-            else Debug.WriteLine("HANDLING_EDITOR: Current vehicle doesn't exist");
+            else Debug.WriteLine($"{ScriptName}: Can't find vehicle with handle {vehicle}");
 
             await Delay(0);
         }
 
+        /// <summary>
+        /// Prints the list of vehicles using any decorator for this script.
+        /// </summary>
         private async void PrintVehiclesWithDecorators(IEnumerable<int> vehiclesList)
         {
             IEnumerable<int> entities = vehiclesList.Where(entity => HasDecorators(entity));
@@ -1271,13 +1328,13 @@ namespace handling_editor
                 strings = LoadResourceFile(ResourceName, "HandlingInfo.xml");
                 handlingInfo.ParseXML(strings);
                 var editableFields = handlingInfo.FieldsInfo.Where(a => a.Value.Editable);
-                Debug.WriteLine($"Loaded HandlingInfo.xml, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
+                Debug.WriteLine($"{ScriptName}: Loaded HandlingInfo.xml, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.Message);
                 Debug.WriteLine(e.StackTrace);
-                Debug.WriteLine("HANDLING_EDITOR: Error loading HandlingInfo.xml");
+                Debug.WriteLine($"{ScriptName}: Error loading HandlingInfo.xml");
             }
         }
 
@@ -1304,13 +1361,13 @@ namespace handling_editor
                         serverPresets[name] = preset;
                     }
                 }
-                Debug.WriteLine($"Loaded HandlingPresets.xml, found {serverPresets.Count} server presets.");
+                Debug.WriteLine($"{ScriptName}: Loaded HandlingPresets.xml, found {serverPresets.Count} server presets.");
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.Message);
                 Debug.WriteLine(e.StackTrace);
-                Debug.WriteLine("HANDLING_EDITOR: Error loading HandlingPresets.xml");
+                Debug.WriteLine($"{ScriptName}: Error loading HandlingPresets.xml");
             }
         }
 
@@ -1322,12 +1379,12 @@ namespace handling_editor
             {
                 strings = LoadResourceFile(ResourceName, "config.ini");
                 config.ParseConfigFile(strings);
-                Debug.WriteLine("HANDLING_EDITOR: Loaded settings from config.ini");
+                Debug.WriteLine($"{ScriptName}: Loaded settings from config.ini");
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.StackTrace);
-                Debug.WriteLine("HANDLING_EDITOR: Impossible to load config.ini");
+                Debug.WriteLine($"{ScriptName}: Impossible to load config.ini");
             }
             finally
             {

@@ -103,7 +103,7 @@ namespace handling_editor
         public override string ToString()
         {
             StringBuilder s = new StringBuilder();
-            s.AppendLine("PRESET FIELDS:");
+            s.AppendLine("HandlingPreset Fields:");
             foreach (var item in Fields)
             {
                 s.AppendLine($"{item.Key}: {item.Value}({DefaultFields[item.Key]})");
