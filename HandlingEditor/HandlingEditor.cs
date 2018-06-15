@@ -519,6 +519,12 @@ namespace handling_editor
 
             RegisterCommand("handling_distance", new Action<int, dynamic>((source, args) =>
             {
+                if(args.Count < 1)
+                {
+                    Debug.WriteLine($"{ScriptName}: Missing float argument");
+                    return;
+                }
+
                 bool result = float.TryParse(args[0], out float value);
                 if (result)
                 {
@@ -531,6 +537,12 @@ namespace handling_editor
 
             RegisterCommand("handling_debug", new Action<int, dynamic>((source, args) =>
             {
+                if (args.Count < 1)
+                {
+                    Debug.WriteLine($"{ScriptName}: Missing bool argument");
+                    return;
+                }
+
                 bool result = bool.TryParse(args[0], out bool value);
                 if (result)
                 {
@@ -548,6 +560,11 @@ namespace handling_editor
 
             RegisterCommand("handling_decorators_on", new Action<int, dynamic>((source, args) =>
             {
+                if (args.Count < 1)
+                {
+                    Debug.WriteLine($"{ScriptName}: Missing int argument");
+                    return;
+                }
 
                 bool result = int.TryParse(args[0], out int value);
                 if (result)
