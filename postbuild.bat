@@ -1,0 +1,1 @@
+copy /y %1 E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor

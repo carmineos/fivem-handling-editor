@@ -56,10 +56,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetFileName) E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor
-copy "$(SolutionDir)config.ini" E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor
-copy "$(SolutionDir)__resource.lua" E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor
-copy "$(SolutionDir)HandlingInfo.xml" E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor
-copy "$(SolutionDir)HandlingPresets.xml" E:\Carmine\neos7\cfx-server\server-data\resources\[customscripts]\handling_editor</PostBuildEvent>
+    <PostBuildEvent>call "$(SolutionDir)postbuild.bat" "$(TargetPath)"
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)config.ini"
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)__resource.lua"
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)HandlingInfo.xml"
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)HandlingPresets.xml"</PostBuildEvent>
   </PropertyGroup>
 </Project>
