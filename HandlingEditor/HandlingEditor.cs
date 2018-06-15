@@ -501,12 +501,13 @@ namespace handling_editor
             ResourceName = GetCurrentResourceName();
             Debug.WriteLine($"{ScriptName}: Script by Neos7");
             LoadConfig();
-            RegisterDecorators();
-
+            
             handlingInfo = new HandlingInfo();
             ReadFieldInfo();
             serverPresets = new Dictionary<string, HandlingPreset>();
             ReadServerPresets();
+
+            RegisterDecorators();
 
             currentTime = GetGameTimer();
             lastTime = GetGameTimer();
