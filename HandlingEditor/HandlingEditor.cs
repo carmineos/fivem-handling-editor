@@ -455,7 +455,7 @@ namespace handling_editor
                     {
                         XmlDocument doc = new XmlDocument();
                         doc.LoadXml(value);
-                        var handling = doc["HandlingData"]["Item"];
+                        var handling = doc["Item"];
                         GetPresetFromXml(handling, currentPreset);
 
                         CitizenFX.Core.UI.Screen.ShowNotification($"Personal preset ~b~{item.Text}~w~ applied");
@@ -1234,7 +1234,6 @@ namespace handling_editor
         private string GetXmlFromPreset(string name, HandlingPreset preset)
         {
             XmlDocument doc = new XmlDocument();
-            XmlElement handlingData = doc.CreateElement("HandlingData");
             XmlElement handlingItem = doc.CreateElement("Item");
             handlingItem.SetAttribute("type", "CHandlingData");
             handlingItem.SetAttribute("presetName", name);
@@ -1267,9 +1266,7 @@ namespace handling_editor
                 else { }
                 handlingItem.AppendChild(field);
             }
-
-            handlingData.AppendChild(handlingItem);
-            doc.AppendChild(handlingData);
+            doc.AppendChild(handlingItem);
 
             return doc.OuterXml;
         }
