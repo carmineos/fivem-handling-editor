@@ -383,6 +383,24 @@ namespace handling_editor
             return newitem;
         }
 
+        private UIMenuItem AddLockedItem(UIMenu menu, FieldInfo fieldInfo)
+        {
+            var newitem = new UIMenuItem(fieldInfo.Name, fieldInfo.Description);
+            newitem.Enabled = false;
+            newitem.SetRightBadge(UIMenuItem.BadgeStyle.Lock);
+
+            menu.AddItem(newitem);
+
+            menu.OnItemSelect += (sender, item, index) =>
+            {
+                if (item == newitem)
+                {
+                    CitizenFX.Core.UI.Screen.ShowNotification($"The server doesn't allow to edit this field.");
+                }
+            };
+            return newitem;
+        }
+
         private UIMenu AddPresetsSubMenu(UIMenu menu)
         {
             var newitem = _menuPool.AddSubMenu(menu, "Saved Presets", "The handling presets saved by you.");
@@ -429,16 +447,23 @@ namespace handling_editor
                 EditorMenu.MouseControlsEnabled = false;
             }
 
-            foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable == true))
+            foreach (var item in handlingInfo.FieldsInfo)
             {
-                Type fieldType = item.Value.Type;
+                if(item.Value.Editable)
+                {
+                    Type fieldType = item.Value.Type;
 
-                if (fieldType == typeof(float))
-                    AddDynamicFloatList(EditorMenu, (FloatFieldInfo)item.Value);
-                else if (fieldType == typeof(int))
-                    AddDynamicIntList(EditorMenu, (IntFieldInfo)item.Value);
-                else if (fieldType == typeof(Vector3))
-                    AddDynamicVector3List(EditorMenu, (VectorFieldInfo)item.Value);
+                    if (fieldType == typeof(float))
+                        AddDynamicFloatList(EditorMenu, (FloatFieldInfo)item.Value);
+                    else if (fieldType == typeof(int))
+                        AddDynamicIntList(EditorMenu, (IntFieldInfo)item.Value);
+                    else if (fieldType == typeof(Vector3))
+                        AddDynamicVector3List(EditorMenu, (VectorFieldInfo)item.Value);
+                }
+                else
+                {
+                    //AddLockedItem(EditorMenu, item.Value);
+                }
             }
 
             AddMenuReset(EditorMenu);
