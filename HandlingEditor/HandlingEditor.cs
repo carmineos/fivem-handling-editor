@@ -112,7 +112,9 @@ namespace handling_editor
                     }else
                         CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldInfo.Name}~w~");
 
+                    int currentSelection = EditorMenu.CurrentSelection;
                     InitialiseMenu(); //Should just update the current item instead
+                    EditorMenu.CurrentSelection = currentSelection;
                     EditorMenu.Visible = true;
                 }
             };
@@ -174,7 +176,9 @@ namespace handling_editor
                     else
                         CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldInfo.Name}~w~");
 
+                    int currentSelection = EditorMenu.CurrentSelection;
                     InitialiseMenu(); //Should just update the current item instead
+                    EditorMenu.CurrentSelection = currentSelection;
                     EditorMenu.Visible = true;
                 }
             };
@@ -241,7 +245,9 @@ namespace handling_editor
                     else
                         CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameX}~w~");
 
+                    int currentSelection = EditorMenu.CurrentSelection;
                     InitialiseMenu(); //Should just update the current item instead
+                    EditorMenu.CurrentSelection = currentSelection;
                     EditorMenu.Visible = true;
                 }
             };
@@ -299,7 +305,9 @@ namespace handling_editor
                     else
                         CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameY}~w~");
 
+                    int currentSelection = EditorMenu.CurrentSelection;
                     InitialiseMenu(); //Should just update the current item instead
+                    EditorMenu.CurrentSelection = currentSelection;
                     EditorMenu.Visible = true;
                 }
             };
@@ -357,7 +365,9 @@ namespace handling_editor
                     else
                         CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameZ}~w~");
 
+                    int currentSelection = EditorMenu.CurrentSelection;
                     InitialiseMenu(); //Should just update the current item instead
+                    EditorMenu.CurrentSelection = currentSelection;
                     EditorMenu.Visible = true;
                 }
             };
@@ -404,11 +414,13 @@ namespace handling_editor
         private UIMenu AddPresetsSubMenu(UIMenu menu)
         {
             var newitem = _menuPool.AddSubMenu(menu, "Saved Presets", "The handling presets saved by you.");
-            newitem.MouseEdgeEnabled = false;
-            newitem.ControlDisablingEnabled = false;
-            newitem.MouseControlsEnabled = false;
-            newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneExtraOption, "Save"));
-            newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, "Delete"));
+            {
+                newitem.MouseEdgeEnabled = false;
+                newitem.ControlDisablingEnabled = false;
+                newitem.MouseControlsEnabled = false;
+                newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneExtraOption, "Save"));
+                newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, "Delete"));
+            }
 
             KvpList kvpList = new KvpList();
             foreach(var key in kvpList)
@@ -422,14 +434,15 @@ namespace handling_editor
         private UIMenu AddServerPresetsSubMenu(UIMenu menu)
         {
             var newitem = _menuPool.AddSubMenu(menu, "Server Presets", "The handling presets loaded from the server.");
-            newitem.MouseEdgeEnabled = false;
-            newitem.ControlDisablingEnabled = false;
-            newitem.MouseControlsEnabled = false;
+            {
+                newitem.MouseEdgeEnabled = false;
+                newitem.ControlDisablingEnabled = false;
+                newitem.MouseControlsEnabled = false;
+            }
 
             foreach (var preset in serverPresets)
-            {
                 newitem.AddItem(new UIMenuItem(preset.Key));
-            }
+
             return newitem;
         }
 
@@ -628,7 +641,7 @@ namespace handling_editor
             if (currentVehicle != -1)
             {
                 if (IsControlJustPressed(1, toggleMenu)/* || IsDisabledControlJustPressed(1, toggleMenu)*/) // TOGGLE MENU VISIBLE
-                    EditorMenu.Visible = !EditorMenu.Visible;
+                    EditorMenu.Visible = !EditorMenu.Visible && !_menuPool.IsAnyMenuOpen();
 
                 if (presetsMenu.Visible)
                 {
