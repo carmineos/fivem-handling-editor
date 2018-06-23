@@ -641,7 +641,12 @@ namespace handling_editor
             if (currentVehicle != -1)
             {
                 if (IsControlJustPressed(1, toggleMenu)/* || IsDisabledControlJustPressed(1, toggleMenu)*/) // TOGGLE MENU VISIBLE
-                    EditorMenu.Visible = !EditorMenu.Visible && !_menuPool.IsAnyMenuOpen();
+                {
+                    if (!EditorMenu.Visible && !_menuPool.IsAnyMenuOpen())
+                        EditorMenu.Visible = true;
+                    else if (_menuPool.IsAnyMenuOpen())
+                        _menuPool.CloseAllMenus();
+                }
 
                 if (presetsMenu.Visible)
                 {
