@@ -453,7 +453,7 @@ namespace handling_editor
                 _menuPool.ResetCursorOnOpen = true;
             }
 
-            EditorMenu = new UIMenu("Handling Editor", "Beta", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height));
+            EditorMenu = new UIMenu(ScriptName, "Beta", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height));
             {
                 EditorMenu.MouseEdgeEnabled = false;
                 EditorMenu.ControlDisablingEnabled = false;
@@ -637,6 +637,17 @@ namespace handling_editor
         private async Task OnTick()
         {
             _menuPool.ProcessMenus();
+
+            if (_menuPool.IsAnyMenuOpen())
+            {
+                // Disable annoying controls for controller
+                DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
+                DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
+                DisableControlAction(1, 48, true); // INPUT_HUD_SPECIAL = DPAD - DOWN
+                DisableControlAction(1, 27, true); // INPUT_PHONE = DPAD - UP
+                DisableControlAction(1, 80, true); // INPUT_VEH_CIN_CAM = B
+                DisableControlAction(1, 73, true); // INPUT_VEH_DUCK = A
+            }
 
             if (currentVehicle != -1)
             {
@@ -1496,10 +1507,7 @@ namespace handling_editor
 
             if (handle != -1)
             {
-                do
-                {
-                    yield return entity;
-                }
+                do yield return entity;
                 while (FindNextVehicle(handle, ref entity));
 
                 EndFindVehicle(handle);
