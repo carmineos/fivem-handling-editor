@@ -8,7 +8,6 @@ using NativeUI;
 using CitizenFX.Core;
 using CitizenFX.Core.UI;
 using static CitizenFX.Core.Native.API;
-using HandlingEditor;
 using System.Xml;
 
 namespace HandlingEditor.Client
@@ -642,6 +641,9 @@ namespace HandlingEditor.Client
 
                     if (presetsMenu.Visible)
                     {
+                        DisableControlAction(1, 75, true); // INPUT_VEH_EXIT - Y
+                        DisableControlAction(1, 37, true); // INPUT_SELECT_WEAPON - X
+
                         if (IsControlJustPressed(1, 179))
                         {
                             string name = await GetOnScreenString("");
