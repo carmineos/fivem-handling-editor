@@ -8,5 +8,5 @@ files {
 client_script {
 	'NativeUI.net.dll',
 	'System.Xml.Mono.net.dll',
-	'HandlingEditor.net.dll'
+	'HandlingEditor.Client.net.dll'
 }
