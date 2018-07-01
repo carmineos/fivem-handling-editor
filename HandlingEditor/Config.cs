@@ -5,61 +5,37 @@ namespace handling_editor
 {
     public class Config
     {
-        public float editingFactor { get; set; }
-        public float maxSyncDistance { get; set; }
-        public int toggleMenu { get; set; }
-        public long timer { get; set; }
-        public bool debug { get; set; }
-        public float screenPosX { get; set; }
-        public float screenPosY { get; set; }
+        protected Dictionary<string, string> Entries { get; set; }
 
-        public Config()
+        public Config(string content)
         {
-            editingFactor = 0.01f;
-            maxSyncDistance = 150.0f;
-            toggleMenu = 167;
-            timer = 1000;
-            debug = false;
-            screenPosX = 1.0f;
-            screenPosY = 0.0f;
-        }
+            Entries = new Dictionary<string, string>();
 
-        public void ParseConfigFile(string content)
-        {
-            Dictionary<string, string> Entries = new Dictionary<string, string>();
-
-            if (content?.Any() ?? false)
+            if (content == null || content.Length == 0)
             {
-                var splitted = content
-                 .Split('\n')
-                 .Where((line) => !line.Trim().StartsWith("#"))
-                 .Select((line) => line.Trim().Split('='))
-                 .Where((line) => line.Length == 2);
-
-                foreach (var tuple in splitted)
-                    Entries.Add(tuple[0], tuple[1]);
+                return;
             }
 
-            if (Entries.ContainsKey("editingFactor"))
-                editingFactor = float.Parse(Entries["editingFactor"]);
+            var splitted = content
+                .Split('\n')
+                .Where((line) => !line.Trim().StartsWith("#"))
+                .Select((line) => line.Trim().Split('='))
+                .Where((line) => line.Length == 2);
 
-            if (Entries.ContainsKey("maxSyncDistance"))
-                maxSyncDistance = float.Parse(Entries["maxSyncDistance"]);
+            foreach (var tuple in splitted)
+            {
+                Entries.Add(tuple[0], tuple[1]);
+            }
+        }
 
-            if (Entries.ContainsKey("toggleMenu"))
-                toggleMenu = int.Parse(Entries["toggleMenu"]);
+        public string Get(string key, string defaultValue = null)
+        {
+            if (Entries.ContainsKey(key))
+            {
+                return Entries[key];
+            }
 
-            if (Entries.ContainsKey("timer"))
-                timer = long.Parse(Entries["timer"]);
-
-            if (Entries.ContainsKey("debug"))
-                debug = bool.Parse(Entries["debug"]);
-
-            if (Entries.ContainsKey("screenPosX"))
-                screenPosX = float.Parse(Entries["screenPosX"]);
-
-            if (Entries.ContainsKey("screenPosY"))
-                screenPosY = float.Parse(Entries["screenPosY"]);
+            return defaultValue;
         }
     }
 }

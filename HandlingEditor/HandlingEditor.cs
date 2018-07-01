@@ -18,20 +18,20 @@ namespace handling_editor
     {
         private static string ResourceName;
         private static readonly string ScriptName = "Handling Editor";
-        internal static readonly string kvpPrefix = "handling_";
+        private static readonly string kvpPrefix = "handling_";
 
         #region CONFIG_FIEDS
-        private static float editingFactor;
-        private static float maxSyncDistance;
-        private static long timer;
-        private static bool debug;
-        private static int toggleMenu;
-        private static float screenPosX;
-        private static float screenPosY;
+        private static float editingFactor = 0.01f;
+        private static float maxSyncDistance = 150.0f;
+        private static long timer = 1000;
+        private static bool debug = false;
+        private static int toggleMenu = 168;
+        private static float screenPosX = 1.0f;
+        private static float screenPosY = 0.0f;
         #endregion
 
         #region FIELDS
-        private static HandlingInfo handlingInfo;
+        private HandlingInfo handlingInfo;
         private Dictionary<string,HandlingPreset> serverPresets;
         private long currentTime;
         private long lastTime;
@@ -422,7 +422,7 @@ namespace handling_editor
                 newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, "Delete"));
             }
 
-            KvpList kvpList = new KvpList();
+            KvpList kvpList = new KvpList(kvpPrefix);
             foreach(var key in kvpList)
             {
                 string value = GetResourceKvpString(key);
@@ -548,12 +548,10 @@ namespace handling_editor
             RegisterDecorators();
 
             currentTime = GetGameTimer();
-            lastTime = GetGameTimer();
-            currentPreset = new HandlingPreset();
+            lastTime = currentTime;
+            currentPreset = null;
             currentVehicle = -1;
             vehicles = Enumerable.Empty<int>();
-
-            InitialiseMenu();
 
             RegisterCommand("handling_distance", new Action<int, dynamic>((source, args) =>
             {
@@ -563,13 +561,12 @@ namespace handling_editor
                     return;
                 }
 
-                bool result = float.TryParse(args[0], out float value);
-                if (result)
+                if (float.TryParse(args[0], out float value))
                 {
                     maxSyncDistance = value;
                     Debug.WriteLine($"{ScriptName}: Received new {nameof(maxSyncDistance)} value {value}");
                 }
-                else Debug.WriteLine($"{ScriptName}: Error parsing new value {value} for {nameof(maxSyncDistance)}");
+                else Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as float");
 
             }), false);
 
@@ -581,35 +578,25 @@ namespace handling_editor
                     return;
                 }
 
-                bool result = bool.TryParse(args[0], out bool value);
-                if (result)
+                if (bool.TryParse(args[0], out bool value))
                 {
                     debug = value;
                     Debug.WriteLine($"{ScriptName}: Received new {nameof(debug)} value {value}");
                 }
-                else Debug.WriteLine($"{ScriptName}: Error parsing new value {value} for {nameof(debug)}");
+                else Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as bool");
 
             }), false);
 
             RegisterCommand("handling_decorators", new Action<int, dynamic>((source, args) =>
             {
-                PrintDecorators(currentVehicle);
-            }), false);
-
-            RegisterCommand("handling_decorators_on", new Action<int, dynamic>((source, args) =>
-            {
                 if (args.Count < 1)
+                    PrintDecorators(currentVehicle);
+                else
                 {
-                    Debug.WriteLine($"{ScriptName}: Missing int argument");
-                    return;
+                    if (int.TryParse(args[0], out int value))
+                        PrintDecorators(value);
+                    else Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as int");
                 }
-
-                bool result = int.TryParse(args[0], out int value);
-                if (result)
-                {
-                    PrintDecorators(value);
-                }
-                else Debug.WriteLine($"{ScriptName}: Error parsing entity handle {value}");
 
             }), false);
 
@@ -636,69 +623,79 @@ namespace handling_editor
         /// <returns></returns>
         private async Task OnTick()
         {
-            _menuPool.ProcessMenus();
-
-            if (_menuPool.IsAnyMenuOpen())
+            if(_menuPool != null)
             {
-                // Disable annoying controls for controller
-                DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
-                DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
-                DisableControlAction(1, 48, true); // INPUT_HUD_SPECIAL = DPAD - DOWN
-                DisableControlAction(1, 27, true); // INPUT_PHONE = DPAD - UP
-                DisableControlAction(1, 80, true); // INPUT_VEH_CIN_CAM = B
-                DisableControlAction(1, 73, true); // INPUT_VEH_DUCK = A
-            }
 
-            if (currentVehicle != -1)
-            {
-                if (IsControlJustPressed(1, toggleMenu)/* || IsDisabledControlJustPressed(1, toggleMenu)*/) // TOGGLE MENU VISIBLE
-                {
-                    if (!EditorMenu.Visible && !_menuPool.IsAnyMenuOpen())
-                        EditorMenu.Visible = true;
-                    else if (_menuPool.IsAnyMenuOpen())
-                        _menuPool.CloseAllMenus();
-                }
+                _menuPool.ProcessMenus();
 
-                if (presetsMenu.Visible)
+                if (_menuPool.IsAnyMenuOpen())
+                    DisableControls();
+
+                if (currentVehicle != -1)
                 {
-                    if (IsControlJustPressed(1, 179))
+                    if (IsControlJustPressed(1, toggleMenu)/* || IsDisabledControlJustPressed(1, toggleMenu)*/) // TOGGLE MENU VISIBLE
                     {
-                        string name = await GetOnScreenValue("");
-                        if (!string.IsNullOrEmpty(name))
-                        {
-                            SavePreset(name, currentPreset);
-                            InitialiseMenu();
-                            presetsMenu.Visible = true;
-                        }
-                        else
-                            CitizenFX.Core.UI.Screen.ShowNotification("Invalid string.");
+                        if (!EditorMenu.Visible && !_menuPool.IsAnyMenuOpen())
+                            EditorMenu.Visible = true;
+                        else if (_menuPool.IsAnyMenuOpen())
+                            _menuPool.CloseAllMenus();
                     }
-                    else if (IsControlJustPressed(1, 178))
+
+                    if (presetsMenu.Visible)
                     {
-                        if(presetsMenu.MenuItems.Count > 0)
+                        if (IsControlJustPressed(1, 179))
                         {
-                            string key = $"{kvpPrefix}{presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text}";
-                            if (GetResourceKvpString(key) != null)
+                            string name = await GetOnScreenValue("");
+                            if (!string.IsNullOrEmpty(name))
                             {
-                                DeleteResourceKvp(key);
+                                SavePreset(name, currentPreset);
                                 InitialiseMenu();
                                 presetsMenu.Visible = true;
                             }
+                            else
+                                CitizenFX.Core.UI.Screen.ShowNotification("Invalid string.");
                         }
-                        else
-                            CitizenFX.Core.UI.Screen.ShowNotification("Nothing to delete.");
+                        else if (IsControlJustPressed(1, 178))
+                        {
+                            if (presetsMenu.MenuItems.Count > 0)
+                            {
+                                string key = $"{kvpPrefix}{presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text}";
+                                if (GetResourceKvpString(key) != null)
+                                {
+                                    DeleteResourceKvp(key);
+                                    InitialiseMenu();
+                                    presetsMenu.Visible = true;
+                                }
+                            }
+                            else
+                                CitizenFX.Core.UI.Screen.ShowNotification("Nothing to delete.");
+                        }
                     }
-                }
-                
-            }
-            else
-            {
-                if(_menuPool.IsAnyMenuOpen())
-                    _menuPool.CloseAllMenus();
-            }
 
+                }
+                else
+                {
+                    if (_menuPool.IsAnyMenuOpen())
+                        _menuPool.CloseAllMenus();
+                }
+            }
 
             await Task.FromResult(0);
+        }
+
+        /// <summary>
+        /// Disable controls for controller to use the script with the controller
+        /// </summary>
+        private async void DisableControls()
+        {
+            DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
+            DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
+            DisableControlAction(1, 48, true); // INPUT_HUD_SPECIAL = DPAD - DOWN
+            DisableControlAction(1, 27, true); // INPUT_PHONE = DPAD - UP
+            DisableControlAction(1, 80, true); // INPUT_VEH_CIN_CAM = B
+            DisableControlAction(1, 73, true); // INPUT_VEH_DUCK = A
+
+            await Delay(0);
         }
 
         /// <summary>
@@ -1440,38 +1437,46 @@ namespace handling_editor
             }
         }
 
-        protected void LoadConfig()
+        protected void LoadConfig(string filename = "config.ini")
         {
             string strings = null;
-            Config config = new Config();
             try
             {
-                strings = LoadResourceFile(ResourceName, "config.ini");
-                config.ParseConfigFile(strings);
-                Debug.WriteLine($"{ScriptName}: Loaded settings from config.ini");
+                strings = LoadResourceFile(ResourceName, filename);
+
+                Debug.WriteLine($"{ScriptName}: Loaded settings from {filename}");
             }
             catch (Exception e)
             {
+                Debug.WriteLine($"{ScriptName}: Impossible to load {filename}");
                 Debug.WriteLine(e.StackTrace);
-                Debug.WriteLine($"{ScriptName}: Impossible to load config.ini");
             }
             finally
             {
-                toggleMenu = config.toggleMenu;
-                editingFactor = config.editingFactor;
-                maxSyncDistance = config.maxSyncDistance;
-                timer = config.timer;
-                debug = config.debug;
-                screenPosX = config.screenPosX;
-                screenPosY = config.screenPosY;
+                Config config = new Config(strings);
+
+                if (int.TryParse(config.Get("toggleMenu"), out int config_ToggleMenu)) toggleMenu = config_ToggleMenu;
+                if (float.TryParse(config.Get("editingFactor"), out float config_editingFactor)) editingFactor = config_editingFactor;
+                if (float.TryParse(config.Get("maxSyncDistance"), out float config_maxSyncDistance)) maxSyncDistance = config_maxSyncDistance;
+                if (long.TryParse(config.Get("timer"), out long config_timer)) timer = config_timer;
+                if (bool.TryParse(config.Get("debug"), out bool config_debug)) debug = config_debug;
+                if (float.TryParse(config.Get("screenPosX"), out float config_screenPosX)) screenPosX = config_screenPosX;
+                if (float.TryParse(config.Get("screenPosY"), out float config_screenPosY)) screenPosY = config_screenPosY;
+
+                Debug.WriteLine($"{ScriptName}: Settings {nameof(timer)}={timer} {nameof(debug)}={debug} {nameof(maxSyncDistance)}={maxSyncDistance}");
             }
         }
- 
+
     }
    
     public class KvpList : IEnumerable<string>
     {
-        public string prefix = HandlingEditor.kvpPrefix;
+        public string prefix;
+
+        public KvpList(string kvpprefix)
+        {
+            this.prefix = kvpprefix;
+        }
 
         public IEnumerator<string> GetEnumerator()
         {
