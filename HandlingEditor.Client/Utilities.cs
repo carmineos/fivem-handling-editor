@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using static CitizenFX.Core.Native.API;
 
-namespace handling_editor
+namespace HandlingEditor.Client
 {
     public class KvpList : IEnumerable<string>
     {

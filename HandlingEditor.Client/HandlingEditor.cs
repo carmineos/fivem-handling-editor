@@ -11,7 +11,7 @@ using static CitizenFX.Core.Native.API;
 using HandlingEditor;
 using System.Xml;
 
-namespace handling_editor
+namespace HandlingEditor.Client
 {
     public class HandlingEditor : BaseScript
     {
@@ -48,7 +48,7 @@ namespace handling_editor
         #endregion
 
         #region GUI_METHODS
-        private async Task<string> GetOnScreenValue(string defaultText)
+        private async Task<string> GetOnScreenString(string defaultText)
         {
             DisableAllControlActions(1);
             AddTextEntry("ENTER_VALUE", "Enter value");
@@ -99,7 +99,7 @@ namespace handling_editor
                 {
                     EditorMenu.Visible = false;
 
-                    string text = await GetOnScreenValue(value.ToString());
+                    string text = await GetOnScreenString(value.ToString());
                     float newvalue = value;
 
                     if (float.TryParse(text, out newvalue))
@@ -162,7 +162,7 @@ namespace handling_editor
                 {
                     EditorMenu.Visible = false;
 
-                    string text = await GetOnScreenValue(value.ToString());
+                    string text = await GetOnScreenString(value.ToString());
                     int newvalue = value;
 
                     if (int.TryParse(text, out newvalue))
@@ -231,7 +231,7 @@ namespace handling_editor
                 {
                     EditorMenu.Visible = false;
 
-                    string text = await GetOnScreenValue(valueX.ToString());
+                    string text = await GetOnScreenString(valueX.ToString());
                     float newvalue = valueX;
 
                     if (float.TryParse(text, out newvalue))
@@ -291,7 +291,7 @@ namespace handling_editor
                 {
                     EditorMenu.Visible = false;
 
-                    string text = await GetOnScreenValue(valueY.ToString());
+                    string text = await GetOnScreenString(valueY.ToString());
                     float newvalue = valueY;
 
                     if (float.TryParse(text, out newvalue))
@@ -351,7 +351,7 @@ namespace handling_editor
                 {
                     EditorMenu.Visible = false;
 
-                    string text = await GetOnScreenValue(valueZ.ToString());
+                    string text = await GetOnScreenString(valueZ.ToString());
                     float newvalue = valueZ;
 
                     if (float.TryParse(text, out newvalue))
@@ -644,7 +644,7 @@ namespace handling_editor
                     {
                         if (IsControlJustPressed(1, 179))
                         {
-                            string name = await GetOnScreenValue("");
+                            string name = await GetOnScreenString("");
                             if (!string.IsNullOrEmpty(name))
                             {
                                 SavePreset(name, currentPreset);

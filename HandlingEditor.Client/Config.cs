@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace handling_editor
+namespace HandlingEditor.Client
 {
     public class Config
     {

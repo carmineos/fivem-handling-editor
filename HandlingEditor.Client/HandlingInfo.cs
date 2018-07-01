@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 
-namespace HandlingEditor
+namespace HandlingEditor.Client
 {
     /*
     public class FieldInfo<T>
@@ -282,72 +282,7 @@ namespace HandlingEditor
                         FieldsInfo[name] = fieldInfo;
                     }
                 }
-
             }
         }
-
-        /** public void ParseXMLLinq(string xml)
-        {
-            XDocument doc = XDocument.Parse(xml);
-            
-            foreach (var item in doc.Element("CHandlingData").Elements())
-            {
-                string name = item.Name.ToString();
-                Type type = FieldInfo.GetFieldType(name);
-
-                bool editable = bool.Parse(item.Attribute("Editable").Value);
-                string description = item.Element("Description").Value;
-
-                var minNode = item.Element("Min");
-                var maxNode = item.Element("Max");
-
-                if (type == typeof(float))
-                {
-                    float min = float.Parse(minNode.Attribute("value").Value);
-                    float max = float.Parse(maxNode.Attribute("value").Value);
-
-                    FloatFieldInfo fieldInfo = new FloatFieldInfo(name, description, editable, min, max);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else if (type == typeof(int))
-                {
-                    int min = int.Parse(minNode.Attribute("value").Value);
-                    int max = int.Parse(maxNode.Attribute("value").Value);
-
-                    IntFieldInfo fieldInfo = new IntFieldInfo(name, description, editable, min, max);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else if (type == typeof(Vector3))
-                {
-                    Vector3 min = new Vector3(
-                        float.Parse(minNode.Attribute("x").Value),
-                        float.Parse(minNode.Attribute("y").Value),
-                        float.Parse(minNode.Attribute("z").Value));
-
-                    Vector3 max = new Vector3(
-                        float.Parse(maxNode.Attribute("x").Value),
-                        float.Parse(maxNode.Attribute("y").Value),
-                        float.Parse(maxNode.Attribute("z").Value));
-
-                    VectorFieldInfo fieldInfo = new VectorFieldInfo(name, description, editable, min, max);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else if (type == typeof(string))
-                {
-                    StringFieldInfo fieldInfo = new StringFieldInfo(name, description, editable);
-                    FieldsInfo[name] = fieldInfo;
-                }
-
-                else
-                {
-                    StringFieldInfo fieldInfo = new StringFieldInfo(name, description, editable);
-                    FieldsInfo[name] = fieldInfo;
-                }
-            }
-        }
-        */
     }
 }

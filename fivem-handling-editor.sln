@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2037
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandlingReader", "HandlingReader\HandlingReader.csproj", "{B988BC1B-ABE1-4E48-8D2F-F050EDAD10A4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandlingUtility", "HandlingUtility\HandlingUtility.csproj", "{B988BC1B-ABE1-4E48-8D2F-F050EDAD10A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandlingEditor", "HandlingEditor\HandlingEditor.csproj", "{A71A59CE-21C1-4FE1-929E-120CE225A409}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandlingEditor.Client", "HandlingEditor.Client\HandlingEditor.Client.csproj", "{A71A59CE-21C1-4FE1-929E-120CE225A409}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{72286571-ADDE-4E1E-9C86-6513B9A9F8B0}"
 	ProjectSection(SolutionItems) = preProject

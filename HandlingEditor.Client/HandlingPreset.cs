@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using CitizenFX.Core;
 
-namespace handling_editor
+namespace HandlingEditor.Client
 {
     public class HandlingPreset : IEquatable<HandlingPreset>
     {
         public Dictionary<string, dynamic> DefaultFields { get; private set; }
-        public Dictionary<string, dynamic> Fields;
+        public Dictionary<string, dynamic> Fields { get; set; }
 
         public HandlingPreset()
         {
@@ -26,10 +26,10 @@ namespace handling_editor
         {
             get
             {
-                foreach(var item in Fields.Keys)
+                foreach(var item in Fields)
                 {
-                    var value = Fields[item];
-                    var defaultValue = DefaultFields[item];
+                    var value = item.Value;
+                    var defaultValue = DefaultFields[item.Key];
 
                     Type fieldType = value.GetType();
 
@@ -53,8 +53,9 @@ namespace handling_editor
 
         public void Reset()
         {
-            foreach (string name in DefaultFields.Keys)
+            foreach (var item in DefaultFields)
             {
+                string name = item.Key;
                 Type fieldType = DefaultFields[name].GetType();
 
                 if (fieldType == typeof(float) || fieldType == typeof(int))
@@ -74,13 +75,15 @@ namespace handling_editor
             if (Fields.Count != other.Fields.Count)
                 return false;
 
-            foreach (var item in Fields.Keys)
+            foreach (var item in Fields)
             {
-                if (!other.Fields.ContainsKey(item))
+                string key = item.Key;
+
+                if (!other.Fields.ContainsKey(key))
                     return false;
 
-                var value = Fields[item];
-                var otherValue = other.Fields[item];
+                var value = item.Value;
+                var otherValue = other.Fields[key];
 
                 Type fieldType = value.GetType();
 

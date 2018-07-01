@@ -49,9 +49,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HandlingEditor\HandlingEditor.csproj">
+    <ProjectReference Include="..\HandlingEditor.Client\HandlingEditor.Client.csproj">
       <Project>{A71A59CE-21C1-4FE1-929E-120CE225A409}</Project>
-      <Name>HandlingEditor</Name>
+      <Name>HandlingEditor.Client</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
