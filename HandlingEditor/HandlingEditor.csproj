@@ -43,8 +43,8 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml.custom">
-      <HintPath>thirdparty\System.Xml.custom.dll</HintPath>
+    <Reference Include="System.Xml.Mono">
+      <HintPath>thirdparty\System.Xml.Mono.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -58,9 +58,11 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>call "$(SolutionDir)postbuild.bat" "$(TargetPath)"
-call "$(SolutionDir)postbuild.bat" "$(SolutionDir)config.ini"
-call "$(SolutionDir)postbuild.bat" "$(SolutionDir)__resource.lua"
-call "$(SolutionDir)postbuild.bat" "$(SolutionDir)HandlingInfo.xml"
-call "$(SolutionDir)postbuild.bat" "$(SolutionDir)HandlingPresets.xml"</PostBuildEvent>
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\config.ini"
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\__resource.lua"
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\HandlingInfo.xml"
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\HandlingPresets.xml"
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\NativeUI.net.dll"
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\System.Xml.Mono.dll"</PostBuildEvent>
   </PropertyGroup>
 </Project>

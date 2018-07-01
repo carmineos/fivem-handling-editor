@@ -3,10 +3,10 @@ resource_manifest_version '44febabe-d386-4d18-afbe-5e627f4af937'
 files {
 	'HandlingInfo.xml',
 	'HandlingPresets.xml',
-	'config.ini'
+	'config.ini',
+	'System.Xml.Mono.dll'
 }
 client_script {
-	'System.Xml.custom.net.dll',
-	'nativeui.net.dll',
+	'NativeUI.net.dll',
 	'HandlingEditor.net.dll'
 }
