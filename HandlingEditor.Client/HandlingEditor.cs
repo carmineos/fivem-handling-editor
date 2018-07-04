@@ -1477,13 +1477,13 @@ namespace HandlingEditor.Client
             {
                 Config config = new Config(strings);
 
-                if (int.TryParse(config.Get("toggleMenu"), out int config_ToggleMenu)) toggleMenu = config_ToggleMenu;
-                if (float.TryParse(config.Get("editingFactor"), out float config_editingFactor)) editingFactor = config_editingFactor;
-                if (float.TryParse(config.Get("maxSyncDistance"), out float config_maxSyncDistance)) maxSyncDistance = config_maxSyncDistance;
-                if (long.TryParse(config.Get("timer"), out long config_timer)) timer = config_timer;
-                if (bool.TryParse(config.Get("debug"), out bool config_debug)) debug = config_debug;
-                if (float.TryParse(config.Get("screenPosX"), out float config_screenPosX)) screenPosX = config_screenPosX;
-                if (float.TryParse(config.Get("screenPosY"), out float config_screenPosY)) screenPosY = config_screenPosY;
+                toggleMenu = config.GetIntValue("toggleMenu", toggleMenu);
+                editingFactor = config.GetFloatValue("editingFactor", editingFactor);
+                maxSyncDistance = config.GetFloatValue("maxSyncDistance", maxSyncDistance);
+                timer = config.GetLongValue("timer", timer);
+                debug = config.GetBoolValue("debug", debug);
+                screenPosX = config.GetFloatValue("screenPosX", screenPosX);
+                screenPosY = config.GetFloatValue("screenPosY", screenPosY);
 
                 Debug.WriteLine($"{ScriptName}: Settings {nameof(timer)}={timer} {nameof(debug)}={debug} {nameof(maxSyncDistance)}={maxSyncDistance}");
             }

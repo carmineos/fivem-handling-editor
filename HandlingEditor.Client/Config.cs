@@ -37,5 +37,53 @@ namespace HandlingEditor.Client
 
             return defaultValue;
         }
+
+        public int GetIntValue(string key, int fallback)
+        {
+            if (Entries.ContainsKey(key))
+            {
+                var value = Entries[key];
+
+                if (int.TryParse(value, out int tmp))
+                    return tmp;
+            }
+            return fallback;
+        }
+
+        public float GetFloatValue(string key, float fallback)
+        {
+            if (Entries.ContainsKey(key))
+            {
+                var value = Entries[key];
+
+                if (float.TryParse(value, out float tmp))
+                    return tmp;
+            }
+            return fallback;
+        }
+
+        public bool GetBoolValue(string key, bool fallback)
+        {
+            if (Entries.ContainsKey(key))
+            {
+                var value = Entries[key];
+
+                if (bool.TryParse(value, out bool tmp))
+                    return tmp;
+            }
+            return fallback;
+        }
+
+        public long GetLongValue(string key, long fallback)
+        {
+            if (Entries.ContainsKey(key))
+            {
+                var value = Entries[key];
+
+                if (long.TryParse(value, out long tmp))
+                    return tmp;
+            }
+            return fallback;
+        }
     }
 }
