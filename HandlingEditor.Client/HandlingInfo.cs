@@ -48,11 +48,11 @@ namespace HandlingEditor.Client
 
         public static Type GetFieldType(string name)
         {
-            if (name.StartsWith("f")) return typeof(float);
-            else if (name.StartsWith("n")) return typeof(int);
-            else if (name.StartsWith("str")) return typeof(string);
-            else if (name.StartsWith("vec")) return typeof(Vector3);
-            else return typeof(string);
+            if (name.StartsWith("f")) return FiedlType.FloatType;
+            else if (name.StartsWith("n")) return FiedlType.IntType;
+            else if (name.StartsWith("str")) return FiedlType.StringType;
+            else if (name.StartsWith("vec")) return FiedlType.Vector3Type;
+            else return FiedlType.StringType;
         }
 
         public void ParseXML(string xml)
@@ -70,7 +70,7 @@ namespace HandlingEditor.Client
                 var minNode = item.Element("Min");
                 var maxNode = item.Element("Max");
 
-                if (type == typeof(float))
+                if (type == FiedlType.FloatType)
                 {
                     float min = float.Parse(minNode.Attribute("value").Value);
                     float max = float.Parse(maxNode.Attribute("value").Value);
@@ -79,7 +79,7 @@ namespace HandlingEditor.Client
                     FieldsInfo[name] = fieldInfo;
                 }
 
-                else if (type == typeof(int))
+                else if (type == FiedlType.IntType)
                 {
                     int min = int.Parse(minNode.Attribute("value").Value);
                     int max = int.Parse(maxNode.Attribute("value").Value);
@@ -88,7 +88,7 @@ namespace HandlingEditor.Client
                     FieldsInfo[name] = fieldInfo;
                 }
 
-                else if (type == typeof(Vector3))
+                else if (type == FiedlType.Vector3Type)
                 {
                     Vector3 min = new Vector3(
                         float.Parse(minNode.Attribute("x").Value),
@@ -104,7 +104,7 @@ namespace HandlingEditor.Client
                     FieldsInfo[name] = fieldInfo;
                 }
 
-                else if (type == typeof(string))
+                else if (type == FiedlType.StringType)
                 {
                     FieldInfo<string> fieldInfo = new FieldInfo<string>(name, description, editable);
                     FieldsInfo[name] = fieldInfo;
@@ -116,7 +116,6 @@ namespace HandlingEditor.Client
 
     public static class FieldType
     {
-        // TODO: Replace FieldType everywhere
         public static Type FloatType = typeof(float);
         public static Type IntType = typeof(int);
         public static Type Vector3Type = typeof(Vector3);
@@ -142,11 +141,11 @@ namespace HandlingEditor.Client
 
         public static Type GetFieldType(string name)
         {
-            if (name.StartsWith("f")) return typeof(float);
-            else if (name.StartsWith("n")) return typeof(int);
-            else if (name.StartsWith("str")) return typeof(string);
-            else if (name.StartsWith("vec")) return typeof(Vector3);
-            else return typeof(string);
+            if (name.StartsWith("f")) return FieldType.FloatType;
+            else if (name.StartsWith("n")) return FieldType.IntType;
+            else if (name.StartsWith("str")) return FieldType.StringType;
+            else if (name.StartsWith("vec")) return FieldType.Vector3Type;
+            else return FieldType.StringType;
         }
     }
 
@@ -236,7 +235,7 @@ namespace HandlingEditor.Client
                     var minNode = item["Min"];
                     var maxNode = item["Max"];
 
-                    if (type == typeof(float))
+                    if (type == FieldType.FloatType)
                     {
                         float min = float.Parse(minNode.Attributes["value"].Value);
                         float max = float.Parse(maxNode.Attributes["value"].Value);
@@ -245,7 +244,7 @@ namespace HandlingEditor.Client
                         FieldsInfo[name] = fieldInfo;
                     }
 
-                    else if (type == typeof(int))
+                    else if (type == FieldType.IntType)
                     {
                         int min = int.Parse(minNode.Attributes["value"].Value);
                         int max = int.Parse(maxNode.Attributes["value"].Value);
@@ -254,7 +253,7 @@ namespace HandlingEditor.Client
                         FieldsInfo[name] = fieldInfo;
                     }
 
-                    else if (type == typeof(Vector3))
+                    else if (type == FieldType.Vector3Type)
                     {
                         Vector3 min = new Vector3(
                             float.Parse(minNode.Attributes["x"].Value),
@@ -270,7 +269,7 @@ namespace HandlingEditor.Client
                         FieldsInfo[name] = fieldInfo;
                     }
 
-                    else if (type == typeof(string))
+                    else if (type == FieldType.StringType)
                     {
                         StringFieldInfo fieldInfo = new StringFieldInfo(name, className, description, editable);
                         FieldsInfo[name] = fieldInfo;

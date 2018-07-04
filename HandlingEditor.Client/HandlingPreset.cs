@@ -33,12 +33,12 @@ namespace HandlingEditor.Client
 
                     Type fieldType = value.GetType();
 
-                    if (fieldType == typeof(float) || fieldType == typeof(int))
+                    if (fieldType == FieldType.FloatType || fieldType == FieldType.IntType)
                     {
                         if (defaultValue != value)
                             return true;
                     }
-                    else if (fieldType == typeof(Vector3))
+                    else if (fieldType == FieldType.Vector3Type)
                     {
                         value = (Vector3)value;
                         defaultValue = (Vector3)defaultValue;
@@ -56,15 +56,15 @@ namespace HandlingEditor.Client
             foreach (var item in DefaultFields)
             {
                 string name = item.Key;
-                Type fieldType = DefaultFields[name].GetType();
+                var value = item.Value;
+                Type fieldType = value.GetType();
 
-                if (fieldType == typeof(float) || fieldType == typeof(int))
+                if (fieldType == FieldType.FloatType || fieldType == FieldType.IntType)
+                    Fields[name] = value;
+
+                else if (fieldType == FieldType.Vector3Type)
                 {
-                    Fields[name] = DefaultFields[name];
-                }
-                else if (fieldType == typeof(Vector3))
-                {
-                    Vector3 vec = (Vector3)DefaultFields[name];
+                    Vector3 vec = (Vector3)value;
                     Fields[name] = new Vector3(vec.X, vec.Y, vec.Z);
                 }
             }
@@ -87,12 +87,12 @@ namespace HandlingEditor.Client
 
                 Type fieldType = value.GetType();
 
-                if (fieldType == typeof(float) || fieldType == typeof(int))
+                if (fieldType == FieldType.FloatType || fieldType == FieldType.IntType)
                 {
                     if (value != otherValue)
                         return false;
                 }
-                else if (fieldType == typeof(Vector3))
+                else if (fieldType == FieldType.Vector3Type)
                 {
                     value = (Vector3)value;
                     otherValue = (Vector3)otherValue;

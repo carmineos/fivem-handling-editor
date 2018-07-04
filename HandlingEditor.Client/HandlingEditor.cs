@@ -59,32 +59,37 @@ namespace HandlingEditor.Client
 
         private UIMenuDynamicListItem AddDynamicFloatList(UIMenu menu, FloatFieldInfo fieldInfo)
         {
-            if (!currentPreset.Fields.ContainsKey(fieldInfo.Name))
+            string name = fieldInfo.Name;
+            string description = fieldInfo.Description;
+            float min = fieldInfo.Min;
+            float max = fieldInfo.Max;
+
+            if (!currentPreset.Fields.ContainsKey(name))
                 return null;
 
-            float value = currentPreset.Fields[fieldInfo.Name];
-            var newitem = new UIMenuDynamicListItem(fieldInfo.Name, fieldInfo.Description, value.ToString("F3"), (sender, direction) =>
+            float value = currentPreset.Fields[name];
+            var newitem = new UIMenuDynamicListItem(name, description, value.ToString("F3"), (sender, direction) =>
             {
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
                 {
                     var newvalue = value - editingFactor;
-                    if (newvalue < fieldInfo.Min)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldInfo.Name}~w~ is {fieldInfo.Min}");
+                    if (newvalue < min)
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{name}~w~ is {min}");
                     else
                     {
                         value = newvalue;
-                        currentPreset.Fields[fieldInfo.Name] = newvalue;
+                        currentPreset.Fields[name] = newvalue;
                     }
                 }
                 else
                 {
                     var newvalue = value + editingFactor;
-                    if (newvalue > fieldInfo.Max)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldInfo.Name}~w~ is {fieldInfo.Max}");
+                    if (newvalue > max)
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{name}~w~ is {max}");
                     else
                     {
                         value = newvalue;
-                        currentPreset.Fields[fieldInfo.Name] = newvalue;
+                        currentPreset.Fields[name] = newvalue;
                     }
                 }
                 return value.ToString("F3");
@@ -103,12 +108,12 @@ namespace HandlingEditor.Client
 
                     if (float.TryParse(text, out newvalue))
                     {
-                        if(newvalue >= fieldInfo.Min && newvalue <= fieldInfo.Max)
-                            currentPreset.Fields[fieldInfo.Name] = newvalue;
+                        if(newvalue >= min && newvalue <= max)
+                            currentPreset.Fields[name] = newvalue;
                         else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldInfo.Name}~w~, Min:{fieldInfo.Min}, Max:{fieldInfo.Max}");
+                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
                     }else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldInfo.Name}~w~");
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
                     InitialiseMenu(); //Should just update the current item instead
@@ -122,32 +127,37 @@ namespace HandlingEditor.Client
 
         private UIMenuDynamicListItem AddDynamicIntList(UIMenu menu, IntFieldInfo fieldInfo)
         {
-            if (!currentPreset.Fields.ContainsKey(fieldInfo.Name))
+            string name = fieldInfo.Name;
+            string description = fieldInfo.Description;
+            int min = fieldInfo.Min;
+            int max = fieldInfo.Max;
+
+            if (!currentPreset.Fields.ContainsKey(name))
                 return null;
 
-            int value = currentPreset.Fields[fieldInfo.Name]; //TODO: Get value from current preset
-            var newitem = new UIMenuDynamicListItem(fieldInfo.Name, fieldInfo.Description, value.ToString(), (sender, direction) =>
+            int value = currentPreset.Fields[name]; //TODO: Get value from current preset
+            var newitem = new UIMenuDynamicListItem(name, description, value.ToString(), (sender, direction) =>
             {
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
                 {
                     var newvalue = value - 1;
-                    if (newvalue < fieldInfo.Min)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldInfo.Name}~w~ is {fieldInfo.Min}");
+                    if (newvalue < min)
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{name}~w~ is {min}");
                     else
                     {
                         value = newvalue;
-                        currentPreset.Fields[fieldInfo.Name] = newvalue;
+                        currentPreset.Fields[name] = newvalue;
                     }
                 }
                 else
                 {
                     var newvalue = value + 1;
-                    if (newvalue > fieldInfo.Max)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldInfo.Name}~w~ is {fieldInfo.Max}");
+                    if (newvalue > max)
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{name}~w~ is {max}");
                     else
                     {
                         value = newvalue;
-                        currentPreset.Fields[fieldInfo.Name] = newvalue;
+                        currentPreset.Fields[name] = newvalue;
                     }
                 }
                 return value.ToString();
@@ -166,13 +176,13 @@ namespace HandlingEditor.Client
 
                     if (int.TryParse(text, out newvalue))
                     {
-                        if (newvalue >= fieldInfo.Min && newvalue <= fieldInfo.Max)
-                            currentPreset.Fields[fieldInfo.Name] = newvalue;
+                        if (newvalue >= min && newvalue <= max)
+                            currentPreset.Fields[name] = newvalue;
                         else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldInfo.Name}~w~, Min:{fieldInfo.Min}, Max:{fieldInfo.Max}");
+                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
                     }
                     else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldInfo.Name}~w~");
+                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
                     InitialiseMenu(); //Should just update the current item instead
@@ -460,15 +470,20 @@ namespace HandlingEditor.Client
 
             foreach (var item in handlingInfo.FieldsInfo)
             {
-                if(item.Value.Editable)
-                {
-                    Type fieldType = item.Value.Type;
+                var fieldInfo = item.Value;
 
-                    if (fieldType == typeof(float))
+                if(fieldInfo.Editable)
+                {
+                    /*
+                    string fieldName = fieldInfo.Name;
+                    string fieldDescription = fieldInfo.Description;*/
+                    Type fieldType = fieldInfo.Type;
+
+                    if (fieldType == FieldType.FloatType)
                         AddDynamicFloatList(EditorMenu, (FloatFieldInfo)item.Value);
-                    else if (fieldType == typeof(int))
+                    else if (fieldType == FieldType.IntType)
                         AddDynamicIntList(EditorMenu, (IntFieldInfo)item.Value);
-                    else if (fieldType == typeof(Vector3))
+                    else if (fieldType == FieldType.Vector3Type)
                         AddDynamicVector3List(EditorMenu, (VectorFieldInfo)item.Value);
                 }
                 else
@@ -708,7 +723,7 @@ namespace HandlingEditor.Client
             currentTime = (GetGameTimer() - lastTime);
 
             playerPed = PlayerPedId();
-            //CURRENT VEHICLE/PRESET HANDLER
+
             if (IsPedInAnyVehicle(playerPed, false))
             {
                 int vehicle = GetVehiclePedIsIn(playerPed, false);
@@ -774,10 +789,20 @@ namespace HandlingEditor.Client
                 {
                     string fieldName = item.Key;
                     dynamic fieldValue = item.Value;
-                    Type fieldType = handlingInfo.FieldsInfo[fieldName].Type;
-                    string className = handlingInfo.FieldsInfo[fieldName].ClassName;
 
-                    if (fieldType == typeof(float))
+                    var fieldsInfo = handlingInfo.FieldsInfo;
+                    if (!fieldsInfo.ContainsKey(fieldName))
+                    {
+                        if (debug)
+                            Debug.WriteLine($"{ScriptName}: No fieldInfo definition found for {fieldName}");
+                        continue;
+                    }
+
+                    FieldInfo fieldInfo = fieldsInfo[fieldName];
+                    Type fieldType = fieldInfo.Type;
+                    string className = fieldInfo.ClassName;
+
+                    if (fieldType == FieldType.FloatType)
                     {
                         var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
                         if (Math.Abs(value - fieldValue) > 0.001f)
@@ -789,7 +814,7 @@ namespace HandlingEditor.Client
                         }     
                     }
                     
-                    else if (fieldType == typeof(int))
+                    else if (fieldType == FieldType.IntType)
                     {
                         var value = GetVehicleHandlingInt(vehicle, className, fieldName);
                         if (value != fieldValue)
@@ -801,7 +826,7 @@ namespace HandlingEditor.Client
                         }
                     }
                     
-                    else if (fieldType == typeof(Vector3))
+                    else if (fieldType == FieldType.Vector3Type)
                     {
                         var value = GetVehicleHandlingVector(vehicle, className, fieldName);
                         if (value != fieldValue)
@@ -850,7 +875,7 @@ namespace HandlingEditor.Client
                 Type fieldType = item.Value.Type;
                 string className = item.Value.ClassName;
 
-                if (fieldType == typeof(float))
+                if (fieldType == FieldType.FloatType)
                 {
                     if (DecorExistOn(vehicle, fieldName))
                     {
@@ -865,7 +890,7 @@ namespace HandlingEditor.Client
                         }
                     }
                 }
-                else if (fieldType == typeof(int))
+                else if (fieldType == FieldType.IntType)
                 {
                     if (DecorExistOn(vehicle, fieldName))
                     {
@@ -880,7 +905,7 @@ namespace HandlingEditor.Client
                         }
                     }
                 }
-                else if (fieldType == typeof(Vector3))
+                else if (fieldType == FieldType.Vector3Type)
                 {
                     string decorX = $"{fieldName}_x";
                     string decorY = $"{fieldName}_y";
@@ -922,7 +947,7 @@ namespace HandlingEditor.Client
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
 
-                if (fieldType == typeof(Vector3))
+                if (fieldType == FieldType.Vector3Type)
                 {
                     if (DecorExistOn(vehicle, $"{fieldName}_x") || DecorExistOn(vehicle, $"{fieldName}_y") || DecorExistOn(vehicle, $"{fieldName}_z"))
                         return true;
@@ -943,17 +968,17 @@ namespace HandlingEditor.Client
                 string fieldName = item.Key;
                 Type type = item.Value.Type;
 
-                if (type == typeof(float))
+                if (type == FieldType.FloatType)
                 {
                     DecorRegister(fieldName, 1);
                     DecorRegister($"{fieldName}_def", 1);
                 }
-                else if (type == typeof(int))
+                else if (type == FieldType.IntType)
                 {
                     DecorRegister(fieldName, 3);
                     DecorRegister($"{fieldName}_def", 3);
                 }
-                else if (type == typeof(Vector3))
+                else if (type == FieldType.Vector3Type)
                 {
                     string decorX = $"{fieldName}_x";
                     string decorY = $"{fieldName}_y";
@@ -982,7 +1007,7 @@ namespace HandlingEditor.Client
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
 
-                if (fieldType == typeof(int) || fieldType == typeof(float))
+                if (fieldType == FieldType.IntType || fieldType == FieldType.FloatType)
                 {
                     string defDecorName = $"{fieldName}_def";
 
@@ -991,7 +1016,7 @@ namespace HandlingEditor.Client
                     if (DecorExistOn(vehicle, defDecorName))
                         DecorRemove(vehicle, defDecorName);
                 }
-                else if (fieldType == typeof(Vector3))
+                else if (fieldType == FieldType.Vector3Type)
                 {
                     string decorX = $"{fieldName}_x";
                     string decorY = $"{fieldName}_y";
@@ -1082,7 +1107,6 @@ namespace HandlingEditor.Client
         /// <param name="vehicle"></param>
         private async void UpdateVehicleDecorators(int vehicle, HandlingPreset preset)
         {
-            int netID = NetworkGetNetworkIdFromEntity(vehicle);
             foreach (var item in preset.Fields)
             {
                 string fieldName = item.Key;
@@ -1092,17 +1116,17 @@ namespace HandlingEditor.Client
                 string defDecorName = $"{fieldName}_def";
                 dynamic defaultValue = preset.DefaultFields[fieldName];
 
-                if (fieldType == typeof(float))
+                if (fieldType == FieldType.FloatType)
                 {
                     UpdateFloatDecorator(vehicle, fieldName, fieldValue, defaultValue);
                     UpdateFloatDecorator(vehicle, defDecorName, defaultValue, fieldValue);
                 }
-                else if(fieldType == typeof(int))
+                else if(fieldType == FieldType.IntType)
                 {
                     UpdateIntDecorator(vehicle, fieldName, fieldValue, defaultValue);
                     UpdateIntDecorator(vehicle, defDecorName, defaultValue, fieldValue);
                 }
-                else if (fieldType == typeof(Vector3))
+                else if (fieldType == FieldType.Vector3Type)
                 {
                     fieldValue = (Vector3)fieldValue;
                     defaultValue = (Vector3)defaultValue;
@@ -1139,15 +1163,12 @@ namespace HandlingEditor.Client
             
             foreach(var item in handlingInfo.FieldsInfo)
             {
-                /*
-                if ()//vehicle hasn't such handling field
-                    continue;*/
                 string fieldName = item.Key;
                 string className = item.Value.ClassName;
                 Type fieldType = item.Value.Type;
                 string defDecorName = $"{fieldName}_def";
 
-                if (fieldType == typeof(float))
+                if (fieldType == FieldType.FloatType)
                 {
                     if (DecorExistOn(vehicle, defDecorName))
                         defaultFields[fieldName] = DecorGetFloat(vehicle, defDecorName);
@@ -1157,7 +1178,7 @@ namespace HandlingEditor.Client
                         fields[fieldName] = DecorGetFloat(vehicle, fieldName);
                     else fields[fieldName] = defaultFields[fieldName];
                 }/*
-                else if (fieldType == typeof(int))
+                else if (fieldType == FieldType.IntType)
                 {
                     if (DecorExistOn(vehicle, defDecorName))
                         defaultFields[fieldName] = DecorGetInt(vehicle, defDecorName);
@@ -1167,7 +1188,7 @@ namespace HandlingEditor.Client
                         fields[fieldName] = DecorGetInt(vehicle, fieldName);
                     else fields[fieldName] = defaultFields[fieldName];
                 }*/
-                else if (fieldType == typeof(Vector3))
+                else if (fieldType == FieldType.Vector3Type)
                 {
                     Vector3 vec = GetVehicleHandlingVector(vehicle, className, fieldName);
 
@@ -1181,7 +1202,7 @@ namespace HandlingEditor.Client
 
                     if (DecorExistOn(vehicle, defDecorNameX))
                         vec.X = DecorGetFloat(vehicle, defDecorNameX);
-                    if ( DecorExistOn(vehicle, defDecorNameY))
+                    if (DecorExistOn(vehicle, defDecorNameY))
                         vec.Y = DecorGetFloat(vehicle, defDecorNameY);
                     if (DecorExistOn(vehicle, defDecorNameZ))
                         vec.Z = DecorGetFloat(vehicle, defDecorNameZ);
@@ -1224,7 +1245,7 @@ namespace HandlingEditor.Client
 
                     dynamic value = 0, defaultValue = 0;
 
-                    if (fieldType == typeof(float))
+                    if (fieldType == FieldType.FloatType)
                     {
                         if (DecorExistOn(vehicle, item.Key))
                         {
@@ -1233,7 +1254,7 @@ namespace HandlingEditor.Client
                             s.AppendLine($"{fieldName}: {value}({defaultValue})");
                         }
                     }
-                    else if (fieldType == typeof(int))
+                    else if (fieldType == FieldType.IntType)
                     {
                         if (DecorExistOn(vehicle, item.Key))
                         {
@@ -1242,7 +1263,7 @@ namespace HandlingEditor.Client
                             s.AppendLine($"{fieldName}: {value}({defaultValue})");
                         }
                     }
-                    else if (fieldType == typeof(Vector3))
+                    else if (fieldType == FieldType.Vector3Type)
                     {
                         string decorX = $"{fieldName}_x";
                         if (DecorExistOn(vehicle, decorX))
@@ -1314,21 +1335,21 @@ namespace HandlingEditor.Client
                 XmlElement field = doc.CreateElement(fieldName);
 
                 Type fieldType = handlingInfo.FieldsInfo[fieldName].Type;
-                if(fieldType == typeof(float))
+                if(fieldType == FieldType.FloatType)
                 {
                     field.SetAttribute("value", ((float)(fieldValue)).ToString());
                 }
-                else if (fieldType == typeof(int))
+                else if (fieldType == FieldType.IntType)
                 {
                     field.SetAttribute("value", ((int)(fieldValue)).ToString());
                 }
-                else if (fieldType == typeof(Vector3))
+                else if (fieldType == FieldType.Vector3Type)
                 {
                     field.SetAttribute("x", ((Vector3)(fieldValue)).X.ToString());
                     field.SetAttribute("y", ((Vector3)(fieldValue)).Y.ToString());
                     field.SetAttribute("z", ((Vector3)(fieldValue)).Z.ToString());
                 }
-                else if (fieldType == typeof(string))
+                else if (fieldType == FieldType.StringType)
                 {
                     field.InnerText = fieldValue;
                 }
@@ -1365,22 +1386,22 @@ namespace HandlingEditor.Client
 
                 XmlElement elem = (XmlElement)item;
 
-                if (fieldType == typeof(float))
+                if (fieldType == FieldType.FloatType)
                 {
                     preset.Fields[fieldName] = float.Parse(elem.GetAttribute("value"));
                 }/*
-                else if (fieldType == typeof(int))
+                else if (fieldType == FieldType.IntType)
                 {
                     preset.Fields[fieldName] = int.Parse(elem.GetAttribute("value"));
                 }*/
-                else if (fieldType == typeof(Vector3))
+                else if (fieldType == FieldType.Vector3Type)
                 {
                     float x = float.Parse(elem.GetAttribute("x"));
                     float y = float.Parse(elem.GetAttribute("y"));
                     float z = float.Parse(elem.GetAttribute("z"));
                     preset.Fields[fieldName] = new Vector3(x, y, z);
                 }/*
-                else if (fieldType == typeof(string))
+                else if (fieldType == FieldType.StringType)
                 {
                     preset.Fields[fieldName] = elem.InnerText;
                 }*/
