@@ -454,7 +454,7 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private void InitialiseMenu()
+        private async void InitialiseMenu()
         {
             _menuPool = new MenuPool();
             {
@@ -544,6 +544,8 @@ namespace HandlingEditor.Client
 
             _menuPool.Add(EditorMenu);
             _menuPool.RefreshIndex();
+
+            await Delay(0);
         }
         #endregion
 
@@ -1459,7 +1461,7 @@ namespace HandlingEditor.Client
             }
         }
 
-        protected void LoadConfig(string filename = "config.ini")
+        private void LoadConfig(string filename = "config.ini")
         {
             string strings = null;
             try
