@@ -1172,23 +1172,15 @@ namespace HandlingEditor.Client
 
                 if (fieldType == FieldType.FloatType)
                 {
-                    if (DecorExistOn(vehicle, defDecorName))
-                        defaultFields[fieldName] = DecorGetFloat(vehicle, defDecorName);
-                    else defaultFields[fieldName] = GetVehicleHandlingFloat(vehicle, className, fieldName);
-
-                    if (DecorExistOn(vehicle, fieldName))
-                        fields[fieldName] = DecorGetFloat(vehicle, fieldName);
-                    else fields[fieldName] = defaultFields[fieldName];
+                    var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetFloat(vehicle, defDecorName) : GetVehicleHandlingFloat(vehicle, className, fieldName);
+                    defaultFields[fieldName] = defaultValue;
+                    fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetFloat(vehicle, fieldName) : defaultValue;
                 }/*
                 else if (fieldType == FieldType.IntType)
                 {
-                    if (DecorExistOn(vehicle, defDecorName))
-                        defaultFields[fieldName] = DecorGetInt(vehicle, defDecorName);
-                    else defaultFields[fieldName] = GetVehicleHandlingInt(vehicle, className, fieldName);
-
-                    if (DecorExistOn(vehicle, fieldName))
-                        fields[fieldName] = DecorGetInt(vehicle, fieldName);
-                    else fields[fieldName] = defaultFields[fieldName];
+                    var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetInt(vehicle, defDecorName) : GetVehicleHandlingInt(vehicle, className, fieldName);
+                    defaultFields[fieldName] = defaultValue;
+                    fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetInt(vehicle, fieldName) : defaultValue;
                 }*/
                 else if (fieldType == FieldType.Vector3Type)
                 {
@@ -1410,30 +1402,30 @@ namespace HandlingEditor.Client
             }
         }
 
-        private void ReadFieldInfo()
+        private void ReadFieldInfo(string filename = "HandlingInfo.xml")
         {
             string strings = null;
             try
             {
-                strings = LoadResourceFile(ResourceName, "HandlingInfo.xml");
+                strings = LoadResourceFile(ResourceName, filename);
                 handlingInfo.ParseXML(strings);
                 var editableFields = handlingInfo.FieldsInfo.Where(a => a.Value.Editable);
-                Debug.WriteLine($"{ScriptName}: Loaded HandlingInfo.xml, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
+                Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.Message);
                 Debug.WriteLine(e.StackTrace);
-                Debug.WriteLine($"{ScriptName}: Error loading HandlingInfo.xml");
+                Debug.WriteLine($"{ScriptName}: Error loading {filename}");
             }
         }
 
-        private void ReadServerPresets()
+        private void ReadServerPresets(string filename = "HandlingPresets.xml")
         {
             string strings = null;
             try
             {
-                strings = LoadResourceFile(ResourceName, "HandlingPresets.xml");
+                strings = LoadResourceFile(ResourceName, filename);
                 XmlDocument doc = new XmlDocument();
                 doc.LoadXml(strings);
 
@@ -1451,13 +1443,13 @@ namespace HandlingEditor.Client
                         serverPresets[name] = preset;
                     }
                 }
-                Debug.WriteLine($"{ScriptName}: Loaded HandlingPresets.xml, found {serverPresets.Count} server presets.");
+                Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {serverPresets.Count} server presets.");
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.Message);
                 Debug.WriteLine(e.StackTrace);
-                Debug.WriteLine($"{ScriptName}: Error loading HandlingPresets.xml");
+                Debug.WriteLine($"{ScriptName}: Error loading {filename}");
             }
         }
 
