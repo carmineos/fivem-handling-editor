@@ -1,7 +1,7 @@
 # Handling Editor
 
 ### Description
-A script which allows to edit the handling of each vehicle individually using FiveM API.
+A script which allows to edit the handling of each vehicle individually using FiveM API and [FiveM port](https://github.com/citizenfx/NativeUI) of [Guad's NativeUI](https://github.com/Guad/NativeUI) .
 
 When a client edits a vehicle, it will be automatically synchronized with all the players.
 If a vehicle is reset to the default values it will stop from being synchronized.
@@ -82,7 +82,6 @@ I am open to any kind of feedback. Report suggestions and bugs you find.
 Open the `postbuild.bat` and edit the path of the resource folder. If in Debug configuration, the post build event will copy the following files to the specified path: the script, the `config.ini`, the `HandlingInfo.xml`, the `HandlingPresets.xml`, the `__resource.lua` and a copy of a built [NativeUI](https://github.com/citizenfx/NativeUI) script ported to FiveM.
 
 ### Credits
-* VStancer by ikt: https://github.com/E66666666/GTAVStancer
 * FiveM by CitizenFX: https://github.com/citizenfx/fivem
 * NativeUI by Guad: https://github.com/Guad/NativeUI
 * GTADrifting members: https://gtad.club/
