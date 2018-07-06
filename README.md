@@ -71,8 +71,11 @@ The value in milliseconds used by each client to check if its preset requires to
 `debug=false`
 Enables the debug mode, which prints some logs in the console
 
-### Ideas
-Once FiveM API will include a GET_HANDLING_* to get the global values for each model I could avoid storing default values with decorators.
+### WIP
+* Once FiveM API will include a GET_HANDLING_* to get the global values for each model I could avoid storing default values with decorators.
+* Support for all the handling classes (once FiveM adds the support to their Natives)
+* Blacklist/Whitelist for vehicle classes and/or individual vehicle models
+
 
 [Source](https://github.com/neos7/fivem-handling-editor)
 [Download](https://github.com/neos7/fivem-handling-editor/releases)
