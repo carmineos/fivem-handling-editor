@@ -57,12 +57,14 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>call "$(SolutionDir)postbuild.bat" "$(TargetPath)"
+    <PostBuildEvent>if $(ConfigurationName) == Debug (
+call "$(SolutionDir)postbuild.bat" "$(TargetPath)"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\config.ini"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\__resource.lua"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\HandlingInfo.xml"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\HandlingPresets.xml"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\NativeUI.net.dll"
-call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\System.Xml.Mono.net.dll"</PostBuildEvent>
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\System.Xml.Mono.net.dll"
+)</PostBuildEvent>
   </PropertyGroup>
 </Project>
