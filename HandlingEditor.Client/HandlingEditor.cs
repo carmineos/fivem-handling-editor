@@ -628,6 +628,14 @@ namespace HandlingEditor.Client
                     Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
             }), false);
 
+            RegisterCommand("handling_xml", new Action<int, dynamic>((source, args) =>
+            {
+                if (currentPreset != null)
+                    Debug.WriteLine(GetXmlFromPreset(currentPreset).OuterXml);
+                else
+                    Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
+            }), false);
+
             Tick += OnTick;
             Tick += ScriptTask;
         }
@@ -1315,12 +1323,11 @@ namespace HandlingEditor.Client
             await Delay(0);
         }
 
-        private string GetXmlFromPreset(string name, HandlingPreset preset)
+        private XmlDocument GetXmlFromPreset(HandlingPreset preset)
         {
             XmlDocument doc = new XmlDocument();
             XmlElement handlingItem = doc.CreateElement("Item");
             handlingItem.SetAttribute("type", "CHandlingData");
-            handlingItem.SetAttribute("presetName", name);
 
             foreach (var item in preset.Fields)
             {
@@ -1331,28 +1338,34 @@ namespace HandlingEditor.Client
                 Type fieldType = handlingInfo.FieldsInfo[fieldName].Type;
                 if(fieldType == FieldType.FloatType)
                 {
-                    field.SetAttribute("value", ((float)(fieldValue)).ToString());
+                    var value = (float)fieldValue;
+                    field.SetAttribute("value", value.ToString());
                 }
                 else if (fieldType == FieldType.IntType)
                 {
-                    field.SetAttribute("value", ((int)(fieldValue)).ToString());
+                    var value = (int)fieldValue;
+                    field.SetAttribute("value", value.ToString());
                 }
                 else if (fieldType == FieldType.Vector3Type)
                 {
-                    field.SetAttribute("x", ((Vector3)(fieldValue)).X.ToString());
-                    field.SetAttribute("y", ((Vector3)(fieldValue)).Y.ToString());
-                    field.SetAttribute("z", ((Vector3)(fieldValue)).Z.ToString());
+                    var value = (Vector3)(fieldValue);
+                    field.SetAttribute("x", value.X.ToString());
+                    field.SetAttribute("y", value.Y.ToString());
+                    field.SetAttribute("z", value.Z.ToString());
                 }
                 else if (fieldType == FieldType.StringType)
                 {
                     field.InnerText = fieldValue;
                 }
-                else { }
+                else
+                {
+
+                }
                 handlingItem.AppendChild(field);
             }
             doc.AppendChild(handlingItem);
 
-            return doc.OuterXml;
+            return doc;
         }
 
         private async void SavePreset(string name, HandlingPreset preset)
@@ -1362,8 +1375,9 @@ namespace HandlingEditor.Client
                 CitizenFX.Core.UI.Screen.ShowNotification($"The name {name} is already used for another preset.");
             else
             {
-                string xml = GetXmlFromPreset(name, preset);;
-                SetResourceKvp(kvpName, xml);
+                var xml = GetXmlFromPreset(preset);
+                xml["Item"].SetAttribute("presetName", name);
+                SetResourceKvp(kvpName, xml.OuterXml);
                 await Delay(0);
             }
         }
