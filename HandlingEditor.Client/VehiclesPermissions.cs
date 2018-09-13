@@ -12,8 +12,8 @@ namespace HandlingEditor.Client
 {
     public static class VehiclesPermissions
     {
-        public static Dictionary<int, bool> Classes = new Dictionary<int, bool>();
-        public static Dictionary<uint, bool> Vehicles = new Dictionary<uint, bool>();
+        public static Dictionary<int, bool> Classes { get; set; } = new Dictionary<int, bool>();
+        public static Dictionary<uint, bool> Vehicles { get; set; } = new Dictionary<uint, bool>();
 
         public static void ParseXml(string xml)
         {

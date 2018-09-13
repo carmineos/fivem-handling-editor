@@ -64,6 +64,7 @@ call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\config.ini"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\__resource.lua"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\HandlingInfo.xml"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\HandlingPresets.xml"
+call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\VehiclesPermissions.xml"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\NativeUI.net.dll"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\System.Xml.Mono.net.dll"
 )</PostBuildEvent>

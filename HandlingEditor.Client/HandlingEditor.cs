@@ -562,6 +562,8 @@ namespace HandlingEditor.Client
 
             RegisterDecorators();
 
+            ReadVehiclePermissions();
+
             currentTime = GetGameTimer();
             lastTime = currentTime;
             currentPreset = null;
@@ -1425,6 +1427,25 @@ namespace HandlingEditor.Client
                 handlingInfo.ParseXML(strings);
                 var editableFields = handlingInfo.FieldsInfo.Where(a => a.Value.Editable);
                 Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.Message);
+                Debug.WriteLine(e.StackTrace);
+                Debug.WriteLine($"{ScriptName}: Error loading {filename}");
+            }
+        }
+
+        private void ReadVehiclePermissions(string filename = "VehiclesPermissions.xml")
+        {
+            string strings = null;
+            try
+            {
+                strings = LoadResourceFile(ResourceName, filename);
+                VehiclesPermissions.ParseXml(strings);
+                Debug.WriteLine($"{ScriptName}: Loaded {filename}");
+                Debug.WriteLine($"{ScriptName}: Found {VehiclesPermissions.Classes.Count} class rules");
+                Debug.WriteLine($"{ScriptName}: Found {VehiclesPermissions.Vehicles.Count} vehicle rules");
             }
             catch (Exception e)
             {
