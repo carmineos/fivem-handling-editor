@@ -738,7 +738,7 @@ namespace HandlingEditor.Client
             {
                 int vehicle = GetVehiclePedIsIn(playerPed, false);
 
-                if (IsThisModelACar((uint)GetEntityModel(vehicle)) && GetPedInVehicleSeat(vehicle, -1) == playerPed && !IsEntityDead(vehicle))
+                if (VehiclesPermissions.IsVehicleAllowed(vehicle) && GetPedInVehicleSeat(vehicle, -1) == playerPed && !IsEntityDead(vehicle))
                 {
                     // Update current vehicle and get its preset
                     if (vehicle != currentVehicle)
