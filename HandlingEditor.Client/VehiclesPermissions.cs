@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Xml;
-using CitizenFX.Core;
-using CitizenFX.Core.UI;
 using static CitizenFX.Core.Native.API;
 
 namespace HandlingEditor.Client
@@ -40,8 +34,8 @@ namespace HandlingEditor.Client
                 Classes[classId] = classIsAllowed;
             }
 
-            var vehicleNodes = rootNode["Vehicles"]?.ChildNodes;
-            foreach (XmlNode item in vehicleNodes)
+            var modelNodes = rootNode["Models"]?.ChildNodes;
+            foreach (XmlNode item in modelNodes)
             {
                 if (item.NodeType == XmlNodeType.Comment)
                     continue;

@@ -430,7 +430,7 @@ namespace HandlingEditor.Client
                 newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, "Delete"));
             }
 
-            KvpList kvpList = new KvpList(kvpPrefix);
+            KvpEnumerable kvpList = new KvpEnumerable(kvpPrefix);
             foreach(var key in kvpList)
             {
                 string value = GetResourceKvpString(key);
@@ -778,7 +778,7 @@ namespace HandlingEditor.Client
                 if (currentVehicle != -1 && currentPreset != null)
                     UpdateVehicleDecorators(currentVehicle, currentPreset);
 
-                vehicles = new VehicleList();
+                vehicles = new VehicleEnumerable();
 
                 // Refreshes the iterated vehicles
                 RefreshVehicles(vehicles.Except(new List<int> { currentVehicle }));
