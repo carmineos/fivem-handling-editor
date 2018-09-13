@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		dist\VehiclesPermissions.xml = dist\VehiclesPermissions.xml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HandlingEditor.Server", "HandlingEditor.Server\HandlingEditor.Server.csproj", "{B1517F18-A119-4E16-A626-4E24399DB266}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{A71A59CE-21C1-4FE1-929E-120CE225A409}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A71A59CE-21C1-4FE1-929E-120CE225A409}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A71A59CE-21C1-4FE1-929E-120CE225A409}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1517F18-A119-4E16-A626-4E24399DB266}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1517F18-A119-4E16-A626-4E24399DB266}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1517F18-A119-4E16-A626-4E24399DB266}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1517F18-A119-4E16-A626-4E24399DB266}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
