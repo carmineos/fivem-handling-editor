@@ -57,7 +57,7 @@ namespace HandlingEditor.Client
             return GetOnscreenKeyboardResult();
         }
 
-        private UIMenuDynamicListItem AddDynamicFloatList(UIMenu menu, FloatFieldInfo fieldInfo)
+        private UIMenuDynamicListItem AddDynamicFloatList(UIMenu menu, FieldInfo<float> fieldInfo)
         {
             string name = fieldInfo.Name;
             string description = fieldInfo.Description;
@@ -125,7 +125,7 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private UIMenuDynamicListItem AddDynamicIntList(UIMenu menu, IntFieldInfo fieldInfo)
+        private UIMenuDynamicListItem AddDynamicIntList(UIMenu menu, FieldInfo<int> fieldInfo)
         {
             string name = fieldInfo.Name;
             string description = fieldInfo.Description;
@@ -194,7 +194,7 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private void AddDynamicVector3List(UIMenu menu, VectorFieldInfo fieldInfo)
+        private void AddDynamicVector3List(UIMenu menu, FieldInfo<Vector3> fieldInfo)
         {
             if (!currentPreset.Fields.ContainsKey(fieldInfo.Name))
                 return;
@@ -401,7 +401,7 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private UIMenuItem AddLockedItem(UIMenu menu, FieldInfo fieldInfo)
+        private UIMenuItem AddLockedItem(UIMenu menu, BaseFieldInfo fieldInfo)
         {
             var newitem = new UIMenuItem(fieldInfo.Name, fieldInfo.Description);
             newitem.Enabled = false;
@@ -480,11 +480,11 @@ namespace HandlingEditor.Client
                     Type fieldType = fieldInfo.Type;
 
                     if (fieldType == FieldType.FloatType)
-                        AddDynamicFloatList(EditorMenu, (FloatFieldInfo)item.Value);
+                        AddDynamicFloatList(EditorMenu, (FieldInfo<float>)item.Value);
                     else if (fieldType == FieldType.IntType)
-                        AddDynamicIntList(EditorMenu, (IntFieldInfo)item.Value);
+                        AddDynamicIntList(EditorMenu, (FieldInfo<int>)item.Value);
                     else if (fieldType == FieldType.Vector3Type)
-                        AddDynamicVector3List(EditorMenu, (VectorFieldInfo)item.Value);
+                        AddDynamicVector3List(EditorMenu, (FieldInfo<Vector3>)item.Value);
                 }
                 else
                 {
@@ -504,6 +504,7 @@ namespace HandlingEditor.Client
                     string value = GetResourceKvpString(key);
                     if (value != null)
                     {
+                        value = Helpers.RemoveByteOrderMarks(value);
                         XmlDocument doc = new XmlDocument();
                         doc.LoadXml(value);
                         var handling = doc["Item"];
@@ -810,7 +811,7 @@ namespace HandlingEditor.Client
                         continue;
                     }
 
-                    FieldInfo fieldInfo = fieldsInfo[fieldName];
+                    BaseFieldInfo fieldInfo = fieldsInfo[fieldName];
                     Type fieldType = fieldInfo.Type;
                     string className = fieldInfo.ClassName;
 
@@ -1392,7 +1393,7 @@ namespace HandlingEditor.Client
                     continue;
 
                 string fieldName = item.Name;
-                Type fieldType = FieldInfo.GetFieldType(fieldName);
+                Type fieldType = FieldType.GetFieldType(fieldName);
 
                 XmlElement elem = (XmlElement)item;
 
@@ -1424,7 +1425,7 @@ namespace HandlingEditor.Client
             try
             {
                 strings = LoadResourceFile(ResourceName, filename);
-                handlingInfo.ParseXML(strings);
+                handlingInfo.ParseXml(strings);
                 var editableFields = handlingInfo.FieldsInfo.Where(a => a.Value.Editable);
                 Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
             }
@@ -1461,6 +1462,7 @@ namespace HandlingEditor.Client
             try
             {
                 strings = LoadResourceFile(ResourceName, filename);
+                strings = Helpers.RemoveByteOrderMarks(strings);
                 XmlDocument doc = new XmlDocument();
                 doc.LoadXml(strings);
 

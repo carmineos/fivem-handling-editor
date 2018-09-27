@@ -52,6 +52,7 @@
     <Compile Include="HandlingInfo.cs" />
     <Compile Include="HandlingEditor.cs" />
     <Compile Include="HandlingPreset.cs" />
+    <Compile Include="Helpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Enumerables.cs" />
     <Compile Include="VehiclesPermissions.cs" />

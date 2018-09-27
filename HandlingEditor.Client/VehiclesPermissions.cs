@@ -11,6 +11,8 @@ namespace HandlingEditor.Client
 
         public static void ParseXml(string xml)
         {
+            xml = Helpers.RemoveByteOrderMarks(xml);
+
             Classes = new Dictionary<int, bool>();
             Vehicles = new Dictionary<uint, bool>();
 
