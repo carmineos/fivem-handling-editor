@@ -454,7 +454,7 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private async void InitialiseMenu()
+        private void InitialiseMenu()
         {
             _menuPool = new MenuPool();
             {
@@ -545,8 +545,6 @@ namespace HandlingEditor.Client
 
             _menuPool.Add(EditorMenu);
             _menuPool.RefreshIndex();
-
-            await Delay(0);
         }
         #endregion
 
@@ -680,6 +678,7 @@ namespace HandlingEditor.Client
                                 SavePreset(name, currentPreset);
                                 InitialiseMenu();
                                 presetsMenu.Visible = true;
+                                CitizenFX.Core.UI.Screen.ShowNotification($"Personal preset ~g~{name}~w~ saved");
                             }
                             else
                                 CitizenFX.Core.UI.Screen.ShowNotification("Invalid string.");
@@ -688,12 +687,15 @@ namespace HandlingEditor.Client
                         {
                             if (presetsMenu.MenuItems.Count > 0)
                             {
-                                string key = $"{kvpPrefix}{presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text}";
+                                string kvpName = presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text;
+                                string key = $"{kvpPrefix}{kvpName}";
                                 if (GetResourceKvpString(key) != null)
                                 {
                                     DeleteResourceKvp(key);
                                     InitialiseMenu();
                                     presetsMenu.Visible = true;
+
+                                    CitizenFX.Core.UI.Screen.ShowNotification($"Personal preset ~r~{kvpName}~w~ deleted");
                                 }
                             }
                             else
@@ -708,14 +710,12 @@ namespace HandlingEditor.Client
                         _menuPool.CloseAllMenus();
                 }
             }
-
-            await Task.FromResult(0);
         }
 
         /// <summary>
         /// Disable controls for controller to use the script with the controller
         /// </summary>
-        private async void DisableControls()
+        private void DisableControls()
         {
             DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
             DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
@@ -723,8 +723,6 @@ namespace HandlingEditor.Client
             DisableControlAction(1, 27, true); // INPUT_PHONE = DPAD - UP
             DisableControlAction(1, 80, true); // INPUT_VEH_CIN_CAM = B
             DisableControlAction(1, 73, true); // INPUT_VEH_DUCK = A
-
-            await Delay(0);
         }
 
         /// <summary>
@@ -786,7 +784,6 @@ namespace HandlingEditor.Client
 
                 lastTime = GetGameTimer();
             }
-            await Delay(0);
         }
 
         /// <summary>
@@ -794,7 +791,7 @@ namespace HandlingEditor.Client
         /// </summary>
         /// <param name="vehicle"></param>
         /// <param name="preset"></param>
-        private async void RefreshVehicleUsingPreset(int vehicle, HandlingPreset preset)
+        private void RefreshVehicleUsingPreset(int vehicle, HandlingPreset preset)
         {
             if (DoesEntityExist(vehicle))
             {
@@ -852,14 +849,13 @@ namespace HandlingEditor.Client
                     }
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
         /// Refreshes the handling for the vehicles in <paramref name="vehiclesList"/> if they are close enough.
         /// </summary>
         /// <param name="vehiclesList"></param>
-        private async void RefreshVehicles(IEnumerable<int> vehiclesList)
+        private void RefreshVehicles(IEnumerable<int> vehiclesList)
         {
             Vector3 currentCoords = GetEntityCoords(playerPed, true);
 
@@ -873,14 +869,13 @@ namespace HandlingEditor.Client
                         RefreshVehicleUsingDecorators(entity);
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
         /// Refreshes the handling for the <paramref name="vehicle"/> using the decorators attached to it.
         /// </summary>
         /// <param name="vehicle"></param>
-        private async void RefreshVehicleUsingDecorators(int vehicle)
+        private void RefreshVehicleUsingDecorators(int vehicle)
         {
             foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable))
             {
@@ -945,7 +940,6 @@ namespace HandlingEditor.Client
                     }
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
@@ -974,7 +968,7 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Registers the decorators for this script
         /// </summary>
-        private async void RegisterDecorators()
+        private void RegisterDecorators()
         {
             foreach (var item in handlingInfo.FieldsInfo)
             {
@@ -1006,14 +1000,13 @@ namespace HandlingEditor.Client
                     DecorRegister($"{decorZ}_def", 1);
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
         /// Remove the handling decorators attached to the <paramref name="vehicle"/>.
         /// </summary>
         /// <param name="vehicle"></param>
-        private async void RemoveDecorators(int vehicle)
+        private void RemoveDecorators(int vehicle)
         {
             foreach (var item in handlingInfo.FieldsInfo)
             {
@@ -1047,7 +1040,6 @@ namespace HandlingEditor.Client
                     if (DecorExistOn(vehicle, defDecorZ)) DecorRemove(vehicle, defDecorZ);
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
@@ -1057,7 +1049,7 @@ namespace HandlingEditor.Client
         /// <param name="name"></param>
         /// <param name="currentValue"></param>
         /// <param name="defaultValue"></param>
-        private async void UpdateFloatDecorator(int vehicle, string name, float currentValue, float defaultValue)
+        private void UpdateFloatDecorator(int vehicle, string name, float currentValue, float defaultValue)
         {
             // Decorator exists but needs to be updated
             if (DecorExistOn(vehicle, name))
@@ -1079,7 +1071,6 @@ namespace HandlingEditor.Client
                         Debug.WriteLine($"{ScriptName}: Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
@@ -1089,7 +1080,7 @@ namespace HandlingEditor.Client
         /// <param name="name"></param>
         /// <param name="currentValue"></param>
         /// <param name="defaultValue"></param>
-        private async void UpdateIntDecorator(int vehicle, string name, int currentValue, int defaultValue)
+        private void UpdateIntDecorator(int vehicle, string name, int currentValue, int defaultValue)
         {
             // Decorator exists but needs to be updated
             if (DecorExistOn(vehicle, name))
@@ -1111,14 +1102,13 @@ namespace HandlingEditor.Client
                         Debug.WriteLine($"{ScriptName}: Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
         /// Updates the decorators on the <paramref name="vehicle"/> with updated values from the <paramref name="preset"/>
         /// </summary>
         /// <param name="vehicle"></param>
-        private async void UpdateVehicleDecorators(int vehicle, HandlingPreset preset)
+        private void UpdateVehicleDecorators(int vehicle, HandlingPreset preset)
         {
             foreach (var item in preset.Fields)
             {
@@ -1161,7 +1151,6 @@ namespace HandlingEditor.Client
                     UpdateFloatDecorator(vehicle, defDecorNameZ, defaultValue.Z, fieldValue.Z);
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
@@ -1233,7 +1222,7 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Prints the values of the decorators used on the <paramref name="vehicle"/>
         /// </summary>
-        private async void PrintDecorators(int vehicle)
+        private void PrintDecorators(int vehicle)
         {
             if (DoesEntityExist(vehicle))
             {
@@ -1302,14 +1291,12 @@ namespace HandlingEditor.Client
                 Debug.Write(s.ToString());
             }
             else Debug.WriteLine($"{ScriptName}: Can't find vehicle with handle {vehicle}");
-
-            await Delay(0);
         }
 
         /// <summary>
         /// Prints the list of vehicles using any decorator for this script.
         /// </summary>
-        private async void PrintVehiclesWithDecorators(IEnumerable<int> vehiclesList)
+        private void PrintVehiclesWithDecorators(IEnumerable<int> vehiclesList)
         {
             IEnumerable<int> entities = vehiclesList.Where(entity => HasDecorators(entity));
 
@@ -1322,8 +1309,6 @@ namespace HandlingEditor.Client
                 s.AppendLine($"Vehicle:{vehicle} netID:{netID}");
             }
             Debug.WriteLine(s.ToString());
-
-            await Delay(0);
         }
 
         private XmlDocument GetXmlFromPreset(HandlingPreset preset)
@@ -1371,7 +1356,7 @@ namespace HandlingEditor.Client
             return doc;
         }
 
-        private async void SavePreset(string name, HandlingPreset preset)
+        private void SavePreset(string name, HandlingPreset preset)
         {
             string kvpName = $"{kvpPrefix}{name}";
             if(GetResourceKvpString(kvpName) != null)
@@ -1381,7 +1366,6 @@ namespace HandlingEditor.Client
                 var xml = GetXmlFromPreset(preset);
                 xml["Item"].SetAttribute("presetName", name);
                 SetResourceKvp(kvpName, xml.OuterXml);
-                await Delay(0);
             }
         }
         
