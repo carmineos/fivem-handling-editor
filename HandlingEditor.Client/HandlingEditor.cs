@@ -456,17 +456,24 @@ namespace HandlingEditor.Client
 
         private void InitialiseMenu()
         {
-            _menuPool = new MenuPool();
+            if (_menuPool == null)
             {
-                _menuPool.ResetCursorOnOpen = true;
+                _menuPool = new MenuPool();
+                {
+                    _menuPool.ResetCursorOnOpen = true;
+                }
             }
 
-            EditorMenu = new UIMenu(ScriptName, "Beta", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height));
+            if (EditorMenu == null)
             {
-                EditorMenu.MouseEdgeEnabled = false;
-                EditorMenu.ControlDisablingEnabled = false;
-                EditorMenu.MouseControlsEnabled = false;
+                EditorMenu = new UIMenu(ScriptName, "Beta", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height));
+                {
+                    EditorMenu.MouseEdgeEnabled = false;
+                    EditorMenu.ControlDisablingEnabled = false;
+                    EditorMenu.MouseControlsEnabled = false;
+                }
             }
+            else EditorMenu.Clear();
 
             foreach (var item in handlingInfo.FieldsInfo)
             {
@@ -637,25 +644,62 @@ namespace HandlingEditor.Client
                     Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
             }), false);
 
-            Tick += OnTick;
+            Tick += UpdateCurrentVehicle;
+            Tick += MenuTask;
             Tick += ScriptTask;
+        }
+
+        /// <summary>
+        /// Updates the <see cref="currentVehicle"/> and the <see cref="currentPreset"/>
+        /// </summary>
+        /// <returns></returns>
+        private async Task UpdateCurrentVehicle()
+        {
+            playerPed = PlayerPedId();
+
+            if (IsPedInAnyVehicle(playerPed, false))
+            {
+                int vehicle = GetVehiclePedIsIn(playerPed, false);
+
+                if (VehiclesPermissions.IsVehicleAllowed(vehicle) && GetPedInVehicleSeat(vehicle, -1) == playerPed && !IsEntityDead(vehicle))
+                {
+                    // Update current vehicle and get its preset
+                    if (vehicle != currentVehicle)
+                    {
+                        currentVehicle = vehicle;
+                        currentPreset = CreateHandlingPreset(currentVehicle);
+                        InitialiseMenu();
+                    }
+                }
+                else
+                {
+                    // If current vehicle isn't a car or player isn't driving current vehicle or vehicle is dead
+                    currentVehicle = -1;
+                    currentPreset = null;
+                }
+            }
+            else
+            {
+                // If player isn't in any vehicle
+                currentVehicle = -1;
+                currentPreset = null;
+            }
         }
 
         /// <summary>
         /// The GUI task of the script
         /// </summary>
         /// <returns></returns>
-        private async Task OnTick()
+        private async Task MenuTask()
         {
             if(_menuPool != null)
             {
-
                 _menuPool.ProcessMenus();
 
                 if (_menuPool.IsAnyMenuOpen())
                     DisableControls();
 
-                if (currentVehicle != -1)
+                if (currentVehicle != -1 && currentPreset != null)
                 {
                     if (IsControlJustPressed(1, toggleMenu)/* || IsDisabledControlJustPressed(1, toggleMenu)*/) // TOGGLE MENU VISIBLE
                     {
@@ -732,36 +776,6 @@ namespace HandlingEditor.Client
         private async Task ScriptTask()
         {
             currentTime = (GetGameTimer() - lastTime);
-
-            playerPed = PlayerPedId();
-
-            if (IsPedInAnyVehicle(playerPed, false))
-            {
-                int vehicle = GetVehiclePedIsIn(playerPed, false);
-
-                if (VehiclesPermissions.IsVehicleAllowed(vehicle) && GetPedInVehicleSeat(vehicle, -1) == playerPed && !IsEntityDead(vehicle))
-                {
-                    // Update current vehicle and get its preset
-                    if (vehicle != currentVehicle)
-                    {
-                        currentVehicle = vehicle;
-                        currentPreset = CreateHandlingPreset(currentVehicle);                
-                        InitialiseMenu();
-                    }
-                }
-                else
-                {
-                    // If current vehicle isn't a car or player isn't driving current vehicle or vehicle is dead
-                    currentVehicle = -1;
-                    currentPreset = null;
-                }
-            }
-            else
-            {
-                // If player isn't in any vehicle
-                currentVehicle = -1;
-                currentPreset = null;
-            }
 
             // Check if decorators needs to be updated
             if (currentTime > timer)
