@@ -17,10 +17,11 @@ namespace HandlingEditor.Client
         private static string ResourceName;
         private static readonly string ScriptName = "Handling Editor";
         private static readonly string kvpPrefix = "handling_";
+        private static float FloatPrecision = 0.001f;
 
         #region CONFIG_FIEDS
-        private static float editingFactor = 0.01f;
-        private static float maxSyncDistance = 150.0f;
+        private static float FloatStep = 0.01f;
+        private static float ScriptRange = 150.0f;
         private static long timer = 1000;
         private static bool debug = false;
         private static int toggleMenu = 168;
@@ -52,7 +53,7 @@ namespace HandlingEditor.Client
             DisableAllControlActions(1);
             AddTextEntry("ENTER_VALUE", "Enter value");
             DisplayOnscreenKeyboard(1, "ENTER_VALUE", "", defaultText, "", "", "", 128);
-            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(0);
+            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(100);
             EnableAllControlActions(1);
             return GetOnscreenKeyboardResult();
         }
@@ -68,13 +69,13 @@ namespace HandlingEditor.Client
                 return null;
 
             float value = currentPreset.Fields[name];
-            var newitem = new UIMenuDynamicListItem(name, description, value.ToString("F3"), (sender, direction) =>
+            string FloatChangeCallBack(UIMenuDynamicListItem item, UIMenuDynamicListItem.ChangeDirection direction)
             {
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
                 {
-                    var newvalue = value - editingFactor;
+                    var newvalue = value - FloatStep;
                     if (newvalue < min)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{name}~w~ is {min}");
+                        Screen.ShowNotification($"Min value allowed for ~b~{name}~w~ is {min}");
                     else
                     {
                         value = newvalue;
@@ -83,9 +84,9 @@ namespace HandlingEditor.Client
                 }
                 else
                 {
-                    var newvalue = value + editingFactor;
+                    var newvalue = value + FloatStep;
                     if (newvalue > max)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{name}~w~ is {max}");
+                        Screen.ShowNotification($"Max value allowed for ~b~{name}~w~ is {max}");
                     else
                     {
                         value = newvalue;
@@ -93,7 +94,8 @@ namespace HandlingEditor.Client
                     }
                 }
                 return value.ToString("F3");
-            });
+            };
+            var newitem = new UIMenuDynamicListItem(name, description, value.ToString("F3"), FloatChangeCallBack);
 
             menu.AddItem(newitem);
 
@@ -111,9 +113,9 @@ namespace HandlingEditor.Client
                         if(newvalue >= min && newvalue <= max)
                             currentPreset.Fields[name] = newvalue;
                         else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
+                            Screen.ShowNotification($"Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
                     }else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
+                        Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
                     InitialiseMenu(); //Should just update the current item instead
@@ -135,14 +137,14 @@ namespace HandlingEditor.Client
             if (!currentPreset.Fields.ContainsKey(name))
                 return null;
 
-            int value = currentPreset.Fields[name]; //TODO: Get value from current preset
-            var newitem = new UIMenuDynamicListItem(name, description, value.ToString(), (sender, direction) =>
+            int value = currentPreset.Fields[name];
+            string IntChangeCallBack(UIMenuDynamicListItem item, UIMenuDynamicListItem.ChangeDirection direction)
             {
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
                 {
                     var newvalue = value - 1;
                     if (newvalue < min)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{name}~w~ is {min}");
+                        Screen.ShowNotification($"Min value allowed for ~b~{name}~w~ is {min}");
                     else
                     {
                         value = newvalue;
@@ -153,7 +155,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = value + 1;
                     if (newvalue > max)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{name}~w~ is {max}");
+                        Screen.ShowNotification($"Max value allowed for ~b~{name}~w~ is {max}");
                     else
                     {
                         value = newvalue;
@@ -161,7 +163,8 @@ namespace HandlingEditor.Client
                     }
                 }
                 return value.ToString();
-            });
+            };
+            var newitem = new UIMenuDynamicListItem(name, description, value.ToString(), IntChangeCallBack);
 
             menu.AddItem(newitem);
 
@@ -179,10 +182,10 @@ namespace HandlingEditor.Client
                         if (newvalue >= min && newvalue <= max)
                             currentPreset.Fields[name] = newvalue;
                         else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
+                            Screen.ShowNotification($"Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
                     }
                     else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
+                        Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
                     InitialiseMenu(); //Should just update the current item instead
@@ -196,22 +199,27 @@ namespace HandlingEditor.Client
 
         private void AddDynamicVector3List(UIMenu menu, FieldInfo<Vector3> fieldInfo)
         {
-            if (!currentPreset.Fields.ContainsKey(fieldInfo.Name))
+            string fieldName = fieldInfo.Name;
+
+            if (!currentPreset.Fields.ContainsKey(fieldName))
                 return;
 
             string fieldDescription = fieldInfo.Description;
-            string fieldNameX = $"{fieldInfo.Name}_x";
-            float valueX = currentPreset.Fields[fieldInfo.Name].X;
-            float minValueX = fieldInfo.Min.X;
-            float maxValueX = fieldInfo.Max.X;
+            Vector3 fieldMin = fieldInfo.Min;
+            Vector3 fieldMax = fieldInfo.Max;
+
+            string fieldNameX = $"{fieldName}_x";
+            float valueX = currentPreset.Fields[fieldName].X;
+            float minValueX = fieldMin.X;
+            float maxValueX = fieldMax.X;
 
             var newitemX = new UIMenuDynamicListItem(fieldNameX, fieldDescription, valueX.ToString("F3"), (sender, direction) =>
             {
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
                 {
-                    var newvalue = valueX - editingFactor;
+                    var newvalue = valueX - FloatStep;
                     if (newvalue < minValueX)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldNameX}~w~ is {minValueX}");
+                        Screen.ShowNotification($"Min value allowed for ~b~{fieldNameX}~w~ is {minValueX}");
                     else
                     {
                         valueX = newvalue;
@@ -220,9 +228,9 @@ namespace HandlingEditor.Client
                 }
                 else
                 {
-                    var newvalue = valueX + editingFactor;
+                    var newvalue = valueX + FloatStep;
                     if (newvalue > maxValueX)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldNameX}~w~ is {maxValueX}");
+                        Screen.ShowNotification($"Max value allowed for ~b~{fieldNameX}~w~ is {maxValueX}");
                     else
                     {
                         valueX = newvalue;
@@ -234,44 +242,18 @@ namespace HandlingEditor.Client
 
             menu.AddItem(newitemX);
 
-            EditorMenu.OnItemSelect += async (sender, item, index) =>
-            {
-                if (item == newitemX)
-                {
-                    EditorMenu.Visible = false;
-
-                    string text = await GetOnScreenString(valueX.ToString());
-                    float newvalue = valueX;
-
-                    if (float.TryParse(text, out newvalue))
-                    {
-                        if (newvalue >= minValueX && newvalue <= maxValueX)
-                            currentPreset.Fields[fieldInfo.Name].X = newvalue;
-                        else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameX}~w~, Min:{minValueX}, Max:{maxValueX}");
-                    }
-                    else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameX}~w~");
-
-                    int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
-                    EditorMenu.Visible = true;
-                }
-            };
-
-            string fieldNameY = $"{fieldInfo.Name}_y";
-            float valueY = currentPreset.Fields[fieldInfo.Name].Y;
-            float minValueY = fieldInfo.Min.X;
-            float maxValueY = fieldInfo.Max.X;
+            string fieldNameY = $"{fieldName}_y";
+            float valueY = currentPreset.Fields[fieldName].Y;
+            float minValueY = fieldMin.Y;
+            float maxValueY = fieldMax.Y;
 
             var newitemY = new UIMenuDynamicListItem(fieldNameY, fieldDescription, valueY.ToString("F3"), (sender, direction) =>
             {
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
                 {
-                    var newvalue = valueY - editingFactor;
+                    var newvalue = valueY - FloatStep;
                     if (newvalue < minValueY)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldNameY}~w~ is {minValueY}");
+                        Screen.ShowNotification($"Min value allowed for ~b~{fieldNameY}~w~ is {minValueY}");
                     else
                     {
                         valueY = newvalue;
@@ -280,9 +262,9 @@ namespace HandlingEditor.Client
                 }
                 else
                 {
-                    var newvalue = valueY + editingFactor;
+                    var newvalue = valueY + FloatStep;
                     if (newvalue > maxValueY)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldNameY}~w~ is {maxValueY}");
+                        Screen.ShowNotification($"Max value allowed for ~b~{fieldNameY}~w~ is {maxValueY}");
                     else
                     {
                         valueY = newvalue;
@@ -294,44 +276,18 @@ namespace HandlingEditor.Client
 
             menu.AddItem(newitemY);
 
-            EditorMenu.OnItemSelect += async (sender, item, index) =>
-            {
-                if (item == newitemY)
-                {
-                    EditorMenu.Visible = false;
-
-                    string text = await GetOnScreenString(valueY.ToString());
-                    float newvalue = valueY;
-
-                    if (float.TryParse(text, out newvalue))
-                    {
-                        if (newvalue >= minValueY && newvalue <= maxValueY)
-                            currentPreset.Fields[fieldInfo.Name].Y = newvalue;
-                        else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameY}~w~, Min:{minValueY}, Max:{maxValueY}");
-                    }
-                    else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameY}~w~");
-
-                    int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
-                    EditorMenu.Visible = true;
-                }
-            };
-
-            string fieldNameZ = $"{fieldInfo.Name}_z";
-            float valueZ = currentPreset.Fields[fieldInfo.Name].Z;
-            float minValueZ = fieldInfo.Min.Z;
-            float maxValueZ = fieldInfo.Max.Z;
+            string fieldNameZ = $"{fieldName}_z";
+            float valueZ = currentPreset.Fields[fieldName].Z;
+            float minValueZ = fieldMin.Z;
+            float maxValueZ = fieldMax.Z;
 
             var newitemZ = new UIMenuDynamicListItem(fieldNameZ, fieldDescription, valueZ.ToString("F3"), (sender, direction) =>
             {
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
                 {
-                    var newvalue = valueZ - editingFactor;
+                    var newvalue = valueZ - FloatStep;
                     if (newvalue < minValueZ)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldNameZ}~w~ is {minValueZ}");
+                        Screen.ShowNotification($"Min value allowed for ~b~{fieldNameZ}~w~ is {minValueZ}");
                     else
                     {
                         valueZ = newvalue;
@@ -340,9 +296,9 @@ namespace HandlingEditor.Client
                 }
                 else
                 {
-                    var newvalue = valueZ + editingFactor;
+                    var newvalue = valueZ + FloatStep;
                     if (newvalue > maxValueZ)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldNameZ}~w~ is {maxValueZ}");
+                        Screen.ShowNotification($"Max value allowed for ~b~{fieldNameZ}~w~ is {maxValueZ}");
                     else
                     {
                         valueZ = newvalue;
@@ -356,7 +312,51 @@ namespace HandlingEditor.Client
 
             EditorMenu.OnItemSelect += async (sender, item, index) =>
             {
-                if (item == newitemZ)
+                if (item == newitemX)
+                {
+                    EditorMenu.Visible = false;
+
+                    string text = await GetOnScreenString(valueX.ToString());
+                    float newvalue = valueX;
+
+                    if (float.TryParse(text, out newvalue))
+                    {
+                        if (newvalue >= minValueX && newvalue <= maxValueX)
+                            currentPreset.Fields[fieldName].X = newvalue;
+                        else
+                            Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameX}~w~, Min:{minValueX}, Max:{maxValueX}");
+                    }
+                    else
+                        Screen.ShowNotification($"Invalid value for ~b~{fieldNameX}~w~");
+
+                    int currentSelection = EditorMenu.CurrentSelection;
+                    InitialiseMenu(); //Should just update the current item instead
+                    EditorMenu.CurrentSelection = currentSelection;
+                    EditorMenu.Visible = true;
+                }
+                else if (item == newitemY)
+                {
+                    EditorMenu.Visible = false;
+
+                    string text = await GetOnScreenString(valueY.ToString());
+                    float newvalue = valueY;
+
+                    if (float.TryParse(text, out newvalue))
+                    {
+                        if (newvalue >= minValueY && newvalue <= maxValueY)
+                            currentPreset.Fields[fieldName].Y = newvalue;
+                        else
+                            Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameY}~w~, Min:{minValueY}, Max:{maxValueY}");
+                    }
+                    else
+                        Screen.ShowNotification($"Invalid value for ~b~{fieldNameY}~w~");
+
+                    int currentSelection = EditorMenu.CurrentSelection;
+                    InitialiseMenu(); //Should just update the current item instead
+                    EditorMenu.CurrentSelection = currentSelection;
+                    EditorMenu.Visible = true;
+                }
+                else if (item == newitemZ)
                 {
                     EditorMenu.Visible = false;
 
@@ -366,12 +366,12 @@ namespace HandlingEditor.Client
                     if (float.TryParse(text, out newvalue))
                     {
                         if (newvalue >= minValueZ && newvalue <= maxValueZ)
-                            currentPreset.Fields[fieldInfo.Name].Z = newvalue;
+                            currentPreset.Fields[fieldName].Z = newvalue;
                         else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameZ}~w~, Min:{minValueZ}, Max:{maxValueZ}");
+                            Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameZ}~w~, Min:{minValueZ}, Max:{maxValueZ}");
                     }
                     else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameZ}~w~");
+                        Screen.ShowNotification($"Invalid value for ~b~{fieldNameZ}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
                     InitialiseMenu(); //Should just update the current item instead
@@ -413,7 +413,7 @@ namespace HandlingEditor.Client
             {
                 if (item == newitem)
                 {
-                    CitizenFX.Core.UI.Screen.ShowNotification($"The server doesn't allow to edit this field.");
+                    Screen.ShowNotification($"The server doesn't allow to edit this field.");
                 }
             };
             return newitem;
@@ -421,57 +421,68 @@ namespace HandlingEditor.Client
 
         private UIMenu AddPresetsSubMenu(UIMenu menu)
         {
-            var newitem = _menuPool.AddSubMenu(menu, "Saved Presets", "The handling presets saved by you.");
+            var newitem = new UIMenuItem("Personal Presets", "The handling presets saved by you.");
+            var subMenu = new UIMenu(menu.Title.Caption, "Personal Presets")
             {
-                newitem.MouseEdgeEnabled = false;
-                newitem.ControlDisablingEnabled = false;
-                newitem.MouseControlsEnabled = false;
-                newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneExtraOption, "Save"));
-                newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, "Delete"));
-            }
+                MouseEdgeEnabled = false,
+                ControlDisablingEnabled = false,
+                MouseControlsEnabled = false,
+            };
+
+            subMenu.AddInstructionalButton(new InstructionalButton(Control.PhoneExtraOption, GetLabelText("ITEM_SAVE")));
+            subMenu.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, GetLabelText("ITEM_DEL")));
+            menu.AddItem(newitem);
+            menu.BindMenuToItem(subMenu, newitem);
+            _menuPool.Add(subMenu);
 
             KvpEnumerable kvpList = new KvpEnumerable(kvpPrefix);
             foreach(var key in kvpList)
             {
                 string value = GetResourceKvpString(key);
-                newitem.AddItem(new UIMenuItem(key.Remove(0, kvpPrefix.Length)));  
+                subMenu.AddItem(new UIMenuItem(key.Remove(0, kvpPrefix.Length)));  
             }
-            return newitem;
+            return subMenu;
         }
 
         private UIMenu AddServerPresetsSubMenu(UIMenu menu)
         {
-            var newitem = _menuPool.AddSubMenu(menu, "Server Presets", "The handling presets loaded from the server.");
+            var newitem = new UIMenuItem("Server Presets", "The handling presets loaded from the server.");
+            var subMenu = new UIMenu(menu.Title.Caption, "Server Presets")
             {
-                newitem.MouseEdgeEnabled = false;
-                newitem.ControlDisablingEnabled = false;
-                newitem.MouseControlsEnabled = false;
-            }
+                MouseEdgeEnabled = false,
+                ControlDisablingEnabled = false,
+                MouseControlsEnabled = false,
+            };
+
+            menu.AddItem(newitem);
+            menu.BindMenuToItem(subMenu, newitem);
+            _menuPool.Add(subMenu);
 
             foreach (var preset in serverPresets)
-                newitem.AddItem(new UIMenuItem(preset.Key));
+                subMenu.AddItem(new UIMenuItem(preset.Key));
 
-            return newitem;
+            return subMenu;
         }
 
         private void InitialiseMenu()
         {
             if (_menuPool == null)
             {
-                _menuPool = new MenuPool();
+                _menuPool = new MenuPool()
                 {
-                    _menuPool.ResetCursorOnOpen = true;
-                }
+                    ResetCursorOnOpen = true
+                };
             }
 
             if (EditorMenu == null)
             {
-                EditorMenu = new UIMenu(ScriptName, "Beta", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height));
+                EditorMenu = new UIMenu(ScriptName, "Editor", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height))
                 {
-                    EditorMenu.MouseEdgeEnabled = false;
-                    EditorMenu.ControlDisablingEnabled = false;
-                    EditorMenu.MouseControlsEnabled = false;
-                }
+                    MouseEdgeEnabled = false,
+                    ControlDisablingEnabled = false,
+                    MouseControlsEnabled = false
+                };
+                _menuPool.Add(EditorMenu);
             }
             else EditorMenu.Clear();
 
@@ -550,7 +561,6 @@ namespace HandlingEditor.Client
                 }
             };
 
-            _menuPool.Add(EditorMenu);
             _menuPool.RefreshIndex();
         }
         #endregion
@@ -586,8 +596,8 @@ namespace HandlingEditor.Client
 
                 if (float.TryParse(args[0], out float value))
                 {
-                    maxSyncDistance = value;
-                    Debug.WriteLine($"{ScriptName}: Received new {nameof(maxSyncDistance)} value {value}");
+                    ScriptRange = value;
+                    Debug.WriteLine($"{ScriptName}: Received new {nameof(ScriptRange)} value {value}");
                 }
                 else Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as float");
 
@@ -648,6 +658,8 @@ namespace HandlingEditor.Client
             Tick += MenuTask;
             Tick += ScriptTask;
         }
+
+        #region TASKS
 
         /// <summary>
         /// Updates the <see cref="currentVehicle"/> and the <see cref="currentPreset"/>
@@ -757,19 +769,6 @@ namespace HandlingEditor.Client
         }
 
         /// <summary>
-        /// Disable controls for controller to use the script with the controller
-        /// </summary>
-        private void DisableControls()
-        {
-            DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
-            DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
-            DisableControlAction(1, 48, true); // INPUT_HUD_SPECIAL = DPAD - DOWN
-            DisableControlAction(1, 27, true); // INPUT_PHONE = DPAD - UP
-            DisableControlAction(1, 80, true); // INPUT_VEH_CIN_CAM = B
-            DisableControlAction(1, 73, true); // INPUT_VEH_DUCK = A
-        }
-
-        /// <summary>
         /// The main task of the script
         /// </summary>
         /// <returns></returns>
@@ -798,6 +797,23 @@ namespace HandlingEditor.Client
 
                 lastTime = GetGameTimer();
             }
+        }
+
+        #endregion
+
+        #region METHODS
+
+        /// <summary>
+        /// Disable controls for controller to use the script with the controller
+        /// </summary>
+        private void DisableControls()
+        {
+            DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
+            DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
+            DisableControlAction(1, 48, true); // INPUT_HUD_SPECIAL = DPAD - DOWN
+            DisableControlAction(1, 27, true); // INPUT_PHONE = DPAD - UP
+            DisableControlAction(1, 80, true); // INPUT_VEH_CIN_CAM = B
+            DisableControlAction(1, 73, true); // INPUT_VEH_DUCK = A
         }
 
         /// <summary>
@@ -829,7 +845,7 @@ namespace HandlingEditor.Client
                     if (fieldType == FieldType.FloatType)
                     {
                         var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                        if (Math.Abs(value - fieldValue) > 0.001f)
+                        if (Math.Abs(value - fieldValue) > FloatPrecision)
                         {
                             SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
 
@@ -879,7 +895,7 @@ namespace HandlingEditor.Client
                 {
                     Vector3 coords = GetEntityCoords(entity, true);
 
-                    if (Vector3.Distance(currentCoords, coords) <= maxSyncDistance)
+                    if (Vector3.Distance(currentCoords, coords) <= ScriptRange)
                         RefreshVehicleUsingDecorators(entity);
                 }
             }
@@ -903,7 +919,7 @@ namespace HandlingEditor.Client
                     {
                         var decorValue = DecorGetFloat(vehicle, fieldName);
                         var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                        if (Math.Abs(value - decorValue) > 0.001f)
+                        if (Math.Abs(value - decorValue) > FloatPrecision)
                         {
                             SetVehicleHandlingFloat(vehicle, className, fieldName, decorValue);
 
@@ -1069,7 +1085,7 @@ namespace HandlingEditor.Client
             if (DecorExistOn(vehicle, name))
             {
                 float decorValue = DecorGetFloat(vehicle, name);
-                if (Math.Abs(currentValue - decorValue) > 0.001f)
+                if (Math.Abs(currentValue - decorValue) > FloatPrecision)
                 {
                     DecorSetFloat(vehicle, name, currentValue);
                     if (debug)
@@ -1078,7 +1094,7 @@ namespace HandlingEditor.Client
             }
             else // Decorator doesn't exist, create it if required
             {
-                if (Math.Abs(currentValue - defaultValue) > 0.001f)
+                if (Math.Abs(currentValue - defaultValue) > FloatPrecision)
                 {
                     DecorSetFloat(vehicle, name, currentValue);
                     if (debug)
@@ -1507,15 +1523,17 @@ namespace HandlingEditor.Client
                 Config config = new Config(strings);
 
                 toggleMenu = config.GetIntValue("toggleMenu", toggleMenu);
-                editingFactor = config.GetFloatValue("editingFactor", editingFactor);
-                maxSyncDistance = config.GetFloatValue("maxSyncDistance", maxSyncDistance);
+                FloatStep = config.GetFloatValue("editingFactor", FloatStep);
+                ScriptRange = config.GetFloatValue("ScriptRange", ScriptRange);
                 timer = config.GetLongValue("timer", timer);
                 debug = config.GetBoolValue("debug", debug);
                 screenPosX = config.GetFloatValue("screenPosX", screenPosX);
                 screenPosY = config.GetFloatValue("screenPosY", screenPosY);
 
-                Debug.WriteLine($"{ScriptName}: Settings {nameof(timer)}={timer} {nameof(debug)}={debug} {nameof(maxSyncDistance)}={maxSyncDistance}");
+                Debug.WriteLine($"{ScriptName}: Settings {nameof(timer)}={timer} {nameof(debug)}={debug} {nameof(ScriptRange)}={ScriptRange}");
             }
         }
+
+        #endregion
     }
 }
