@@ -43,8 +43,8 @@ namespace HandlingEditor.Client
         #region GUI_FIELDS
         private MenuPool _menuPool;
         private UIMenu EditorMenu;
-        private UIMenu presetsMenu;
-        private UIMenu serverPresetsMenu;
+        private UIMenu PersonalPresetsMenu;
+        private UIMenu ServerPresetsMenu;
         #endregion
 
         #region GUI_METHODS
@@ -118,7 +118,7 @@ namespace HandlingEditor.Client
                         Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
+                    UpdateEditorMenu(); //Should just update the current item instead
                     EditorMenu.CurrentSelection = currentSelection;
                     EditorMenu.Visible = true;
                 }
@@ -188,7 +188,7 @@ namespace HandlingEditor.Client
                         Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
+                    UpdateEditorMenu();  //Should just update the current item instead
                     EditorMenu.CurrentSelection = currentSelection;
                     EditorMenu.Visible = true;
                 }
@@ -330,7 +330,7 @@ namespace HandlingEditor.Client
                         Screen.ShowNotification($"Invalid value for ~b~{fieldNameX}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
+                    UpdateEditorMenu();  //Should just update the current item instead
                     EditorMenu.CurrentSelection = currentSelection;
                     EditorMenu.Visible = true;
                 }
@@ -352,7 +352,7 @@ namespace HandlingEditor.Client
                         Screen.ShowNotification($"Invalid value for ~b~{fieldNameY}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
+                    UpdateEditorMenu();  //Should just update the current item instead
                     EditorMenu.CurrentSelection = currentSelection;
                     EditorMenu.Visible = true;
                 }
@@ -374,7 +374,7 @@ namespace HandlingEditor.Client
                         Screen.ShowNotification($"Invalid value for ~b~{fieldNameZ}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
+                    UpdateEditorMenu();  //Should just update the current item instead
                     EditorMenu.CurrentSelection = currentSelection;
                     EditorMenu.Visible = true;
                 }
@@ -394,7 +394,7 @@ namespace HandlingEditor.Client
                     RefreshVehicleUsingPreset(currentVehicle, currentPreset);
                     RemoveDecorators(currentVehicle);
 
-                    InitialiseMenu();
+                    UpdateEditorMenu();
                     EditorMenu.Visible = true;
                 }
             };
@@ -419,82 +419,61 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private UIMenu AddPresetsSubMenu(UIMenu menu)
+        private void UpdatePersonalPresetsMenu()
         {
-            var newitem = new UIMenuItem("Personal Presets", "The handling presets saved by you.");
-            var subMenu = new UIMenu(menu.Title.Caption, "Personal Presets")
-            {
-                MouseEdgeEnabled = false,
-                ControlDisablingEnabled = false,
-                MouseControlsEnabled = false,
-            };
+            if (PersonalPresetsMenu == null)
+                return;
 
-            subMenu.AddInstructionalButton(new InstructionalButton(Control.PhoneExtraOption, GetLabelText("ITEM_SAVE")));
-            subMenu.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, GetLabelText("ITEM_DEL")));
-            menu.AddItem(newitem);
-            menu.BindMenuToItem(subMenu, newitem);
-            _menuPool.Add(subMenu);
-
+            PersonalPresetsMenu.Clear();
             KvpEnumerable kvpList = new KvpEnumerable(kvpPrefix);
-            foreach(var key in kvpList)
+            foreach (var key in kvpList)
             {
                 string value = GetResourceKvpString(key);
-                subMenu.AddItem(new UIMenuItem(key.Remove(0, kvpPrefix.Length)));  
+                PersonalPresetsMenu.AddItem(new UIMenuItem(key.Remove(0, kvpPrefix.Length)));
             }
-            return subMenu;
+
+            PersonalPresetsMenu.RefreshIndex();
         }
 
-        private UIMenu AddServerPresetsSubMenu(UIMenu menu)
+        private void UpdateServerPresetsMenu()
         {
-            var newitem = new UIMenuItem("Server Presets", "The handling presets loaded from the server.");
-            var subMenu = new UIMenu(menu.Title.Caption, "Server Presets")
-            {
-                MouseEdgeEnabled = false,
-                ControlDisablingEnabled = false,
-                MouseControlsEnabled = false,
-            };
+            if (ServerPresetsMenu == null)
+                return;
 
-            menu.AddItem(newitem);
-            menu.BindMenuToItem(subMenu, newitem);
-            _menuPool.Add(subMenu);
+            ServerPresetsMenu.Clear();
 
             foreach (var preset in serverPresets)
-                subMenu.AddItem(new UIMenuItem(preset.Key));
+                ServerPresetsMenu.AddItem(new UIMenuItem(preset.Key));
 
-            return subMenu;
+            ServerPresetsMenu.RefreshIndex();
         }
 
-        private void InitialiseMenu()
+        private void UpdateEditorMenu()
         {
-            if (_menuPool == null)
-            {
-                _menuPool = new MenuPool()
-                {
-                    ResetCursorOnOpen = true
-                };
-            }
-
             if (EditorMenu == null)
-            {
-                EditorMenu = new UIMenu(ScriptName, "Editor", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height))
-                {
-                    MouseEdgeEnabled = false,
-                    ControlDisablingEnabled = false,
-                    MouseControlsEnabled = false
-                };
-                _menuPool.Add(EditorMenu);
-            }
-            else EditorMenu.Clear();
+                return;
+
+            EditorMenu.Clear();
+
+            var PersonalPresetsItem = new UIMenuItem("Personal Presets", "The handling presets saved by you.");
+            PersonalPresetsItem.SetRightLabel("→→→");
+            EditorMenu.AddItem(PersonalPresetsItem);
+            EditorMenu.BindMenuToItem(PersonalPresetsMenu, PersonalPresetsItem);
+
+            var ServerPresetsItem = new UIMenuItem("Server Presets", "The handling presets loaded from the server.");
+            ServerPresetsItem.SetRightLabel("→→→");
+            EditorMenu.AddItem(ServerPresetsItem);
+            EditorMenu.BindMenuToItem(ServerPresetsMenu, ServerPresetsItem);
 
             foreach (var item in handlingInfo.FieldsInfo)
             {
                 var fieldInfo = item.Value;
 
-                if(fieldInfo.Editable)
+                if (fieldInfo.Editable)
                 {
-                    /*
-                    string fieldName = fieldInfo.Name;
-                    string fieldDescription = fieldInfo.Description;*/
+                    
+                    //string fieldName = fieldInfo.Name;
+                    //string fieldDescription = fieldInfo.Description;
                     Type fieldType = fieldInfo.Type;
 
                     if (fieldType == FieldType.FloatType)
@@ -511,12 +490,51 @@ namespace HandlingEditor.Client
             }
 
             AddMenuReset(EditorMenu);
-            presetsMenu = AddPresetsSubMenu(EditorMenu);
-            serverPresetsMenu = AddServerPresetsSubMenu(EditorMenu);
 
-            presetsMenu.OnItemSelect += (sender, item, index) =>
+            UpdatePersonalPresetsMenu();
+            UpdateServerPresetsMenu();
+
+            EditorMenu.RefreshIndex();
+        }
+
+        private void InitialiseMenu()
+        {
+            if (EditorMenu == null)
             {
-                if(sender == presetsMenu)
+                EditorMenu = new UIMenu(ScriptName, "Editor", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height))
+                {
+                    MouseEdgeEnabled = false,
+                    ControlDisablingEnabled = false,
+                    MouseControlsEnabled = false
+                };
+            }
+            if (PersonalPresetsMenu == null)
+            {
+                PersonalPresetsMenu = new UIMenu(ScriptName, "Personal Presets")
+                {
+                    MouseEdgeEnabled = false,
+                    ControlDisablingEnabled = false,
+                    MouseControlsEnabled = false,
+                };
+
+                PersonalPresetsMenu.AddInstructionalButton(new InstructionalButton(Control.PhoneExtraOption, GetLabelText("ITEM_SAVE")));
+                PersonalPresetsMenu.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, GetLabelText("ITEM_DEL")));
+            }
+            if (ServerPresetsMenu == null)
+            {
+                ServerPresetsMenu = new UIMenu(ScriptName, "Server Presets")
+                {
+                    MouseEdgeEnabled = false,
+                    ControlDisablingEnabled = false,
+                    MouseControlsEnabled = false,
+                };
+            }
+
+            UpdateEditorMenu();
+
+            PersonalPresetsMenu.OnItemSelect += (sender, item, index) =>
+            {
+                if(sender == PersonalPresetsMenu)
                 {
                     string key = $"{kvpPrefix}{item.Text}";
                     string value = GetResourceKvpString(key);
@@ -528,18 +546,16 @@ namespace HandlingEditor.Client
                         var handling = doc["Item"];
                         GetPresetFromXml(handling, currentPreset);
 
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Personal preset ~b~{item.Text}~w~ applied");
-                        InitialiseMenu();
-                        presetsMenu.Visible = true;
+                        Screen.ShowNotification($"Personal preset ~b~{item.Text}~w~ applied");
                     }
                     else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"~r~ERROR~w~: Personal preset ~b~{item.Text}~w~ corrupted");
+                        Screen.ShowNotification($"~r~ERROR~w~: Personal preset ~b~{item.Text}~w~ corrupted");
                 }
             };
 
-            serverPresetsMenu.OnItemSelect += (sender, item, index) =>
+            ServerPresetsMenu.OnItemSelect += (sender, item, index) =>
             {
-                if(sender == serverPresetsMenu)
+                if(sender == ServerPresetsMenu)
                 {
                     string key = item.Text;
                     if (serverPresets.ContainsKey(key))
@@ -552,14 +568,24 @@ namespace HandlingEditor.Client
                             }
                             else Debug.Write($"Missing {field} field in currentPreset");
                         }
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Server preset ~b~{key}~w~ applied");
-                        InitialiseMenu();
-                        serverPresetsMenu.Visible = true;
+                        Screen.ShowNotification($"Server preset ~b~{key}~w~ applied");
                     }
                     else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"~r~ERROR~w~: Server preset ~b~{key}~w~ corrupted");
+                        Screen.ShowNotification($"~r~ERROR~w~: Server preset ~b~{key}~w~ corrupted");
                 }
             };
+
+            if (_menuPool == null)
+            {
+                _menuPool = new MenuPool()
+                {
+                    ResetCursorOnOpen = true
+                };
+            }
+            
+            _menuPool.Add(EditorMenu);
+            _menuPool.Add(PersonalPresetsMenu);
+            _menuPool.Add(ServerPresetsMenu);
 
             _menuPool.RefreshIndex();
         }
@@ -586,7 +612,7 @@ namespace HandlingEditor.Client
             currentVehicle = -1;
             vehicles = Enumerable.Empty<int>();
 
-            RegisterCommand("handling_distance", new Action<int, dynamic>((source, args) =>
+            RegisterCommand("handling_range", new Action<int, dynamic>((source, args) =>
             {
                 if(args.Count < 1)
                 {
@@ -721,7 +747,7 @@ namespace HandlingEditor.Client
                             _menuPool.CloseAllMenus();
                     }
 
-                    if (presetsMenu.Visible)
+                    if (PersonalPresetsMenu.Visible)
                     {
                         DisableControlAction(1, 75, true); // INPUT_VEH_EXIT - Y
                         DisableControlAction(1, 37, true); // INPUT_SELECT_WEAPON - X
@@ -732,30 +758,28 @@ namespace HandlingEditor.Client
                             if (!string.IsNullOrEmpty(name))
                             {
                                 SavePreset(name, currentPreset);
-                                InitialiseMenu();
-                                presetsMenu.Visible = true;
-                                CitizenFX.Core.UI.Screen.ShowNotification($"Personal preset ~g~{name}~w~ saved");
+                                UpdatePersonalPresetsMenu();
+                                Screen.ShowNotification($"Personal preset ~g~{name}~w~ saved");
                             }
                             else
-                                CitizenFX.Core.UI.Screen.ShowNotification("Invalid string.");
+                                Screen.ShowNotification("Invalid string.");
                         }
                         else if (IsControlJustPressed(1, 178))
                         {
-                            if (presetsMenu.MenuItems.Count > 0)
+                            if (PersonalPresetsMenu.MenuItems.Count > 0)
                             {
-                                string kvpName = presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text;
+                                string kvpName = PersonalPresetsMenu.MenuItems[PersonalPresetsMenu.CurrentSelection].Text;
                                 string key = $"{kvpPrefix}{kvpName}";
                                 if (GetResourceKvpString(key) != null)
                                 {
                                     DeleteResourceKvp(key);
-                                    InitialiseMenu();
-                                    presetsMenu.Visible = true;
+                                    UpdatePersonalPresetsMenu();
 
-                                    CitizenFX.Core.UI.Screen.ShowNotification($"Personal preset ~r~{kvpName}~w~ deleted");
+                                    Screen.ShowNotification($"Personal preset ~r~{kvpName}~w~ deleted");
                                 }
                             }
                             else
-                                CitizenFX.Core.UI.Screen.ShowNotification("Nothing to delete.");
+                                Screen.ShowNotification("Nothing to delete.");
                         }
                     }
 
@@ -1523,7 +1547,7 @@ namespace HandlingEditor.Client
                 Config config = new Config(strings);
 
                 toggleMenu = config.GetIntValue("toggleMenu", toggleMenu);
-                FloatStep = config.GetFloatValue("editingFactor", FloatStep);
+                FloatStep = config.GetFloatValue("FloatStep", FloatStep);
                 ScriptRange = config.GetFloatValue("ScriptRange", ScriptRange);
                 timer = config.GetLongValue("timer", timer);
                 debug = config.GetBoolValue("debug", debug);
