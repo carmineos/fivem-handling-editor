@@ -17,9 +17,9 @@ namespace HandlingEditor.Client
         private static string ResourceName;
         private static readonly string ScriptName = "Handling Editor";
         private static readonly string kvpPrefix = "handling_";
-        private static float FloatPrecision = 0.001f;
 
         #region CONFIG_FIEDS
+        private static float FloatPrecision = 0.001f;
         private static float FloatStep = 0.01f;
         private static float ScriptRange = 150.0f;
         private static long timer = 1000;
@@ -75,7 +75,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = value - FloatStep;
                     if (newvalue < min)
-                        Screen.ShowNotification($"Min value allowed for ~b~{name}~w~ is {min}");
+                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{name}~w~ is {min}");
                     else
                     {
                         value = newvalue;
@@ -86,7 +86,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = value + FloatStep;
                     if (newvalue > max)
-                        Screen.ShowNotification($"Max value allowed for ~b~{name}~w~ is {max}");
+                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{name}~w~ is {max}");
                     else
                     {
                         value = newvalue;
@@ -113,9 +113,9 @@ namespace HandlingEditor.Client
                         if(newvalue >= min && newvalue <= max)
                             currentPreset.Fields[name] = newvalue;
                         else
-                            Screen.ShowNotification($"Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
+                            Screen.ShowNotification($"{ScriptName}:  Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
                     }else
-                        Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
+                        Screen.ShowNotification($"{ScriptName}:  Invalid value for ~b~{name}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
                     UpdateEditorMenu(); //Should just update the current item instead
@@ -144,7 +144,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = value - 1;
                     if (newvalue < min)
-                        Screen.ShowNotification($"Min value allowed for ~b~{name}~w~ is {min}");
+                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{name}~w~ is {min}");
                     else
                     {
                         value = newvalue;
@@ -155,7 +155,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = value + 1;
                     if (newvalue > max)
-                        Screen.ShowNotification($"Max value allowed for ~b~{name}~w~ is {max}");
+                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{name}~w~ is {max}");
                     else
                     {
                         value = newvalue;
@@ -182,10 +182,10 @@ namespace HandlingEditor.Client
                         if (newvalue >= min && newvalue <= max)
                             currentPreset.Fields[name] = newvalue;
                         else
-                            Screen.ShowNotification($"Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
+                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
                     }
                     else
-                        Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
+                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{name}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
                     UpdateEditorMenu();  //Should just update the current item instead
@@ -219,7 +219,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = valueX - FloatStep;
                     if (newvalue < minValueX)
-                        Screen.ShowNotification($"Min value allowed for ~b~{fieldNameX}~w~ is {minValueX}");
+                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldNameX}~w~ is {minValueX}");
                     else
                     {
                         valueX = newvalue;
@@ -230,7 +230,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = valueX + FloatStep;
                     if (newvalue > maxValueX)
-                        Screen.ShowNotification($"Max value allowed for ~b~{fieldNameX}~w~ is {maxValueX}");
+                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldNameX}~w~ is {maxValueX}");
                     else
                     {
                         valueX = newvalue;
@@ -253,7 +253,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = valueY - FloatStep;
                     if (newvalue < minValueY)
-                        Screen.ShowNotification($"Min value allowed for ~b~{fieldNameY}~w~ is {minValueY}");
+                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldNameY}~w~ is {minValueY}");
                     else
                     {
                         valueY = newvalue;
@@ -264,7 +264,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = valueY + FloatStep;
                     if (newvalue > maxValueY)
-                        Screen.ShowNotification($"Max value allowed for ~b~{fieldNameY}~w~ is {maxValueY}");
+                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldNameY}~w~ is {maxValueY}");
                     else
                     {
                         valueY = newvalue;
@@ -287,7 +287,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = valueZ - FloatStep;
                     if (newvalue < minValueZ)
-                        Screen.ShowNotification($"Min value allowed for ~b~{fieldNameZ}~w~ is {minValueZ}");
+                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldNameZ}~w~ is {minValueZ}");
                     else
                     {
                         valueZ = newvalue;
@@ -298,7 +298,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = valueZ + FloatStep;
                     if (newvalue > maxValueZ)
-                        Screen.ShowNotification($"Max value allowed for ~b~{fieldNameZ}~w~ is {maxValueZ}");
+                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldNameZ}~w~ is {maxValueZ}");
                     else
                     {
                         valueZ = newvalue;
@@ -324,10 +324,10 @@ namespace HandlingEditor.Client
                         if (newvalue >= minValueX && newvalue <= maxValueX)
                             currentPreset.Fields[fieldName].X = newvalue;
                         else
-                            Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameX}~w~, Min:{minValueX}, Max:{maxValueX}");
+                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldNameX}~w~, Min:{minValueX}, Max:{maxValueX}");
                     }
                     else
-                        Screen.ShowNotification($"Invalid value for ~b~{fieldNameX}~w~");
+                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameX}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
                     UpdateEditorMenu();  //Should just update the current item instead
@@ -346,10 +346,10 @@ namespace HandlingEditor.Client
                         if (newvalue >= minValueY && newvalue <= maxValueY)
                             currentPreset.Fields[fieldName].Y = newvalue;
                         else
-                            Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameY}~w~, Min:{minValueY}, Max:{maxValueY}");
+                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldNameY}~w~, Min:{minValueY}, Max:{maxValueY}");
                     }
                     else
-                        Screen.ShowNotification($"Invalid value for ~b~{fieldNameY}~w~");
+                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameY}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
                     UpdateEditorMenu();  //Should just update the current item instead
@@ -368,10 +368,10 @@ namespace HandlingEditor.Client
                         if (newvalue >= minValueZ && newvalue <= maxValueZ)
                             currentPreset.Fields[fieldName].Z = newvalue;
                         else
-                            Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameZ}~w~, Min:{minValueZ}, Max:{maxValueZ}");
+                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldNameZ}~w~, Min:{minValueZ}, Max:{maxValueZ}");
                     }
                     else
-                        Screen.ShowNotification($"Invalid value for ~b~{fieldNameZ}~w~");
+                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameZ}~w~");
 
                     int currentSelection = EditorMenu.CurrentSelection;
                     UpdateEditorMenu();  //Should just update the current item instead
@@ -379,26 +379,6 @@ namespace HandlingEditor.Client
                     EditorMenu.Visible = true;
                 }
             };
-        }
-        
-        private UIMenuItem AddMenuReset(UIMenu menu)
-        {
-            var newitem = new UIMenuItem("Reset", "Restores the default values");
-            menu.AddItem(newitem);
-
-            menu.OnItemSelect += (sender, item, index) =>
-            {
-                if (item == newitem)
-                {
-                    currentPreset.Reset();
-                    RefreshVehicleUsingPreset(currentVehicle, currentPreset);
-                    RemoveDecorators(currentVehicle);
-
-                    UpdateEditorMenu();
-                    EditorMenu.Visible = true;
-                }
-            };
-            return newitem;
         }
 
         private UIMenuItem AddLockedItem(UIMenu menu, BaseFieldInfo fieldInfo)
@@ -413,7 +393,7 @@ namespace HandlingEditor.Client
             {
                 if (item == newitem)
                 {
-                    Screen.ShowNotification($"The server doesn't allow to edit this field.");
+                    Screen.ShowNotification($"{ScriptName}: The server doesn't allow to edit this field.");
                 }
             };
             return newitem;
@@ -489,7 +469,22 @@ namespace HandlingEditor.Client
                 }
             }
 
-            AddMenuReset(EditorMenu);
+            var resetItem = new UIMenuItem("Reset", "Restores the default values");
+            EditorMenu.AddItem(resetItem);
+
+            EditorMenu.OnItemSelect += async (sender, item, index) =>
+            {
+                if (item == resetItem)
+                {
+                    currentPreset.Reset();
+                    RefreshVehicleUsingPreset(currentVehicle, currentPreset);
+                    RemoveDecorators(currentVehicle);
+
+                    await Delay(100);
+                    UpdateEditorMenu();
+                    EditorMenu.Visible = true;
+                }
+            };
 
             UpdatePersonalPresetsMenu();
             UpdateServerPresetsMenu();
@@ -546,10 +541,13 @@ namespace HandlingEditor.Client
                         var handling = doc["Item"];
                         GetPresetFromXml(handling, currentPreset);
 
-                        Screen.ShowNotification($"Personal preset ~b~{item.Text}~w~ applied");
+                        int currentSelection = PersonalPresetsMenu.CurrentSelection;
+                        UpdateEditorMenu();
+                        PersonalPresetsMenu.CurrentSelection = currentSelection;
+                        Screen.ShowNotification($"{ScriptName}: Personal preset ~b~{item.Text}~w~ applied");
                     }
                     else
-                        Screen.ShowNotification($"~r~ERROR~w~: Personal preset ~b~{item.Text}~w~ corrupted");
+                        Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Personal preset ~b~{item.Text}~w~ corrupted");
                 }
             };
 
@@ -568,10 +566,14 @@ namespace HandlingEditor.Client
                             }
                             else Debug.Write($"Missing {field} field in currentPreset");
                         }
-                        Screen.ShowNotification($"Server preset ~b~{key}~w~ applied");
+
+                        int currentSelection = PersonalPresetsMenu.CurrentSelection;
+                        UpdateEditorMenu();
+                        PersonalPresetsMenu.CurrentSelection = currentSelection;
+                        Screen.ShowNotification($"{ScriptName}: Server preset ~b~{key}~w~ applied");
                     }
                     else
-                        Screen.ShowNotification($"~r~ERROR~w~: Server preset ~b~{key}~w~ corrupted");
+                        Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Server preset ~b~{key}~w~ corrupted");
                 }
             };
 
@@ -741,10 +743,14 @@ namespace HandlingEditor.Client
                 {
                     if (IsControlJustPressed(1, toggleMenu)/* || IsDisabledControlJustPressed(1, toggleMenu)*/) // TOGGLE MENU VISIBLE
                     {
-                        if (!EditorMenu.Visible && !_menuPool.IsAnyMenuOpen())
-                            EditorMenu.Visible = true;
-                        else if (_menuPool.IsAnyMenuOpen())
+                        if (_menuPool.IsAnyMenuOpen())
                             _menuPool.CloseAllMenus();
+                        else
+                        {
+                            if(!EditorMenu.Visible)
+                                EditorMenu.Visible = true;
+                        }
+                            
                     }
 
                     if (PersonalPresetsMenu.Visible)
@@ -757,12 +763,12 @@ namespace HandlingEditor.Client
                             string name = await GetOnScreenString("");
                             if (!string.IsNullOrEmpty(name))
                             {
-                                SavePreset(name, currentPreset);
+                                SavePresetAsKVP(name, currentPreset);
                                 UpdatePersonalPresetsMenu();
-                                Screen.ShowNotification($"Personal preset ~g~{name}~w~ saved");
+                                Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{name}~w~ saved");
                             }
                             else
-                                Screen.ShowNotification("Invalid string.");
+                                Screen.ShowNotification($"{ScriptName}: Invalid string.");
                         }
                         else if (IsControlJustPressed(1, 178))
                         {
@@ -775,19 +781,18 @@ namespace HandlingEditor.Client
                                     DeleteResourceKvp(key);
                                     UpdatePersonalPresetsMenu();
 
-                                    Screen.ShowNotification($"Personal preset ~r~{kvpName}~w~ deleted");
+                                    Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{kvpName}~w~ deleted");
                                 }
                             }
                             else
-                                Screen.ShowNotification("Nothing to delete.");
+                                Screen.ShowNotification($"{ScriptName}: Nothing to delete.");
                         }
                     }
 
                 }
                 else
                 {
-                    if (_menuPool.IsAnyMenuOpen())
-                        _menuPool.CloseAllMenus();
+                    _menuPool.CloseAllMenus();
                 }
             }
         }
@@ -847,59 +852,59 @@ namespace HandlingEditor.Client
         /// <param name="preset"></param>
         private void RefreshVehicleUsingPreset(int vehicle, HandlingPreset preset)
         {
-            if (DoesEntityExist(vehicle))
+            if (!DoesEntityExist(vehicle))
+                return;
+
+            foreach (var item in preset.Fields)
             {
-                foreach (var item in preset.Fields)
+                string fieldName = item.Key;
+                dynamic fieldValue = item.Value;
+
+                var fieldsInfo = handlingInfo.FieldsInfo;
+                if (!fieldsInfo.ContainsKey(fieldName))
                 {
-                    string fieldName = item.Key;
-                    dynamic fieldValue = item.Value;
+                    if (debug)
+                        Debug.WriteLine($"{ScriptName}: No fieldInfo definition found for {fieldName}");
+                    continue;
+                }
 
-                    var fieldsInfo = handlingInfo.FieldsInfo;
-                    if (!fieldsInfo.ContainsKey(fieldName))
+                BaseFieldInfo fieldInfo = fieldsInfo[fieldName];
+                Type fieldType = fieldInfo.Type;
+                string className = fieldInfo.ClassName;
+
+                if (fieldType == FieldType.FloatType)
+                {
+                    var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
+                    if (Math.Abs(value - fieldValue) > FloatPrecision)
                     {
+                        SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
+
                         if (debug)
-                            Debug.WriteLine($"{ScriptName}: No fieldInfo definition found for {fieldName}");
-                        continue;
+                            Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
                     }
+                }
 
-                    BaseFieldInfo fieldInfo = fieldsInfo[fieldName];
-                    Type fieldType = fieldInfo.Type;
-                    string className = fieldInfo.ClassName;
-
-                    if (fieldType == FieldType.FloatType)
+                else if (fieldType == FieldType.IntType)
+                {
+                    var value = GetVehicleHandlingInt(vehicle, className, fieldName);
+                    if (value != fieldValue)
                     {
-                        var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                        if (Math.Abs(value - fieldValue) > FloatPrecision)
-                        {
-                            SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
+                        SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
 
-                            if (debug)
-                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
-                        }     
+                        if (debug)
+                            Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
                     }
-                    
-                    else if (fieldType == FieldType.IntType)
-                    {
-                        var value = GetVehicleHandlingInt(vehicle, className, fieldName);
-                        if (value != fieldValue)
-                        {
-                            SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
+                }
 
-                            if (debug)
-                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
-                        }
-                    }
-                    
-                    else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == FieldType.Vector3Type)
+                {
+                    var value = GetVehicleHandlingVector(vehicle, className, fieldName);
+                    if (value != fieldValue)
                     {
-                        var value = GetVehicleHandlingVector(vehicle, className, fieldName);
-                        if (value != fieldValue)
-                        {
-                            SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
+                        SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
 
-                            if (debug)
-                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
-                        }
+                        if (debug)
+                            Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
                     }
                 }
             }
@@ -1093,6 +1098,11 @@ namespace HandlingEditor.Client
                     if (DecorExistOn(vehicle, defDecorY)) DecorRemove(vehicle, defDecorY);
                     if (DecorExistOn(vehicle, defDecorZ)) DecorRemove(vehicle, defDecorZ);
                 }
+            }
+
+            if(debug)
+            {
+                Debug.WriteLine($"{ScriptName}: Removed all decorators on vehicle {vehicle}");
             }
         }
 
@@ -1354,7 +1364,7 @@ namespace HandlingEditor.Client
         {
             IEnumerable<int> entities = vehiclesList.Where(entity => HasDecorators(entity));
 
-            Debug.WriteLine($"HANDLING EDITOR: Vehicles with decorators: {entities.Count()}");
+            Debug.WriteLine($"{ScriptName}: Vehicles with decorators: {entities.Count()}");
 
             StringBuilder s = new StringBuilder();
             foreach (var vehicle in entities)
@@ -1410,7 +1420,7 @@ namespace HandlingEditor.Client
             return doc;
         }
 
-        private void SavePreset(string name, HandlingPreset preset)
+        private void SavePresetAsKVP(string name, HandlingPreset preset)
         {
             string kvpName = $"{kvpPrefix}{name}";
             if(GetResourceKvpString(kvpName) != null)
