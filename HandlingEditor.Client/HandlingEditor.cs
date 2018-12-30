@@ -584,6 +584,7 @@ namespace HandlingEditor.Client
                     ResetCursorOnOpen = true
                 };
             }
+            else _menuPool.ToList().Clear();
             
             _menuPool.Add(EditorMenu);
             _menuPool.Add(PersonalPresetsMenu);
