@@ -29,9 +29,15 @@ namespace HandlingEditor.Client
                 if (item.Name != "class")
                     continue;
 
+                var idAttribute = item.Attributes["id"];
+                var allowedAttribute = item.Attributes["allowed"];
+
+                if (idAttribute == null || allowedAttribute == null)
+                    continue;
+
                 //var className = item.Attributes["name"].Value;
-                int classId = int.Parse(item.Attributes["id"].Value);
-                bool classIsAllowed = bool.Parse(item.Attributes["allowed"].Value);
+                int classId = int.Parse(idAttribute.Value);
+                bool classIsAllowed = bool.Parse(allowedAttribute.Value);
 
                 Classes[classId] = classIsAllowed;
             }
@@ -45,12 +51,18 @@ namespace HandlingEditor.Client
                 if (item.Name != "model")
                     continue;
 
-                var modelName = item.Attributes["name"].Value;
-                bool modelIsAllowed = bool.Parse(item.Attributes["allowed"].Value);
+                var nameAttribute = item.Attributes["name"];
+                var allowedAttribute = item.Attributes["allowed"];
+
+                if (nameAttribute == null || allowedAttribute == null)
+                    continue;
+
+                var modelName = nameAttribute.Value;
+                bool modelIsAllowed = bool.Parse(allowedAttribute.Value);
 
                 uint modelHash = unchecked((uint)GetHashKey(modelName));
 
-                // Not checking if the model is valid should allow the scripts to work even if the any model is loaded at runtime (eg. starting a resource of an addon vehicle)
+                // Not checking if the model is valid should allow the scripts to work even if the model is loaded at runtime (eg. starting a resource of an addon vehicle)
                 //if (IsModelValid(modelHash))
                     Vehicles[modelHash] = modelIsAllowed;
             }

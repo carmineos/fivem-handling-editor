@@ -197,12 +197,12 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private void AddDynamicVector3List(UIMenu menu, FieldInfo<Vector3> fieldInfo)
+        private UIMenuDynamicListItem[] AddDynamicVector3List(UIMenu menu, FieldInfo<Vector3> fieldInfo)
         {
             string fieldName = fieldInfo.Name;
 
             if (!currentPreset.Fields.ContainsKey(fieldName))
-                return;
+                return null;
 
             string fieldDescription = fieldInfo.Description;
             Vector3 fieldMin = fieldInfo.Min;
@@ -379,6 +379,8 @@ namespace HandlingEditor.Client
                     EditorMenu.Visible = true;
                 }
             };
+
+            return new UIMenuDynamicListItem[3] { newitemX, newitemY, newitemZ };
         }
 
         private UIMenuItem AddLockedItem(UIMenu menu, BaseFieldInfo fieldInfo)
@@ -1425,7 +1427,7 @@ namespace HandlingEditor.Client
         {
             string kvpName = $"{kvpPrefix}{name}";
             if(GetResourceKvpString(kvpName) != null)
-                CitizenFX.Core.UI.Screen.ShowNotification($"The name {name} is already used for another preset.");
+                Screen.ShowNotification($"{ScriptName}: The name {name} is already used for another preset.");
             else
             {
                 var xml = GetXmlFromPreset(preset);
@@ -1493,9 +1495,7 @@ namespace HandlingEditor.Client
             {
                 strings = LoadResourceFile(ResourceName, filename);
                 VehiclesPermissions.ParseXml(strings);
-                Debug.WriteLine($"{ScriptName}: Loaded {filename}");
-                Debug.WriteLine($"{ScriptName}: Found {VehiclesPermissions.Classes.Count} class rules");
-                Debug.WriteLine($"{ScriptName}: Found {VehiclesPermissions.Vehicles.Count} vehicle rules");
+                Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {VehiclesPermissions.Classes.Count} class rules and {VehiclesPermissions.Vehicles.Count} vehicle rules");
             }
             catch (Exception e)
             {
