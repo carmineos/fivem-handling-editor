@@ -41,9 +41,13 @@ namespace HandlingEditor.Client
 
         #region EVENTS
 
-        public static event EventHandler ResetButtonPressed;
-        public static event EventHandler<string> PersonalPresetApplied;
-        public static event EventHandler<string> ServerPresetApplied;
+        public static event EventHandler ResetPreset_Pressed;
+        public static event EventHandler<string> ApplyPersonalPreset_Pressed;
+        public static event EventHandler<string> ApplyServerPreset_Pressed;
+        public static event EventHandler<string> SavePersonalPreset_Pressed;
+        public static event EventHandler<string> SaveServerPreset_Pressed;
+        public static event EventHandler<string> DeletePersonalPreset_Pressed;
+        public static event EventHandler<string> DeleteServerPreset_Pressed;
 
         #endregion
 
@@ -52,7 +56,9 @@ namespace HandlingEditor.Client
         public HandlingMenu()
         {
             Tick += OnTick;
-            HandlingEditor.InvalidatedGUI += new EventHandler((sender,args) => InitializeMenu());
+            HandlingEditor.Menu_Outdated += new EventHandler((sender,args) => InitializeMenu());
+            HandlingEditor.PersonalPresetsMenu_Outdated += new EventHandler((sender,args) => UpdatePersonalPresetsMenu());
+            HandlingEditor.ServerPresetsMenu_Outdated += new EventHandler((sender,args) => UpdateServerPresetsMenu());
         }
 
         #endregion
@@ -86,34 +92,20 @@ namespace HandlingEditor.Client
                     {
                         HandlingEditor.DisableControls2();
 
+                        // Save Button pressed
                         if (IsControlJustPressed(1, 179))
                         {
-                            string name = await GetOnScreenString("");
-                            if (!string.IsNullOrEmpty(name))
-                            {
-                                HandlingEditor.SavePresetAsKVP(name, CurrentPreset);
-                                UpdatePersonalPresetsMenu();
-                                Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{name}~w~ saved");
-                            }
-                            else
-                                Screen.ShowNotification($"{ScriptName}: Invalid string.");
+                            string kvpName = await GetOnScreenString("");
+                            SavePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
                         }
+                        // Delete Button pressed
                         else if (IsControlJustPressed(1, 178))
                         {
                             if (PersonalPresetsMenu.MenuItems.Count > 0)
                             {
                                 string kvpName = PersonalPresetsMenu.MenuItems[PersonalPresetsMenu.CurrentSelection].Text;
-                                string key = $"{kvpPrefix}{kvpName}";
-                                if (GetResourceKvpString(key) != null)
-                                {
-                                    DeleteResourceKvp(key);
-                                    UpdatePersonalPresetsMenu();
-
-                                    Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{kvpName}~w~ deleted");
-                                }
+                                DeletePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
                             }
-                            else
-                                Screen.ShowNotification($"{ScriptName}: Nothing to delete.");
                         }
                     }
                 }
@@ -128,7 +120,7 @@ namespace HandlingEditor.Client
 
         #region MENU METHODS
 
-        public void InitializeMenu()
+        private void InitializeMenu()
         {
             if (EditorMenu == null)
             {
@@ -154,7 +146,7 @@ namespace HandlingEditor.Client
 
                 PersonalPresetsMenu.OnItemSelect += (sender, item, index) =>
                 {
-                    PersonalPresetApplied.Invoke(sender, item.Text);
+                    ApplyPersonalPreset_Pressed.Invoke(sender, item.Text);
 
                     int currentSelection = PersonalPresetsMenu.CurrentSelection;
                     UpdateEditorMenu();
@@ -173,7 +165,7 @@ namespace HandlingEditor.Client
 
                 ServerPresetsMenu.OnItemSelect += (sender, item, index) =>
                 {
-                    ServerPresetApplied.Invoke(sender, item.Text);
+                    ApplyServerPreset_Pressed.Invoke(sender, item.Text);
 
                     int currentSelection = ServerPresetsMenu.CurrentSelection;
                     UpdateEditorMenu();
@@ -248,7 +240,7 @@ namespace HandlingEditor.Client
             {
                 if (item == resetItem)
                 {
-                    ResetButtonPressed.Invoke(this, EventArgs.Empty);
+                    ResetPreset_Pressed.Invoke(this, EventArgs.Empty);
                 }
             };
 

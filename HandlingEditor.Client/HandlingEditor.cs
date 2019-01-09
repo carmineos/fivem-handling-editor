@@ -14,7 +14,9 @@ namespace HandlingEditor.Client
     {
         #region EVENTS
 
-        public static event EventHandler InvalidatedGUI;
+        public static event EventHandler Menu_Outdated;
+        public static event EventHandler PersonalPresetsMenu_Outdated;
+        public static event EventHandler ServerPresetsMenu_Outdated;
 
         #endregion
 
@@ -134,7 +136,7 @@ namespace HandlingEditor.Client
                     CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
             }), false);
 
-            HandlingMenu.PersonalPresetApplied += async (sender, name) =>
+            HandlingMenu.ApplyPersonalPreset_Pressed += async (sender, name) =>
             {
                 string key = $"{kvpPrefix}{name}";
                 string value = GetResourceKvpString(key);
@@ -151,10 +153,10 @@ namespace HandlingEditor.Client
                 else
                     Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Personal preset ~b~{name}~w~ corrupted");
 
-                await Delay(1000);
+                await Delay(200);
             };
 
-            HandlingMenu.ServerPresetApplied += async (sender, name) =>
+            HandlingMenu.ApplyServerPreset_Pressed += async (sender, name) =>
             {
                 string key = name;
                 if (ServerPresets.ContainsKey(key))
@@ -173,17 +175,39 @@ namespace HandlingEditor.Client
                 else
                     Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Server preset ~b~{key}~w~ corrupted");
 
-                await Delay(1000);
+                await Delay(200);
             };
 
-            HandlingMenu.ResetButtonPressed += async (sender, args) =>
+            HandlingMenu.SavePersonalPreset_Pressed += async (sender, name) =>
+            {
+                if (SavePresetAsKVP(name, CurrentPreset))
+                {
+                    await Delay(200);
+                    PersonalPresetsMenu_Outdated(this, EventArgs.Empty);
+                    Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{name}~w~ saved");
+                }
+                else
+                    Screen.ShowNotification($"{ScriptName}: The name {name} is invalid or already used.");
+            };
+
+            HandlingMenu.DeletePersonalPreset_Pressed += async (sender, name) =>
+            {
+                if (DeletePresetKVP(name))
+                {
+                    await Delay(200);
+                    PersonalPresetsMenu_Outdated(this, EventArgs.Empty);
+                    Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{name}~w~ deleted");
+                }
+            };
+
+            HandlingMenu.ResetPreset_Pressed += async (sender, args) =>
             {
                 CurrentPreset.Reset();
                 RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
                 RemoveDecorators(CurrentVehicle);
 
                 await Delay(200);
-                InvalidatedGUI(this, EventArgs.Empty);
+                Menu_Outdated(this, EventArgs.Empty);
             };
 
             Tick += UpdateCurrentVehicle;
@@ -213,7 +237,7 @@ namespace HandlingEditor.Client
                     {
                         CurrentVehicle = vehicle;
                         CurrentPreset = CreateHandlingPreset(CurrentVehicle);
-                        InvalidatedGUI.Invoke(this, EventArgs.Empty);
+                        Menu_Outdated.Invoke(this, EventArgs.Empty);
                     }
                 }
                 else
@@ -863,19 +887,35 @@ namespace HandlingEditor.Client
             return doc;
         }
 
-        public static void SavePresetAsKVP(string name, HandlingPreset preset)
+        private static bool SavePresetAsKVP(string name, HandlingPreset preset)
         {
+            if (string.IsNullOrEmpty(name))
+                return false;
+
             string kvpName = $"{kvpPrefix}{name}";
+
+            //Key already used
             if(GetResourceKvpString(kvpName) != null)
-                Screen.ShowNotification($"{ScriptName}: The name {name} is already used for another preset.");
-            else
-            {
-                var xml = GetXmlFromPreset(preset);
-                xml["Item"].SetAttribute("presetName", name);
-                SetResourceKvp(kvpName, xml.OuterXml);
-            }
+                return false;
+
+            var xml = GetXmlFromPreset(preset);
+            xml["Item"].SetAttribute("presetName", name);
+            SetResourceKvp(kvpName, xml.OuterXml);
+            return true;
         }
-        
+
+        private static bool DeletePresetKVP(string name)
+        {
+            string key = $"{kvpPrefix}{name}";
+
+            //Nothing to delete
+            if (GetResourceKvpString(key) == null)
+                return false;
+
+            DeleteResourceKvp(key);
+            return true;
+        }
+
         private void GetPresetFromXml(XmlNode node, HandlingPreset preset)
         {
             foreach (XmlNode item in node.ChildNodes)
