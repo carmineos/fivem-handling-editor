@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		dist\HandlingPresets.xml = dist\HandlingPresets.xml
 		dist\permissions.cfg = dist\permissions.cfg
 		postbuild.bat = postbuild.bat
+		README.md = README.md
 		dist\VehiclesPermissions.xml = dist\VehiclesPermissions.xml
 	EndProjectSection
 EndProject
