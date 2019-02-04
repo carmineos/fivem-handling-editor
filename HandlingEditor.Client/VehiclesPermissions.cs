@@ -74,10 +74,10 @@ namespace HandlingEditor.Client
 
             int vehicleClass = GetVehicleClass(handle);
 
-            bool isClassAllowed = Classes.ContainsKey(vehicleClass) ? Classes[vehicleClass] : false;
-            bool isVehicleAllowed = Vehicles.ContainsKey(modelHash) ? Vehicles[modelHash] : isClassAllowed;
+            Classes.TryGetValue(vehicleClass, out bool isAllowed);
+            Vehicles.TryGetValue(modelHash, out isAllowed);
 
-            return isVehicleAllowed; // vehicle permission overrides class one
+            return isAllowed; // vehicle permission overrides class one
         }
     }
 }
