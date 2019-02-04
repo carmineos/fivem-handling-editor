@@ -157,13 +157,15 @@ namespace HandlingEditor.Client
             HandlingMenu.ApplyServerPreset_Pressed += async (sender, name) =>
             {
                 string key = name;
-                if (ServerPresets.ContainsKey(key))
+                if (ServerPresets.TryGetValue(key, out HandlingPreset preset))
                 {
-                    foreach (var field in ServerPresets[key].Fields.Keys)
+                    var presetFields = preset.Fields; 
+                    foreach (var field in presetFields.Keys)
                     {
+                        // TODO: Add a flag to decide if a field should be added to the preset anyway
                         if (CurrentPreset.Fields.ContainsKey(field))
                         {
-                            CurrentPreset.Fields[field] = ServerPresets[key].Fields[field];
+                            CurrentPreset.Fields[field] = presetFields[field];
                         }
                         else CitizenFX.Core.Debug.Write($"Missing {field} field in currentPreset");
                     }
@@ -326,14 +328,13 @@ namespace HandlingEditor.Client
                 dynamic fieldValue = item.Value;
 
                 var fieldsInfo = HandlingInfo.FieldsInfo;
-                if (!fieldsInfo.ContainsKey(fieldName))
+                if (!fieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 {
                     if (Debug)
                         CitizenFX.Core.Debug.WriteLine($"{ScriptName}: No fieldInfo definition found for {fieldName}");
                     continue;
                 }
 
-                BaseFieldInfo fieldInfo = fieldsInfo[fieldName];
                 Type fieldType = fieldInfo.Type;
                 string className = fieldInfo.ClassName;
 
