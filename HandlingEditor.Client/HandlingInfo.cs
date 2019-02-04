@@ -53,16 +53,11 @@ namespace HandlingEditor.Client
         }
     }
 
-    public class HandlingInfo
+    public static class HandlingInfo
     {
-        public Dictionary<string, BaseFieldInfo> FieldsInfo;
+        public static Dictionary<string, BaseFieldInfo> FieldsInfo = new Dictionary<string, BaseFieldInfo>();
 
-        public HandlingInfo()
-        {
-            FieldsInfo = new Dictionary<string, BaseFieldInfo>();
-        }
-
-        public void ParseXml(string xml)
+        public static void ParseXml(string xml)
         {
             xml = Helpers.RemoveByteOrderMarks(xml);
             XmlDocument doc = new XmlDocument();

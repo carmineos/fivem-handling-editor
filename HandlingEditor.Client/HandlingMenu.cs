@@ -24,7 +24,6 @@ namespace HandlingEditor.Client
         public static float ScreenPosY => HandlingEditor.ScreenPosY;
         public int CurrentVehicle => HandlingEditor.CurrentVehicle;
         public HandlingPreset CurrentPreset => HandlingEditor.CurrentPreset;
-        public HandlingInfo HandlingInfo => HandlingEditor.HandlingInfo;
         public Dictionary<string, HandlingPreset> ServerPresets => HandlingEditor.ServerPresets;
 
         #endregion

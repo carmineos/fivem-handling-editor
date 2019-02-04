@@ -35,7 +35,6 @@ namespace HandlingEditor.Client
         public const string ScriptName = "Handling Editor";
         public const string kvpPrefix = "handling_";
         public static string ResourceName { get; private set; }
-        public static HandlingInfo HandlingInfo { get; private set; }
         public static Dictionary<string,HandlingPreset> ServerPresets { get; private set; }
         public static long CurrentTime { get; private set; }
         public static long LastTime { get; private set; }
@@ -53,7 +52,6 @@ namespace HandlingEditor.Client
             CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Script by Neos7");
             LoadConfig();
             
-            HandlingInfo = new HandlingInfo();
             ReadFieldInfo();
             ServerPresets = new Dictionary<string, HandlingPreset>();
             ReadServerPresets();
