@@ -134,5 +134,40 @@ namespace HandlingEditor.Client
                 }
             }
         }
+
+        /*
+        public static bool IsValueAllowed(string name, dynamic value)
+        {
+            if (string.IsNullOrEmpty(name))
+                return false;
+
+            // No field with such name exists
+            if (!FieldsInfo.TryGetValue(name, out BaseFieldInfo baseFieldInfo))
+                return false;
+
+            if (baseFieldInfo is FieldInfo<int> && value is int)
+            {
+                FieldInfo<int> fieldInfo = (FieldInfo<int>)baseFieldInfo;
+                return (value <= fieldInfo.Max && value >= fieldInfo.Min);
+            }
+            else if (baseFieldInfo is FieldInfo<float> && value is float)
+            {
+                FieldInfo<float> fieldInfo = (FieldInfo<float>)baseFieldInfo;
+                return (value <= fieldInfo.Max && value >= fieldInfo.Min);
+            }
+            else if (baseFieldInfo is FieldInfo<Vector3> && value is Vector3)
+            {
+                FieldInfo<Vector3> fieldInfo = (FieldInfo<Vector3>)baseFieldInfo;
+
+                if (name == $"{fieldInfo.Name}_x") return (value <= fieldInfo.Max.X && value >= fieldInfo.Min.X);
+                else if (name == $"{fieldInfo.Name}_y") return (value <= fieldInfo.Max.Y && value >= fieldInfo.Min.Y);
+                else if (name == $"{fieldInfo.Name}_z") return (value <= fieldInfo.Max.Z && value >= fieldInfo.Min.Z);
+                else return false;
+            }
+            else
+            {
+                return false;
+            }
+        }*/
     }
 }
