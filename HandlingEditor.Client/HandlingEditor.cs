@@ -20,7 +20,7 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region CONFIG FIEDS
+        #region Config Fields
         public static float FloatPrecision { get; private set; } = 0.001f;
         public static float FloatStep { get; private set; } = 0.01f;
         public static float ScriptRange { get; private set; } = 150.0f;
@@ -35,7 +35,7 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region FIELDS
+        #region Fields
         public const string ScriptName = "Handling Editor";
         public const string kvpPrefix = "handling_";
         public static string ResourceName { get; private set; }
@@ -48,7 +48,7 @@ namespace HandlingEditor.Client
         public static IEnumerable<int> Vehicles { get; private set; }
         #endregion
 
-        #region CONSTRUCTOR
+        #region Constructor
 
         public HandlingEditor()
         {
@@ -220,7 +220,7 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region TASKS
+        #region Tasks
 
         /// <summary>
         /// Updates the <see cref="CurrentVehicle"/> and the <see cref="CurrentPreset"/>
@@ -292,7 +292,7 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region METHODS
+        #region Methods
 
         /// <summary>
         /// Disable controls for controller to use the script with the controller
