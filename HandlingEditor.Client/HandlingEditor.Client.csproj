@@ -31,11 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CitizenFX.Core">
-      <HintPath>E:\Giochi\FiveM\citizen\clr2\lib\mono\4.5\CitizenFX.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="NativeUI">
-      <HintPath>thirdparty\NativeUI.dll</HintPath>
+    <Reference Include="CitizenFX.Core, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\vendor\CitizenFX.Core.Client\CitizenFX.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -58,16 +56,22 @@
     <Compile Include="Enumerables.cs" />
     <Compile Include="VehiclesPermissions.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\vendor\MenuAPI\MenuAPI\MenuAPI.csproj">
+      <Project>{9c746601-9f3d-4b0d-877c-1c7bc493c5bc}</Project>
+      <Name>MenuAPI</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if $(ConfigurationName) == Debug (
+    <PostBuildEvent>if '$(CI)' == '' (
 call "$(SolutionDir)postbuild.bat" "$(TargetPath)"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\config.ini"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\__resource.lua"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\HandlingInfo.xml"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\HandlingPresets.xml"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\VehiclesPermissions.xml"
-call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\NativeUI.net.dll"
+call "$(SolutionDir)postbuild.bat" "$(TargetDir)\MenuAPI.net.dll"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\System.Xml.Mono.net.dll"
 )</PostBuildEvent>
   </PropertyGroup>

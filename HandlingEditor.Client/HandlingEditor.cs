@@ -12,7 +12,7 @@ namespace HandlingEditor.Client
 {
     public class HandlingEditor : BaseScript
     {
-        #region EVENTS
+        #region Events
 
         public static event EventHandler Menu_Outdated;
         public static event EventHandler PersonalPresetsMenu_Outdated;
@@ -27,8 +27,12 @@ namespace HandlingEditor.Client
         public static long Timer { get; private set; } = 1000;
         public static bool Debug { get; private set; } = false;
         public static int ToggleMenu { get; private set; } = 168;
-        public static float ScreenPosX { get; private set; } = 1.0f;
-        public static float ScreenPosY { get; private set; } = 0.0f;
+        
+        /// <summary>
+        /// Wheter <see cref="CurrentVehicle"/> and <see cref="CurrentPreset"/> are valid
+        /// </summary>
+        public static bool CurrentPresetIsValid => CurrentVehicle != -1 && CurrentPreset != null;
+
         #endregion
 
         #region FIELDS
@@ -210,7 +214,7 @@ namespace HandlingEditor.Client
                 Menu_Outdated(this, EventArgs.Empty);
             };
 
-            Tick += UpdateCurrentVehicle;
+            Tick += GetCurrentVehicle;
             Tick += ScriptTask;
         }
 
@@ -222,7 +226,7 @@ namespace HandlingEditor.Client
         /// Updates the <see cref="CurrentVehicle"/> and the <see cref="CurrentPreset"/>
         /// </summary>
         /// <returns></returns>
-        private async Task UpdateCurrentVehicle()
+        private async Task GetCurrentVehicle()
         {
             PlayerPed = PlayerPedId();
 
@@ -268,14 +272,14 @@ namespace HandlingEditor.Client
             {
                 // Current vehicle could be updated each tick to show the edited fields live
                 // Check if current vehicle needs to be refreshed
-                if (CurrentVehicle != -1 && CurrentPreset != null)
+                if (CurrentPresetIsValid)
                 {
                     if (CurrentPreset.IsEdited)
                         RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
-                }
 
-                if (CurrentVehicle != -1 && CurrentPreset != null)
                     UpdateVehicleDecorators(CurrentVehicle, CurrentPreset);
+                }
+                    
 
                 Vehicles = new VehicleEnumerable();
 
@@ -1041,8 +1045,6 @@ namespace HandlingEditor.Client
                 ScriptRange = config.GetFloatValue("ScriptRange", ScriptRange);
                 Timer = config.GetLongValue("timer", Timer);
                 Debug = config.GetBoolValue("debug", Debug);
-                ScreenPosX = config.GetFloatValue("screenPosX", ScreenPosX);
-                ScreenPosY = config.GetFloatValue("screenPosY", ScreenPosY);
 
                 CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Settings {nameof(Timer)}={Timer} {nameof(Debug)}={Debug} {nameof(ScriptRange)}={ScriptRange}");
             }

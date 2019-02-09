@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using NativeUI;
 using CitizenFX.Core;
 using CitizenFX.Core.UI;
 using static CitizenFX.Core.Native.API;
 using System.Drawing;
+using MenuAPI;
 
 namespace HandlingEditor.Client
 {
@@ -18,11 +18,8 @@ namespace HandlingEditor.Client
         public string ScriptName => HandlingEditor.ScriptName;
         public string kvpPrefix => HandlingEditor.kvpPrefix;
         public float FloatStep => HandlingEditor.FloatStep;
-        public float FloatPrecision => HandlingEditor.FloatPrecision;
         public int ToggleMenu => HandlingEditor.ToggleMenu;
-        public static float ScreenPosX => HandlingEditor.ScreenPosX;
-        public static float ScreenPosY => HandlingEditor.ScreenPosY;
-        public int CurrentVehicle => HandlingEditor.CurrentVehicle;
+        public bool CurrentPresetIsValid => HandlingEditor.CurrentPresetIsValid;
         public HandlingPreset CurrentPreset => HandlingEditor.CurrentPreset;
         public Dictionary<string, HandlingPreset> ServerPresets => HandlingEditor.ServerPresets;
 
@@ -30,11 +27,11 @@ namespace HandlingEditor.Client
 
         #region MENU FIELDS
 
-        public MenuPool _menuPool { get; private set; }
-        public UIMenu EditorMenu { get; private set; }
-        public UIMenu PersonalPresetsMenu { get; private set; }
-        public UIMenu ServerPresetsMenu { get; private set; }
-        public List<UIMenuDynamicListItem> HandlingListItems { get; private set; }
+        public MenuController menuController;
+        public Menu EditorMenu;
+        public Menu PersonalPresetsMenu;
+        public Menu ServerPresetsMenu;
+        public List<MenuDynamicListItem> HandlingListItems;
 
         #endregion
 
@@ -63,58 +60,50 @@ namespace HandlingEditor.Client
         #endregion
 
         #region TASKS
-
+        
         private async Task OnTick()
         {
-            if (_menuPool != null)
+            if (!CurrentPresetIsValid)
             {
-                _menuPool.ProcessMenus();
+                if (MenuController.IsAnyMenuOpen())
+                    MenuController.CloseAllMenus();
+            }
+                
 
-                if (_menuPool.IsAnyMenuOpen())
-                    HandlingEditor.DisableControls();
+                //if (menuController.IsAnyMenuOpen())
+                //HandlingEditor.DisableControls();
+                /*
+            if (CurrentVehicle != -1 && CurrentPreset != null)
+            {
 
-                if (CurrentVehicle != -1 && CurrentPreset != null)
+
+                if (PersonalPresetsMenu.Visible)
                 {
-                    if (IsControlJustPressed(1, ToggleMenu)/* || IsDisabledControlJustPressed(1, toggleMenu)*/) // TOGGLE MENU VISIBLE
-                    {
-                        if (_menuPool.IsAnyMenuOpen())
-                            _menuPool.CloseAllMenus();
-                        else
-                        {
-                            if (!EditorMenu.Visible)
-                                EditorMenu.Visible = true;
-                        }
+                    HandlingEditor.DisableControls2();
 
+                    // Save Button pressed
+                    if (IsControlJustPressed(1, 179))
+                    {
+                        string kvpName = await GetOnScreenString("");
+                        SavePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
                     }
-
-                    if (PersonalPresetsMenu.Visible)
+                    // Delete Button pressed
+                    else if (IsControlJustPressed(1, 178))
                     {
-                        HandlingEditor.DisableControls2();
-
-                        // Save Button pressed
-                        if (IsControlJustPressed(1, 179))
+                        if (PersonalPresetsMenu.MenuItems.Count > 0)
                         {
-                            string kvpName = await GetOnScreenString("");
-                            SavePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
-                        }
-                        // Delete Button pressed
-                        else if (IsControlJustPressed(1, 178))
-                        {
-                            if (PersonalPresetsMenu.MenuItems.Count > 0)
-                            {
-                                string kvpName = PersonalPresetsMenu.MenuItems[PersonalPresetsMenu.CurrentSelection].Text;
-                                DeletePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
-                            }
+                            string kvpName = PersonalPresetsMenu.MenuItems[PersonalPresetsMenu.CurrentSelection].Text;
+                            DeletePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
                         }
                     }
-                }
-                else
-                {
-                    _menuPool.CloseAllMenus();
                 }
             }
+            else
+            {
+                menuController.CloseAllMenus();
+            }*/
         }
-
+        
         #endregion
 
         #region MENU METHODS
@@ -123,72 +112,53 @@ namespace HandlingEditor.Client
         {
             if (EditorMenu == null)
             {
-                EditorMenu = new UIMenu(ScriptName, "Editor", new PointF(ScreenPosX * Screen.Width, ScreenPosY * Screen.Height))
-                {
-                    MouseEdgeEnabled = false,
-                    ControlDisablingEnabled = false,
-                    MouseControlsEnabled = false
-                };
+                EditorMenu = new Menu(ScriptName, "Editor");
             }
+            
             if (PersonalPresetsMenu == null)
             {
-                PersonalPresetsMenu = new UIMenu(ScriptName, "Personal Presets", new PointF(ScreenPosX * Screen.Width, ScreenPosY * Screen.Height))
-                {
-                    MouseEdgeEnabled = false,
-                    ControlDisablingEnabled = false,
-                    MouseControlsEnabled = false,
-                };
+                PersonalPresetsMenu = new Menu(ScriptName, "Personal Presets");
 
-                PersonalPresetsMenu.AddInstructionalButton(new InstructionalButton(Control.PhoneExtraOption, GetLabelText("ITEM_SAVE")));
-                PersonalPresetsMenu.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, GetLabelText("ITEM_DEL")));
-
+                PersonalPresetsMenu.InstructionalButtons.Add(Control.PhoneExtraOption, GetLabelText("ITEM_SAVE"));
+                PersonalPresetsMenu.InstructionalButtons.Add(Control.PhoneOption, GetLabelText("ITEM_DEL"));
 
                 PersonalPresetsMenu.OnItemSelect += (sender, item, index) =>
                 {
                     ApplyPersonalPreset_Pressed.Invoke(sender, item.Text);
 
-                    int currentSelection = PersonalPresetsMenu.CurrentSelection;
+                    int currentSelection = PersonalPresetsMenu.CurrentIndex;
                     UpdateEditorMenu();
-                    PersonalPresetsMenu.CurrentSelection = currentSelection;
+                    PersonalPresetsMenu.SelectItem(currentSelection);
                 };
 
             }
             if (ServerPresetsMenu == null)
             {
-                ServerPresetsMenu = new UIMenu(ScriptName, "Server Presets", new PointF(ScreenPosX * Screen.Width, ScreenPosY * Screen.Height))
-                {
-                    MouseEdgeEnabled = false,
-                    ControlDisablingEnabled = false,
-                    MouseControlsEnabled = false,
-                };
-
+                ServerPresetsMenu = new Menu(ScriptName, "Server Presets");
+                
                 ServerPresetsMenu.OnItemSelect += (sender, item, index) =>
                 {
                     ApplyServerPreset_Pressed.Invoke(sender, item.Text);
 
-                    int currentSelection = ServerPresetsMenu.CurrentSelection;
+                    int currentSelection = ServerPresetsMenu.CurrentIndex;
                     UpdateEditorMenu();
-                    ServerPresetsMenu.CurrentSelection = currentSelection;
+                    ServerPresetsMenu.SelectItem(currentSelection);
                 };
-
             }
 
             UpdateEditorMenu();
 
-            if (_menuPool == null)
+            if (menuController == null)
             {
-                _menuPool = new MenuPool()
-                {
-                    ResetCursorOnOpen = true
-                };
+                menuController = new MenuController();
+                MenuController.AddMenu(EditorMenu);
+                MenuController.AddMenu(PersonalPresetsMenu);
+                MenuController.AddMenu(ServerPresetsMenu);
+                MenuController.MenuAlignment = MenuController.MenuAlignmentOption.Right;
+                MenuController.MenuToggleKey = (Control)ToggleMenu;
+                MenuController.EnableMenuToggleKeyOnController = false;
+                MenuController.MainMenu = EditorMenu;
             }
-            else _menuPool.ToList().Clear();
-
-            _menuPool.Add(EditorMenu);
-            _menuPool.Add(PersonalPresetsMenu);
-            _menuPool.Add(ServerPresetsMenu);
-
-            _menuPool.RefreshIndex();
         }
 
         private void UpdateEditorMenu()
@@ -196,18 +166,25 @@ namespace HandlingEditor.Client
             if (EditorMenu == null)
                 return;
 
-            EditorMenu.Clear();
+            EditorMenu.ClearMenuItems();
 
-            var PersonalPresetsItem = new UIMenuItem("Personal Presets", "The handling presets saved by you.");
-            PersonalPresetsItem.SetRightLabel("→→→");
-            EditorMenu.AddItem(PersonalPresetsItem);
-            EditorMenu.BindMenuToItem(PersonalPresetsMenu, PersonalPresetsItem);
+            // Create Personal Presets sub menu and bind item to a button
+            var PersonalPresetsItem = new MenuItem("Personal Presets", "The handling presets saved by you.")
+            {
+                Label = "→→→"
+            };
+            EditorMenu.AddMenuItem(PersonalPresetsItem);
+            MenuController.BindMenuItem(EditorMenu, PersonalPresetsMenu, PersonalPresetsItem);
 
-            var ServerPresetsItem = new UIMenuItem("Server Presets", "The handling presets loaded from the server.");
-            ServerPresetsItem.SetRightLabel("→→→");
-            EditorMenu.AddItem(ServerPresetsItem);
-            EditorMenu.BindMenuToItem(ServerPresetsMenu, ServerPresetsItem);
+            // Create Server Presets sub menu and bind item to a button
+            var ServerPresetsItem = new MenuItem("Server Presets", "The handling presets loaded from the server.")
+            {
+                Label = "→→→"
+            };
+            EditorMenu.AddMenuItem(ServerPresetsItem);
+            MenuController.BindMenuItem(EditorMenu, ServerPresetsMenu, ServerPresetsItem);
 
+            // Add all the controllers
             foreach (var item in HandlingInfo.FieldsInfo)
             {
                 var fieldInfo = item.Value;
@@ -228,41 +205,38 @@ namespace HandlingEditor.Client
                 }
                 else
                 {
-                    //AddLockedItem(EditorMenu, item.Value);
+                    AddLockedItem(EditorMenu, item.Value);
                 }
             }
 
-            var resetItem = new UIMenuItem("Reset", "Restores the default values");
-            EditorMenu.AddItem(resetItem);
+            var resetItem = new MenuItem("Reset", "Restores the default values");
+            EditorMenu.AddMenuItem(resetItem);
 
             EditorMenu.OnItemSelect += (sender, item, index) =>
             {
                 if (item == resetItem)
                 {
-                    ResetPreset_Pressed.Invoke(this, EventArgs.Empty);
+                    ResetPreset_Pressed(this, EventArgs.Empty);
                 }
             };
 
             UpdatePersonalPresetsMenu();
             UpdateServerPresetsMenu();
 
-            EditorMenu.RefreshIndex();
         }
 
         private void UpdatePersonalPresetsMenu()
         {
             if (PersonalPresetsMenu == null)
                 return;
-            PersonalPresetsMenu.Clear();
+            PersonalPresetsMenu.ClearMenuItems();
 
             KvpEnumerable kvpList = new KvpEnumerable(kvpPrefix);
             foreach (var key in kvpList)
             {
                 string value = GetResourceKvpString(key);
-                PersonalPresetsMenu.AddItem(new UIMenuItem(key.Remove(0, kvpPrefix.Length)));
+                PersonalPresetsMenu.AddMenuItem(new MenuItem(key.Remove(0, kvpPrefix.Length)));
             }
-
-            PersonalPresetsMenu.RefreshIndex();
         }
 
         private void UpdateServerPresetsMenu()
@@ -270,12 +244,10 @@ namespace HandlingEditor.Client
             if (ServerPresetsMenu == null)
                 return;
 
-            ServerPresetsMenu.Clear();
+            ServerPresetsMenu.ClearMenuItems();
 
             foreach (var preset in ServerPresets)
-                ServerPresetsMenu.AddItem(new UIMenuItem(preset.Key));
-
-            ServerPresetsMenu.RefreshIndex();
+                ServerPresetsMenu.AddMenuItem(new MenuItem(preset.Key));
         }
 
         private async Task<string> GetOnScreenString(string defaultText)
@@ -283,12 +255,12 @@ namespace HandlingEditor.Client
             DisableAllControlActions(1);
             AddTextEntry("ENTER_VALUE", "Enter value");
             DisplayOnscreenKeyboard(1, "ENTER_VALUE", "", defaultText, "", "", "", 128);
-            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(100);
+            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(200);
             EnableAllControlActions(1);
             return GetOnscreenKeyboardResult();
         }
 
-        private UIMenuDynamicListItem AddDynamicFloatList(UIMenu menu, FieldInfo<float> fieldInfo)
+        private MenuDynamicListItem AddDynamicFloatList(Menu menu, FieldInfo<float> fieldInfo)
         {
             string name = fieldInfo.Name;
             string description = fieldInfo.Description;
@@ -299,9 +271,9 @@ namespace HandlingEditor.Client
                 return null;
 
             float value = CurrentPreset.Fields[name];
-            string FloatChangeCallBack(UIMenuDynamicListItem item, UIMenuDynamicListItem.ChangeDirection direction)
+            string FloatChangeCallBack(MenuDynamicListItem item, bool left)
             {
-                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
+                if (left)
                 {
                     var newvalue = value - FloatStep;
                     if (newvalue < min)
@@ -325,13 +297,15 @@ namespace HandlingEditor.Client
                 }
                 return value.ToString("F3");
             };
-            var newitem = new UIMenuDynamicListItem(name, description, value.ToString("F3"), FloatChangeCallBack);
-
-            menu.AddItem(newitem);
+            var newitem = new MenuDynamicListItem(name, value.ToString("F3"), FloatChangeCallBack, description)
+            {
+                ItemData = name
+            };
+            menu.AddMenuItem(newitem);
 
             EditorMenu.OnItemSelect += async (sender, item, index) =>
             {
-                if (item == newitem)
+                if (item.ItemData == newitem.ItemData)
                 {
                     EditorMenu.Visible = false;
 
@@ -348,9 +322,8 @@ namespace HandlingEditor.Client
                     else
                         Screen.ShowNotification($"{ScriptName}:  Invalid value for ~b~{name}~w~");
 
-                    int currentSelection = EditorMenu.CurrentSelection;
-                    UpdateEditorMenu(); //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
+                    ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
+                    EditorMenu.SelectItem(index);
                     EditorMenu.Visible = true;
                 }
             };
@@ -358,7 +331,7 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private UIMenuDynamicListItem AddDynamicIntList(UIMenu menu, FieldInfo<int> fieldInfo)
+        private MenuDynamicListItem AddDynamicIntList(Menu menu, FieldInfo<int> fieldInfo)
         {
             string name = fieldInfo.Name;
             string description = fieldInfo.Description;
@@ -369,9 +342,9 @@ namespace HandlingEditor.Client
                 return null;
 
             int value = CurrentPreset.Fields[name];
-            string IntChangeCallBack(UIMenuDynamicListItem item, UIMenuDynamicListItem.ChangeDirection direction)
+            string IntChangeCallBack(MenuDynamicListItem item, bool left)
             {
-                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
+                if (left)
                 {
                     var newvalue = value - 1;
                     if (newvalue < min)
@@ -395,9 +368,11 @@ namespace HandlingEditor.Client
                 }
                 return value.ToString();
             };
-            var newitem = new UIMenuDynamicListItem(name, description, value.ToString(), IntChangeCallBack);
-
-            menu.AddItem(newitem);
+            var newitem = new MenuDynamicListItem(name, value.ToString(), IntChangeCallBack, description)
+            {
+                ItemData = name
+            };
+            menu.AddMenuItem(newitem);
 
             EditorMenu.OnItemSelect += async (sender, item, index) =>
             {
@@ -418,9 +393,9 @@ namespace HandlingEditor.Client
                     else
                         Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{name}~w~");
 
-                    int currentSelection = EditorMenu.CurrentSelection;
+                    int currentSelection = EditorMenu.CurrentIndex;
                     UpdateEditorMenu();  //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
+                    EditorMenu.SelectItem(currentSelection);
                     EditorMenu.Visible = true;
                 }
             };
@@ -428,7 +403,7 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private UIMenuDynamicListItem[] AddDynamicVector3List(UIMenu menu, FieldInfo<Vector3> fieldInfo)
+        private MenuDynamicListItem[] AddDynamicVector3List(Menu menu, FieldInfo<Vector3> fieldInfo)
         {
             string fieldName = fieldInfo.Name;
 
@@ -443,10 +418,9 @@ namespace HandlingEditor.Client
             float valueX = CurrentPreset.Fields[fieldName].X;
             float minValueX = fieldMin.X;
             float maxValueX = fieldMax.X;
-
-            var newitemX = new UIMenuDynamicListItem(fieldNameX, fieldDescription, valueX.ToString("F3"), (sender, direction) =>
+            string XChangeCallback(MenuDynamicListItem item, bool left)
             {
-                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
+                if (left)
                 {
                     var newvalue = valueX - FloatStep;
                     if (newvalue < minValueX)
@@ -469,18 +443,20 @@ namespace HandlingEditor.Client
                     }
                 }
                 return valueX.ToString("F3");
-            });
-
-            menu.AddItem(newitemX);
+            }
+            var newitemX = new MenuDynamicListItem(fieldNameX, valueX.ToString("F3"), XChangeCallback, fieldDescription)
+            {
+                ItemData = fieldNameX
+            };
+            menu.AddMenuItem(newitemX);
 
             string fieldNameY = $"{fieldName}_y";
             float valueY = CurrentPreset.Fields[fieldName].Y;
             float minValueY = fieldMin.Y;
             float maxValueY = fieldMax.Y;
-
-            var newitemY = new UIMenuDynamicListItem(fieldNameY, fieldDescription, valueY.ToString("F3"), (sender, direction) =>
+            string YChangeCallback(MenuDynamicListItem item, bool left)
             {
-                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
+                if (left)
                 {
                     var newvalue = valueY - FloatStep;
                     if (newvalue < minValueY)
@@ -503,18 +479,20 @@ namespace HandlingEditor.Client
                     }
                 }
                 return valueY.ToString("F3");
-            });
-
-            menu.AddItem(newitemY);
+            }
+            var newitemY = new MenuDynamicListItem(fieldNameY, valueY.ToString("F3"), YChangeCallback, fieldDescription)
+            {
+                ItemData = fieldNameY
+            };
+            menu.AddMenuItem(newitemY);
 
             string fieldNameZ = $"{fieldName}_z";
             float valueZ = CurrentPreset.Fields[fieldName].Z;
             float minValueZ = fieldMin.Z;
             float maxValueZ = fieldMax.Z;
-
-            var newitemZ = new UIMenuDynamicListItem(fieldNameZ, fieldDescription, valueZ.ToString("F3"), (sender, direction) =>
+            string ZChangeCallBack(MenuDynamicListItem item, bool left)
             {
-                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
+                if (left)
                 {
                     var newvalue = valueZ - FloatStep;
                     if (newvalue < minValueZ)
@@ -537,9 +515,12 @@ namespace HandlingEditor.Client
                     }
                 }
                 return valueZ.ToString("F3");
-            });
-
-            menu.AddItem(newitemZ);
+            }
+            var newitemZ = new MenuDynamicListItem(fieldNameZ, valueZ.ToString("F3"), ZChangeCallBack, fieldDescription)
+            {
+                ItemData = fieldNameZ
+            };
+            menu.AddMenuItem(newitemZ);
 
             EditorMenu.OnItemSelect += async (sender, item, index) =>
             {
@@ -560,9 +541,9 @@ namespace HandlingEditor.Client
                     else
                         Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameX}~w~");
 
-                    int currentSelection = EditorMenu.CurrentSelection;
+                    int currentSelection = EditorMenu.CurrentIndex;
                     UpdateEditorMenu();  //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
+                    EditorMenu.SelectItem(currentSelection);
                     EditorMenu.Visible = true;
                 }
                 else if (item == newitemY)
@@ -582,9 +563,9 @@ namespace HandlingEditor.Client
                     else
                         Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameY}~w~");
 
-                    int currentSelection = EditorMenu.CurrentSelection;
+                    int currentSelection = EditorMenu.CurrentIndex;
                     UpdateEditorMenu();  //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
+                    EditorMenu.SelectItem(currentSelection);
                     EditorMenu.Visible = true;
                 }
                 else if (item == newitemZ)
@@ -604,23 +585,26 @@ namespace HandlingEditor.Client
                     else
                         Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameZ}~w~");
 
-                    int currentSelection = EditorMenu.CurrentSelection;
+                    int currentSelection = EditorMenu.CurrentIndex;
                     UpdateEditorMenu();  //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
+                    EditorMenu.SelectItem(currentSelection);
                     EditorMenu.Visible = true;
                 }
             };
 
-            return new UIMenuDynamicListItem[3] { newitemX, newitemY, newitemZ };
+            return new MenuDynamicListItem[3] { newitemX, newitemY, newitemZ };
         }
 
-        private UIMenuItem AddLockedItem(UIMenu menu, BaseFieldInfo fieldInfo)
+        private MenuItem AddLockedItem(Menu menu, BaseFieldInfo fieldInfo)
         {
-            var newitem = new UIMenuItem(fieldInfo.Name, fieldInfo.Description);
-            newitem.Enabled = false;
-            newitem.SetRightBadge(UIMenuItem.BadgeStyle.Lock);
+            var newitem = new MenuItem(fieldInfo.Name, fieldInfo.Description)
+            {
+                Enabled = false,
+                RightIcon = MenuItem.Icon.LOCK,
+                ItemData = fieldInfo.Name,
+            };
 
-            menu.AddItem(newitem);
+            menu.AddMenuItem(newitem);
 
             menu.OnItemSelect += (sender, item, index) =>
             {
