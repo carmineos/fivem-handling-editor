@@ -68,40 +68,6 @@ namespace HandlingEditor.Client
                 if (MenuController.IsAnyMenuOpen())
                     MenuController.CloseAllMenus();
             }
-                
-
-                //if (menuController.IsAnyMenuOpen())
-                //HandlingEditor.DisableControls();
-                /*
-            if (CurrentVehicle != -1 && CurrentPreset != null)
-            {
-
-
-                if (PersonalPresetsMenu.Visible)
-                {
-                    HandlingEditor.DisableControls2();
-
-                    // Save Button pressed
-                    if (IsControlJustPressed(1, 179))
-                    {
-                        string kvpName = await GetOnScreenString("");
-                        SavePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
-                    }
-                    // Delete Button pressed
-                    else if (IsControlJustPressed(1, 178))
-                    {
-                        if (PersonalPresetsMenu.MenuItems.Count > 0)
-                        {
-                            string kvpName = PersonalPresetsMenu.MenuItems[PersonalPresetsMenu.CurrentSelection].Text;
-                            DeletePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                menuController.CloseAllMenus();
-            }*/
         }
         
         #endregion
@@ -121,6 +87,20 @@ namespace HandlingEditor.Client
 
                 PersonalPresetsMenu.InstructionalButtons.Add(Control.PhoneExtraOption, GetLabelText("ITEM_SAVE"));
                 PersonalPresetsMenu.InstructionalButtons.Add(Control.PhoneOption, GetLabelText("ITEM_DEL"));
+
+                PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneExtraOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control> (async (sender, control) =>
+                {
+                    string kvpName = await GetOnScreenString("");
+                    SavePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
+                }) , true));
+                PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>(async (sender, control) =>
+                {
+                    if (PersonalPresetsMenu.GetMenuItems().Count > 0)
+                    {
+                        string kvpName = PersonalPresetsMenu.GetMenuItems()[PersonalPresetsMenu.CurrentIndex].Text;
+                        DeletePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
+                    }
+                }), true));
 
                 PersonalPresetsMenu.OnItemSelect += (sender, item, index) =>
                 {
