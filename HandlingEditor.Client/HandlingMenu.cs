@@ -10,7 +10,7 @@ namespace HandlingEditor.Client
 {
     public class HandlingMenu : BaseScript
     {
-        #region EDITOR PROPERTIES
+        #region Editor Properties
 
         public string ScriptName => HandlingEditor.ScriptName;
         public string kvpPrefix => HandlingEditor.kvpPrefix;
@@ -22,7 +22,7 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region MENU FIELDS
+        #region Menu Fields
 
         public MenuController menuController;
         public Menu EditorMenu;
@@ -32,31 +32,31 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region EVENTS
+        #region Events
 
-        public static event EventHandler ResetPreset_Pressed;
-        public static event EventHandler<string> ApplyPersonalPreset_Pressed;
-        public static event EventHandler<string> ApplyServerPreset_Pressed;
-        public static event EventHandler<string> SavePersonalPreset_Pressed;
-        public static event EventHandler<string> SaveServerPreset_Pressed;
-        public static event EventHandler<string> DeletePersonalPreset_Pressed;
-        public static event EventHandler<string> DeleteServerPreset_Pressed;
+        public static event EventHandler ResetPresetButtonPressed;
+        public static event EventHandler<string> ApplyPersonalPresetButtonPressed;
+        public static event EventHandler<string> ApplyServerPresetButtonPressed;
+        public static event EventHandler<string> SavePersonalPresetButtonPressed;
+        public static event EventHandler<string> SaveServerPresetButtonPressed;
+        public static event EventHandler<string> DeletePersonalPresetButtonPressed;
+        public static event EventHandler<string> DeleteServerPresetButtonPressed;
 
         #endregion
 
-        #region CONSTRUCTOR
+        #region Constructor
 
         public HandlingMenu()
         {
             Tick += OnTick;
-            HandlingEditor.Menu_Outdated += new EventHandler((sender,args) => InitializeMenu());
-            HandlingEditor.PersonalPresetsMenu_Outdated += new EventHandler((sender,args) => UpdatePersonalPresetsMenu());
-            HandlingEditor.ServerPresetsMenu_Outdated += new EventHandler((sender,args) => UpdateServerPresetsMenu());
+            HandlingEditor.PresetChanged += new EventHandler((sender,args) => InitializeMenu());
+            HandlingEditor.PersonalPresetsListChanged += new EventHandler((sender,args) => UpdatePersonalPresetsMenu());
+            HandlingEditor.ServerPresetsListChanged += new EventHandler((sender,args) => UpdateServerPresetsMenu());
         }
 
         #endregion
 
-        #region TASKS
+        #region Tasks
         
         private async Task OnTick()
         {
@@ -69,7 +69,7 @@ namespace HandlingEditor.Client
         
         #endregion
 
-        #region MENU METHODS
+        #region Menu Methods
 
         private void InitializeMenu()
         {
@@ -88,24 +88,22 @@ namespace HandlingEditor.Client
                 PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneExtraOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control> (async (sender, control) =>
                 {
                     string kvpName = await GetOnScreenString("");
-                    SavePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
+                    SavePersonalPresetButtonPressed(PersonalPresetsMenu, kvpName);
                 }) , true));
                 PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) =>
                 {
                     if (PersonalPresetsMenu.GetMenuItems().Count > 0)
                     {
                         string kvpName = PersonalPresetsMenu.GetMenuItems()[PersonalPresetsMenu.CurrentIndex].Text;
-                        DeletePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
+                        DeletePersonalPresetButtonPressed(PersonalPresetsMenu, kvpName);
                     }
                 }), true));
 
                 PersonalPresetsMenu.OnItemSelect += (sender, item, index) =>
                 {
-                    ApplyPersonalPreset_Pressed.Invoke(sender, item.Text);
+                    ApplyPersonalPresetButtonPressed.Invoke(sender, item.Text);
 
-                    int currentSelection = PersonalPresetsMenu.CurrentIndex;
                     UpdateEditorMenu();
-                    //PersonalPresetsMenu.CurrentIndex = currentSelection;
                 };
 
             }
@@ -115,12 +113,10 @@ namespace HandlingEditor.Client
                 
                 ServerPresetsMenu.OnItemSelect += (sender, item, index) =>
                 {
-                    ApplyServerPreset_Pressed.Invoke(sender, item.Text);
+                    ApplyServerPresetButtonPressed.Invoke(sender, item.Text);
 
                     
-                    int currentSelection = ServerPresetsMenu.CurrentIndex;
                     UpdateEditorMenu();
-                    //ServerPresetsMenu.CurrentIndex = currentSelection;
 
                 };
             }
@@ -197,7 +193,7 @@ namespace HandlingEditor.Client
             {
                 if (item == resetItem)
                 {
-                    ResetPreset_Pressed(this, EventArgs.Empty);
+                    ResetPresetButtonPressed(this, EventArgs.Empty);
                 }
             };
 

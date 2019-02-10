@@ -14,9 +14,9 @@ namespace HandlingEditor.Client
     {
         #region Events
 
-        public static event EventHandler Menu_Outdated;
-        public static event EventHandler PersonalPresetsMenu_Outdated;
-        public static event EventHandler ServerPresetsMenu_Outdated;
+        public static event EventHandler PresetChanged;
+        public static event EventHandler PersonalPresetsListChanged;
+        public static event EventHandler ServerPresetsListChanged;
 
         #endregion
 
@@ -138,7 +138,7 @@ namespace HandlingEditor.Client
                     CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
             }), false);
 
-            HandlingMenu.ApplyPersonalPreset_Pressed += async (sender, name) =>
+            HandlingMenu.ApplyPersonalPresetButtonPressed += async (sender, name) =>
             {
                 string key = $"{kvpPrefix}{name}";
                 string value = GetResourceKvpString(key);
@@ -158,7 +158,7 @@ namespace HandlingEditor.Client
                 await Delay(200);
             };
 
-            HandlingMenu.ApplyServerPreset_Pressed += async (sender, name) =>
+            HandlingMenu.ApplyServerPresetButtonPressed += async (sender, name) =>
             {
                 string key = name;
                 if (ServerPresets.TryGetValue(key, out HandlingPreset preset))
@@ -182,36 +182,36 @@ namespace HandlingEditor.Client
                 await Delay(200);
             };
 
-            HandlingMenu.SavePersonalPreset_Pressed += async (sender, name) =>
+            HandlingMenu.SavePersonalPresetButtonPressed += async (sender, name) =>
             {
                 if (SavePresetAsKVP(name, CurrentPreset))
                 {
                     await Delay(200);
-                    PersonalPresetsMenu_Outdated(this, EventArgs.Empty);
+                    PersonalPresetsListChanged(this, EventArgs.Empty);
                     Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{name}~w~ saved");
                 }
                 else
                     Screen.ShowNotification($"{ScriptName}: The name {name} is invalid or already used.");
             };
 
-            HandlingMenu.DeletePersonalPreset_Pressed += async (sender, name) =>
+            HandlingMenu.DeletePersonalPresetButtonPressed += async (sender, name) =>
             {
                 if (DeletePresetKVP(name))
                 {
                     await Delay(200);
-                    PersonalPresetsMenu_Outdated(this, EventArgs.Empty);
+                    PersonalPresetsListChanged(this, EventArgs.Empty);
                     Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{name}~w~ deleted");
                 }
             };
 
-            HandlingMenu.ResetPreset_Pressed += async (sender, args) =>
+            HandlingMenu.ResetPresetButtonPressed += async (sender, args) =>
             {
                 CurrentPreset.Reset();
-                RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
                 RemoveDecorators(CurrentVehicle);
+                RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
 
                 await Delay(200);
-                Menu_Outdated(this, EventArgs.Empty);
+                PresetChanged(this, EventArgs.Empty);
             };
 
             Tick += GetCurrentVehicle;
@@ -241,7 +241,7 @@ namespace HandlingEditor.Client
                     {
                         CurrentVehicle = vehicle;
                         CurrentPreset = CreateHandlingPreset(CurrentVehicle);
-                        Menu_Outdated.Invoke(this, EventArgs.Empty);
+                        PresetChanged.Invoke(this, EventArgs.Empty);
                     }
                 }
                 else
@@ -369,7 +369,7 @@ namespace HandlingEditor.Client
                 else if (fieldType == FieldType.Vector3Type)
                 {
                     var value = GetVehicleHandlingVector(vehicle, className, fieldName);
-                    if (value != fieldValue)
+                    if (value != fieldValue) // TODO: Check why this is bugged
                     {
                         SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
 
