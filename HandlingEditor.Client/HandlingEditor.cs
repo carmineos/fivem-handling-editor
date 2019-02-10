@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Drawing;
 using System.Text;
-using NativeUI;
 using CitizenFX.Core;
 using CitizenFX.Core.UI;
 using static CitizenFX.Core.Native.API;
@@ -14,574 +12,78 @@ namespace HandlingEditor.Client
 {
     public class HandlingEditor : BaseScript
     {
-        private static string ResourceName;
-        private static readonly string ScriptName = "Handling Editor";
-        private static readonly string kvpPrefix = "handling_";
+        #region Events
 
-        #region CONFIG_FIEDS
-        private static float editingFactor = 0.01f;
-        private static float maxSyncDistance = 150.0f;
-        private static long timer = 1000;
-        private static bool debug = false;
-        private static int toggleMenu = 168;
-        private static float screenPosX = 1.0f;
-        private static float screenPosY = 0.0f;
+        public static event EventHandler PresetChanged;
+        public static event EventHandler PersonalPresetsListChanged;
+        public static event EventHandler ServerPresetsListChanged;
+
         #endregion
 
-        #region FIELDS
-        private HandlingInfo handlingInfo;
-        private Dictionary<string,HandlingPreset> serverPresets;
-        private long currentTime;
-        private long lastTime;
-        private int playerPed;
-        private int currentVehicle;
-        private HandlingPreset currentPreset;
-        private IEnumerable<int> vehicles;
-        #endregion
-
-        #region GUI_FIELDS
-        private MenuPool _menuPool;
-        private UIMenu EditorMenu;
-        private UIMenu presetsMenu;
-        private UIMenu serverPresetsMenu;
-        #endregion
-
-        #region GUI_METHODS
-        private async Task<string> GetOnScreenString(string defaultText)
-        {
-            DisableAllControlActions(1);
-            AddTextEntry("ENTER_VALUE", "Enter value");
-            DisplayOnscreenKeyboard(1, "ENTER_VALUE", "", defaultText, "", "", "", 128);
-            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(0);
-            EnableAllControlActions(1);
-            return GetOnscreenKeyboardResult();
-        }
-
-        private UIMenuDynamicListItem AddDynamicFloatList(UIMenu menu, FloatFieldInfo fieldInfo)
-        {
-            string name = fieldInfo.Name;
-            string description = fieldInfo.Description;
-            float min = fieldInfo.Min;
-            float max = fieldInfo.Max;
-
-            if (!currentPreset.Fields.ContainsKey(name))
-                return null;
-
-            float value = currentPreset.Fields[name];
-            var newitem = new UIMenuDynamicListItem(name, description, value.ToString("F3"), (sender, direction) =>
-            {
-                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
-                {
-                    var newvalue = value - editingFactor;
-                    if (newvalue < min)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{name}~w~ is {min}");
-                    else
-                    {
-                        value = newvalue;
-                        currentPreset.Fields[name] = newvalue;
-                    }
-                }
-                else
-                {
-                    var newvalue = value + editingFactor;
-                    if (newvalue > max)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{name}~w~ is {max}");
-                    else
-                    {
-                        value = newvalue;
-                        currentPreset.Fields[name] = newvalue;
-                    }
-                }
-                return value.ToString("F3");
-            });
-
-            menu.AddItem(newitem);
-
-            EditorMenu.OnItemSelect += async (sender, item, index) =>
-            {
-                if (item == newitem)
-                {
-                    EditorMenu.Visible = false;
-
-                    string text = await GetOnScreenString(value.ToString());
-                    float newvalue = value;
-
-                    if (float.TryParse(text, out newvalue))
-                    {
-                        if(newvalue >= min && newvalue <= max)
-                            currentPreset.Fields[name] = newvalue;
-                        else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
-                    }else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
-
-                    int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
-                    EditorMenu.Visible = true;
-                }
-            };
-
-            return newitem;
-        }
-
-        private UIMenuDynamicListItem AddDynamicIntList(UIMenu menu, IntFieldInfo fieldInfo)
-        {
-            string name = fieldInfo.Name;
-            string description = fieldInfo.Description;
-            int min = fieldInfo.Min;
-            int max = fieldInfo.Max;
-
-            if (!currentPreset.Fields.ContainsKey(name))
-                return null;
-
-            int value = currentPreset.Fields[name]; //TODO: Get value from current preset
-            var newitem = new UIMenuDynamicListItem(name, description, value.ToString(), (sender, direction) =>
-            {
-                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
-                {
-                    var newvalue = value - 1;
-                    if (newvalue < min)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{name}~w~ is {min}");
-                    else
-                    {
-                        value = newvalue;
-                        currentPreset.Fields[name] = newvalue;
-                    }
-                }
-                else
-                {
-                    var newvalue = value + 1;
-                    if (newvalue > max)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{name}~w~ is {max}");
-                    else
-                    {
-                        value = newvalue;
-                        currentPreset.Fields[name] = newvalue;
-                    }
-                }
-                return value.ToString();
-            });
-
-            menu.AddItem(newitem);
-
-            EditorMenu.OnItemSelect += async (sender, item, index) =>
-            {
-                if (item == newitem)
-                {
-                    EditorMenu.Visible = false;
-
-                    string text = await GetOnScreenString(value.ToString());
-                    int newvalue = value;
-
-                    if (int.TryParse(text, out newvalue))
-                    {
-                        if (newvalue >= min && newvalue <= max)
-                            currentPreset.Fields[name] = newvalue;
-                        else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
-                    }
-                    else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{name}~w~");
-
-                    int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
-                    EditorMenu.Visible = true;
-                }
-            };
-
-            return newitem;
-        }
-
-        private void AddDynamicVector3List(UIMenu menu, VectorFieldInfo fieldInfo)
-        {
-            if (!currentPreset.Fields.ContainsKey(fieldInfo.Name))
-                return;
-
-            string fieldDescription = fieldInfo.Description;
-            string fieldNameX = $"{fieldInfo.Name}_x";
-            float valueX = currentPreset.Fields[fieldInfo.Name].X;
-            float minValueX = fieldInfo.Min.X;
-            float maxValueX = fieldInfo.Max.X;
-
-            var newitemX = new UIMenuDynamicListItem(fieldNameX, fieldDescription, valueX.ToString("F3"), (sender, direction) =>
-            {
-                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
-                {
-                    var newvalue = valueX - editingFactor;
-                    if (newvalue < minValueX)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldNameX}~w~ is {minValueX}");
-                    else
-                    {
-                        valueX = newvalue;
-                        currentPreset.Fields[fieldInfo.Name].X = newvalue;
-                    }
-                }
-                else
-                {
-                    var newvalue = valueX + editingFactor;
-                    if (newvalue > maxValueX)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldNameX}~w~ is {maxValueX}");
-                    else
-                    {
-                        valueX = newvalue;
-                        currentPreset.Fields[fieldInfo.Name].X = newvalue;
-                    }
-                }
-                return valueX.ToString("F3");
-            });
-
-            menu.AddItem(newitemX);
-
-            EditorMenu.OnItemSelect += async (sender, item, index) =>
-            {
-                if (item == newitemX)
-                {
-                    EditorMenu.Visible = false;
-
-                    string text = await GetOnScreenString(valueX.ToString());
-                    float newvalue = valueX;
-
-                    if (float.TryParse(text, out newvalue))
-                    {
-                        if (newvalue >= minValueX && newvalue <= maxValueX)
-                            currentPreset.Fields[fieldInfo.Name].X = newvalue;
-                        else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameX}~w~, Min:{minValueX}, Max:{maxValueX}");
-                    }
-                    else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameX}~w~");
-
-                    int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
-                    EditorMenu.Visible = true;
-                }
-            };
-
-            string fieldNameY = $"{fieldInfo.Name}_y";
-            float valueY = currentPreset.Fields[fieldInfo.Name].Y;
-            float minValueY = fieldInfo.Min.X;
-            float maxValueY = fieldInfo.Max.X;
-
-            var newitemY = new UIMenuDynamicListItem(fieldNameY, fieldDescription, valueY.ToString("F3"), (sender, direction) =>
-            {
-                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
-                {
-                    var newvalue = valueY - editingFactor;
-                    if (newvalue < minValueY)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldNameY}~w~ is {minValueY}");
-                    else
-                    {
-                        valueY = newvalue;
-                        currentPreset.Fields[fieldInfo.Name].Y = newvalue;
-                    }
-                }
-                else
-                {
-                    var newvalue = valueY + editingFactor;
-                    if (newvalue > maxValueY)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldNameY}~w~ is {maxValueY}");
-                    else
-                    {
-                        valueY = newvalue;
-                        currentPreset.Fields[fieldInfo.Name].Y = newvalue;
-                    }
-                }
-                return valueY.ToString("F3");
-            });
-
-            menu.AddItem(newitemY);
-
-            EditorMenu.OnItemSelect += async (sender, item, index) =>
-            {
-                if (item == newitemY)
-                {
-                    EditorMenu.Visible = false;
-
-                    string text = await GetOnScreenString(valueY.ToString());
-                    float newvalue = valueY;
-
-                    if (float.TryParse(text, out newvalue))
-                    {
-                        if (newvalue >= minValueY && newvalue <= maxValueY)
-                            currentPreset.Fields[fieldInfo.Name].Y = newvalue;
-                        else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameY}~w~, Min:{minValueY}, Max:{maxValueY}");
-                    }
-                    else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameY}~w~");
-
-                    int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
-                    EditorMenu.Visible = true;
-                }
-            };
-
-            string fieldNameZ = $"{fieldInfo.Name}_z";
-            float valueZ = currentPreset.Fields[fieldInfo.Name].Z;
-            float minValueZ = fieldInfo.Min.Z;
-            float maxValueZ = fieldInfo.Max.Z;
-
-            var newitemZ = new UIMenuDynamicListItem(fieldNameZ, fieldDescription, valueZ.ToString("F3"), (sender, direction) =>
-            {
-                if (direction == UIMenuDynamicListItem.ChangeDirection.Left)
-                {
-                    var newvalue = valueZ - editingFactor;
-                    if (newvalue < minValueZ)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Min value allowed for ~b~{fieldNameZ}~w~ is {minValueZ}");
-                    else
-                    {
-                        valueZ = newvalue;
-                        currentPreset.Fields[fieldInfo.Name].Z = newvalue;
-                    }
-                }
-                else
-                {
-                    var newvalue = valueZ + editingFactor;
-                    if (newvalue > maxValueZ)
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Max value allowed for ~b~{fieldNameZ}~w~ is {maxValueZ}");
-                    else
-                    {
-                        valueZ = newvalue;
-                        currentPreset.Fields[fieldInfo.Name].Z = newvalue;
-                    }
-                }
-                return valueZ.ToString("F3");
-            });
-
-            menu.AddItem(newitemZ);
-
-            EditorMenu.OnItemSelect += async (sender, item, index) =>
-            {
-                if (item == newitemZ)
-                {
-                    EditorMenu.Visible = false;
-
-                    string text = await GetOnScreenString(valueZ.ToString());
-                    float newvalue = valueZ;
-
-                    if (float.TryParse(text, out newvalue))
-                    {
-                        if (newvalue >= minValueZ && newvalue <= maxValueZ)
-                            currentPreset.Fields[fieldInfo.Name].Z = newvalue;
-                        else
-                            CitizenFX.Core.UI.Screen.ShowNotification($"Value out of allowed limits for ~b~{fieldNameZ}~w~, Min:{minValueZ}, Max:{maxValueZ}");
-                    }
-                    else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Invalid value for ~b~{fieldNameZ}~w~");
-
-                    int currentSelection = EditorMenu.CurrentSelection;
-                    InitialiseMenu(); //Should just update the current item instead
-                    EditorMenu.CurrentSelection = currentSelection;
-                    EditorMenu.Visible = true;
-                }
-            };
-        }
+        #region Config Fields
+        public static float FloatPrecision { get; private set; } = 0.001f;
+        public static float FloatStep { get; private set; } = 0.01f;
+        public static float ScriptRange { get; private set; } = 150.0f;
+        public static long Timer { get; private set; } = 1000;
+        public static bool Debug { get; private set; } = false;
+        public static int ToggleMenu { get; private set; } = 168;
         
-        private UIMenuItem AddMenuReset(UIMenu menu)
-        {
-            var newitem = new UIMenuItem("Reset", "Restores the default values");
-            menu.AddItem(newitem);
+        /// <summary>
+        /// Wheter <see cref="CurrentVehicle"/> and <see cref="CurrentPreset"/> are valid
+        /// </summary>
+        public static bool CurrentPresetIsValid => CurrentVehicle != -1 && CurrentPreset != null;
 
-            menu.OnItemSelect += (sender, item, index) =>
-            {
-                if (item == newitem)
-                {
-                    currentPreset.Reset();
-                    RefreshVehicleUsingPreset(currentVehicle, currentPreset);
-                    RemoveDecorators(currentVehicle);
-
-                    InitialiseMenu();
-                    EditorMenu.Visible = true;
-                }
-            };
-            return newitem;
-        }
-
-        private UIMenuItem AddLockedItem(UIMenu menu, FieldInfo fieldInfo)
-        {
-            var newitem = new UIMenuItem(fieldInfo.Name, fieldInfo.Description);
-            newitem.Enabled = false;
-            newitem.SetRightBadge(UIMenuItem.BadgeStyle.Lock);
-
-            menu.AddItem(newitem);
-
-            menu.OnItemSelect += (sender, item, index) =>
-            {
-                if (item == newitem)
-                {
-                    CitizenFX.Core.UI.Screen.ShowNotification($"The server doesn't allow to edit this field.");
-                }
-            };
-            return newitem;
-        }
-
-        private UIMenu AddPresetsSubMenu(UIMenu menu)
-        {
-            var newitem = _menuPool.AddSubMenu(menu, "Saved Presets", "The handling presets saved by you.");
-            {
-                newitem.MouseEdgeEnabled = false;
-                newitem.ControlDisablingEnabled = false;
-                newitem.MouseControlsEnabled = false;
-                newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneExtraOption, "Save"));
-                newitem.AddInstructionalButton(new InstructionalButton(Control.PhoneOption, "Delete"));
-            }
-
-            KvpList kvpList = new KvpList(kvpPrefix);
-            foreach(var key in kvpList)
-            {
-                string value = GetResourceKvpString(key);
-                newitem.AddItem(new UIMenuItem(key.Remove(0, kvpPrefix.Length)));  
-            }
-            return newitem;
-        }
-
-        private UIMenu AddServerPresetsSubMenu(UIMenu menu)
-        {
-            var newitem = _menuPool.AddSubMenu(menu, "Server Presets", "The handling presets loaded from the server.");
-            {
-                newitem.MouseEdgeEnabled = false;
-                newitem.ControlDisablingEnabled = false;
-                newitem.MouseControlsEnabled = false;
-            }
-
-            foreach (var preset in serverPresets)
-                newitem.AddItem(new UIMenuItem(preset.Key));
-
-            return newitem;
-        }
-
-        private async void InitialiseMenu()
-        {
-            _menuPool = new MenuPool();
-            {
-                _menuPool.ResetCursorOnOpen = true;
-            }
-
-            EditorMenu = new UIMenu(ScriptName, "Beta", new PointF(screenPosX * Screen.Width, screenPosY * Screen.Height));
-            {
-                EditorMenu.MouseEdgeEnabled = false;
-                EditorMenu.ControlDisablingEnabled = false;
-                EditorMenu.MouseControlsEnabled = false;
-            }
-
-            foreach (var item in handlingInfo.FieldsInfo)
-            {
-                var fieldInfo = item.Value;
-
-                if(fieldInfo.Editable)
-                {
-                    /*
-                    string fieldName = fieldInfo.Name;
-                    string fieldDescription = fieldInfo.Description;*/
-                    Type fieldType = fieldInfo.Type;
-
-                    if (fieldType == FieldType.FloatType)
-                        AddDynamicFloatList(EditorMenu, (FloatFieldInfo)item.Value);
-                    else if (fieldType == FieldType.IntType)
-                        AddDynamicIntList(EditorMenu, (IntFieldInfo)item.Value);
-                    else if (fieldType == FieldType.Vector3Type)
-                        AddDynamicVector3List(EditorMenu, (VectorFieldInfo)item.Value);
-                }
-                else
-                {
-                    //AddLockedItem(EditorMenu, item.Value);
-                }
-            }
-
-            AddMenuReset(EditorMenu);
-            presetsMenu = AddPresetsSubMenu(EditorMenu);
-            serverPresetsMenu = AddServerPresetsSubMenu(EditorMenu);
-
-            presetsMenu.OnItemSelect += (sender, item, index) =>
-            {
-                if(sender == presetsMenu)
-                {
-                    string key = $"{kvpPrefix}{item.Text}";
-                    string value = GetResourceKvpString(key);
-                    if (value != null)
-                    {
-                        XmlDocument doc = new XmlDocument();
-                        doc.LoadXml(value);
-                        var handling = doc["Item"];
-                        GetPresetFromXml(handling, currentPreset);
-
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Personal preset ~b~{item.Text}~w~ applied");
-                        InitialiseMenu();
-                        presetsMenu.Visible = true;
-                    }
-                    else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"~r~ERROR~w~: Personal preset ~b~{item.Text}~w~ corrupted");
-                }
-            };
-
-            serverPresetsMenu.OnItemSelect += (sender, item, index) =>
-            {
-                if(sender == serverPresetsMenu)
-                {
-                    string key = item.Text;
-                    if (serverPresets.ContainsKey(key))
-                    {
-                        foreach (var field in serverPresets[key].Fields.Keys)
-                        {
-                            if (currentPreset.Fields.ContainsKey(field))
-                            {
-                                currentPreset.Fields[field] = serverPresets[key].Fields[field];
-                            }
-                            else Debug.Write($"Missing {field} field in currentPreset");
-                        }
-                        CitizenFX.Core.UI.Screen.ShowNotification($"Server preset ~b~{key}~w~ applied");
-                        InitialiseMenu();
-                        serverPresetsMenu.Visible = true;
-                    }
-                    else
-                        CitizenFX.Core.UI.Screen.ShowNotification($"~r~ERROR~w~: Server preset ~b~{key}~w~ corrupted");
-                }
-            };
-
-            _menuPool.Add(EditorMenu);
-            _menuPool.RefreshIndex();
-
-            await Delay(0);
-        }
         #endregion
+
+        #region Fields
+        public const string ScriptName = "Handling Editor";
+        public const string kvpPrefix = "handling_";
+        public static string ResourceName { get; private set; }
+        public static Dictionary<string,HandlingPreset> ServerPresets { get; private set; }
+        public static long CurrentTime { get; private set; }
+        public static long LastTime { get; private set; }
+        public static int PlayerPed { get; private set; }
+        public static int CurrentVehicle { get; private set; }
+        public static HandlingPreset CurrentPreset { get; private set; }
+        public static IEnumerable<int> Vehicles { get; private set; }
+        #endregion
+
+        #region Constructor
 
         public HandlingEditor()
         {
             ResourceName = GetCurrentResourceName();
-            Debug.WriteLine($"{ScriptName}: Script by Neos7");
+            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Script by Neos7");
             LoadConfig();
             
-            handlingInfo = new HandlingInfo();
             ReadFieldInfo();
-            serverPresets = new Dictionary<string, HandlingPreset>();
+            ServerPresets = new Dictionary<string, HandlingPreset>();
             ReadServerPresets();
 
             RegisterDecorators();
 
-            currentTime = GetGameTimer();
-            lastTime = currentTime;
-            currentPreset = null;
-            currentVehicle = -1;
-            vehicles = Enumerable.Empty<int>();
+            ReadVehiclePermissions();
 
-            RegisterCommand("handling_distance", new Action<int, dynamic>((source, args) =>
+            CurrentTime = GetGameTimer();
+            LastTime = CurrentTime;
+            CurrentPreset = null;
+            CurrentVehicle = -1;
+            Vehicles = Enumerable.Empty<int>();
+
+            RegisterCommand("handling_range", new Action<int, dynamic>((source, args) =>
             {
                 if(args.Count < 1)
                 {
-                    Debug.WriteLine($"{ScriptName}: Missing float argument");
+                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Missing float argument");
                     return;
                 }
 
                 if (float.TryParse(args[0], out float value))
                 {
-                    maxSyncDistance = value;
-                    Debug.WriteLine($"{ScriptName}: Received new {nameof(maxSyncDistance)} value {value}");
+                    ScriptRange = value;
+                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Received new {nameof(ScriptRange)} value {value}");
                 }
-                else Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as float");
+                else CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as float");
 
             }), false);
 
@@ -589,132 +91,173 @@ namespace HandlingEditor.Client
             {
                 if (args.Count < 1)
                 {
-                    Debug.WriteLine($"{ScriptName}: Missing bool argument");
+                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Missing bool argument");
                     return;
                 }
 
                 if (bool.TryParse(args[0], out bool value))
                 {
-                    debug = value;
-                    Debug.WriteLine($"{ScriptName}: Received new {nameof(debug)} value {value}");
+                    Debug = value;
+                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Received new {nameof(Debug)} value {value}");
                 }
-                else Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as bool");
+                else CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as bool");
 
             }), false);
 
             RegisterCommand("handling_decorators", new Action<int, dynamic>((source, args) =>
             {
                 if (args.Count < 1)
-                    PrintDecorators(currentVehicle);
+                    PrintDecorators(CurrentVehicle);
                 else
                 {
                     if (int.TryParse(args[0], out int value))
                         PrintDecorators(value);
-                    else Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as int");
+                    else CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as int");
                 }
 
             }), false);
 
             RegisterCommand("handling_print", new Action<int, dynamic>((source, args) =>
             {
-                PrintVehiclesWithDecorators(vehicles);
+                PrintVehiclesWithDecorators(Vehicles);
             }), false);
 
             RegisterCommand("handling_preset", new Action<int, dynamic>((source, args) =>
             {
-                if (currentPreset != null)
-                    Debug.WriteLine(currentPreset.ToString());
+                if (CurrentPreset != null)
+                    CitizenFX.Core.Debug.WriteLine(CurrentPreset.ToString());
                 else
-                    Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
+                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
             }), false);
 
-            Tick += OnTick;
+            RegisterCommand("handling_xml", new Action<int, dynamic>((source, args) =>
+            {
+                if (CurrentPreset != null)
+                    CitizenFX.Core.Debug.WriteLine(GetXmlFromPreset(CurrentPreset).OuterXml);
+                else
+                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
+            }), false);
+
+            HandlingMenu.ApplyPersonalPresetButtonPressed += async (sender, name) =>
+            {
+                string key = $"{kvpPrefix}{name}";
+                string value = GetResourceKvpString(key);
+                if (value != null)
+                {
+                    value = Helpers.RemoveByteOrderMarks(value);
+                    XmlDocument doc = new XmlDocument();
+                    doc.LoadXml(value);
+                    var handling = doc["Item"];
+                    GetPresetFromXml(handling, CurrentPreset);
+
+                    Screen.ShowNotification($"{ScriptName}: Personal preset ~b~{name}~w~ applied");
+                }
+                else
+                    Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Personal preset ~b~{name}~w~ corrupted");
+
+                await Delay(200);
+            };
+
+            HandlingMenu.ApplyServerPresetButtonPressed += async (sender, name) =>
+            {
+                string key = name;
+                if (ServerPresets.TryGetValue(key, out HandlingPreset preset))
+                {
+                    var presetFields = preset.Fields; 
+                    foreach (var field in presetFields.Keys)
+                    {
+                        // TODO: Add a flag to decide if a field should be added to the preset anyway
+                        if (CurrentPreset.Fields.ContainsKey(field))
+                        {
+                            CurrentPreset.Fields[field] = presetFields[field];
+                        }
+                        else CitizenFX.Core.Debug.Write($"Missing {field} field in currentPreset");
+                    }
+
+                    Screen.ShowNotification($"{ScriptName}: Server preset ~b~{key}~w~ applied");
+                }
+                else
+                    Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Server preset ~b~{key}~w~ corrupted");
+
+                await Delay(200);
+            };
+
+            HandlingMenu.SavePersonalPresetButtonPressed += async (sender, name) =>
+            {
+                if (SavePresetAsKVP(name, CurrentPreset))
+                {
+                    await Delay(200);
+                    PersonalPresetsListChanged(this, EventArgs.Empty);
+                    Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{name}~w~ saved");
+                }
+                else
+                    Screen.ShowNotification($"{ScriptName}: The name {name} is invalid or already used.");
+            };
+
+            HandlingMenu.DeletePersonalPresetButtonPressed += async (sender, name) =>
+            {
+                if (DeletePresetKVP(name))
+                {
+                    await Delay(200);
+                    PersonalPresetsListChanged(this, EventArgs.Empty);
+                    Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{name}~w~ deleted");
+                }
+            };
+
+            HandlingMenu.ResetPresetButtonPressed += async (sender, args) =>
+            {
+                CurrentPreset.Reset();
+                RemoveDecorators(CurrentVehicle);
+                RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
+
+                await Delay(200);
+                PresetChanged(this, EventArgs.Empty);
+            };
+
+            Tick += GetCurrentVehicle;
             Tick += ScriptTask;
         }
 
+        #endregion
+
+        #region Tasks
+
         /// <summary>
-        /// The GUI task of the script
+        /// Updates the <see cref="CurrentVehicle"/> and the <see cref="CurrentPreset"/>
         /// </summary>
         /// <returns></returns>
-        private async Task OnTick()
+        private async Task GetCurrentVehicle()
         {
-            if(_menuPool != null)
+            PlayerPed = PlayerPedId();
+
+            if (IsPedInAnyVehicle(PlayerPed, false))
             {
+                int vehicle = GetVehiclePedIsIn(PlayerPed, false);
 
-                _menuPool.ProcessMenus();
-
-                if (_menuPool.IsAnyMenuOpen())
-                    DisableControls();
-
-                if (currentVehicle != -1)
+                if (VehiclesPermissions.IsVehicleAllowed(vehicle) && GetPedInVehicleSeat(vehicle, -1) == PlayerPed && !IsEntityDead(vehicle))
                 {
-                    if (IsControlJustPressed(1, toggleMenu)/* || IsDisabledControlJustPressed(1, toggleMenu)*/) // TOGGLE MENU VISIBLE
+                    // Update current vehicle and get its preset
+                    if (vehicle != CurrentVehicle)
                     {
-                        if (!EditorMenu.Visible && !_menuPool.IsAnyMenuOpen())
-                            EditorMenu.Visible = true;
-                        else if (_menuPool.IsAnyMenuOpen())
-                            _menuPool.CloseAllMenus();
+                        CurrentVehicle = vehicle;
+                        CurrentPreset = CreateHandlingPreset(CurrentVehicle);
+                        PresetChanged.Invoke(this, EventArgs.Empty);
                     }
-
-                    if (presetsMenu.Visible)
-                    {
-                        DisableControlAction(1, 75, true); // INPUT_VEH_EXIT - Y
-                        DisableControlAction(1, 37, true); // INPUT_SELECT_WEAPON - X
-
-                        if (IsControlJustPressed(1, 179))
-                        {
-                            string name = await GetOnScreenString("");
-                            if (!string.IsNullOrEmpty(name))
-                            {
-                                SavePreset(name, currentPreset);
-                                InitialiseMenu();
-                                presetsMenu.Visible = true;
-                            }
-                            else
-                                CitizenFX.Core.UI.Screen.ShowNotification("Invalid string.");
-                        }
-                        else if (IsControlJustPressed(1, 178))
-                        {
-                            if (presetsMenu.MenuItems.Count > 0)
-                            {
-                                string key = $"{kvpPrefix}{presetsMenu.MenuItems[presetsMenu.CurrentSelection].Text}";
-                                if (GetResourceKvpString(key) != null)
-                                {
-                                    DeleteResourceKvp(key);
-                                    InitialiseMenu();
-                                    presetsMenu.Visible = true;
-                                }
-                            }
-                            else
-                                CitizenFX.Core.UI.Screen.ShowNotification("Nothing to delete.");
-                        }
-                    }
-
                 }
                 else
                 {
-                    if (_menuPool.IsAnyMenuOpen())
-                        _menuPool.CloseAllMenus();
+                    // If current vehicle isn't a car or player isn't driving current vehicle or vehicle is dead
+                    CurrentVehicle = -1;
+                    CurrentPreset = null;
                 }
             }
-
-            await Task.FromResult(0);
-        }
-
-        /// <summary>
-        /// Disable controls for controller to use the script with the controller
-        /// </summary>
-        private async void DisableControls()
-        {
-            DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
-            DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
-            DisableControlAction(1, 48, true); // INPUT_HUD_SPECIAL = DPAD - DOWN
-            DisableControlAction(1, 27, true); // INPUT_PHONE = DPAD - UP
-            DisableControlAction(1, 80, true); // INPUT_VEH_CIN_CAM = B
-            DisableControlAction(1, 73, true); // INPUT_VEH_DUCK = A
-
-            await Delay(0);
-        }
+            else
+            {
+                // If player isn't in any vehicle
+                CurrentVehicle = -1;
+                CurrentPreset = null;
+            }
+        }      
 
         /// <summary>
         /// The main task of the script
@@ -722,60 +265,55 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         private async Task ScriptTask()
         {
-            currentTime = (GetGameTimer() - lastTime);
-
-            playerPed = PlayerPedId();
-
-            if (IsPedInAnyVehicle(playerPed, false))
-            {
-                int vehicle = GetVehiclePedIsIn(playerPed, false);
-
-                if (IsThisModelACar((uint)GetEntityModel(vehicle)) && GetPedInVehicleSeat(vehicle, -1) == playerPed && !IsEntityDead(vehicle))
-                {
-                    // Update current vehicle and get its preset
-                    if (vehicle != currentVehicle)
-                    {
-                        currentVehicle = vehicle;
-                        currentPreset = CreateHandlingPreset(currentVehicle);                
-                        InitialiseMenu();
-                    }
-                }
-                else
-                {
-                    // If current vehicle isn't a car or player isn't driving current vehicle or vehicle is dead
-                    currentVehicle = -1;
-                    currentPreset = null;
-                }
-            }
-            else
-            {
-                // If player isn't in any vehicle
-                currentVehicle = -1;
-                currentPreset = null;
-            }
+            CurrentTime = (GetGameTimer() - LastTime);
 
             // Check if decorators needs to be updated
-            if (currentTime > timer)
+            if (CurrentTime > Timer)
             {
                 // Current vehicle could be updated each tick to show the edited fields live
                 // Check if current vehicle needs to be refreshed
-                if (currentVehicle != -1 && currentPreset != null)
+                if (CurrentPresetIsValid)
                 {
-                    if (currentPreset.IsEdited)
-                        RefreshVehicleUsingPreset(currentVehicle, currentPreset);
+                    if (CurrentPreset.IsEdited)
+                        RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
+
+                    UpdateVehicleDecorators(CurrentVehicle, CurrentPreset);
                 }
+                    
 
-                if (currentVehicle != -1 && currentPreset != null)
-                    UpdateVehicleDecorators(currentVehicle, currentPreset);
-
-                vehicles = new VehicleList();
+                Vehicles = new VehicleEnumerable();
 
                 // Refreshes the iterated vehicles
-                RefreshVehicles(vehicles.Except(new List<int> { currentVehicle }));
+                RefreshVehicles(Vehicles.Except(new List<int> { CurrentVehicle }));
 
-                lastTime = GetGameTimer();
+                LastTime = GetGameTimer();
             }
-            await Delay(0);
+        }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Disable controls for controller to use the script with the controller
+        /// </summary>
+        public static void DisableControls()
+        {
+            DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
+            DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
+            DisableControlAction(1, 48, true); // INPUT_HUD_SPECIAL = DPAD - DOWN
+            DisableControlAction(1, 27, true); // INPUT_PHONE = DPAD - UP
+            DisableControlAction(1, 80, true); // INPUT_VEH_CIN_CAM = B
+            DisableControlAction(1, 73, true); // INPUT_VEH_DUCK = A
+        }
+
+        /// <summary>
+        /// Disable controls for controller to use the script with the controller
+        /// </summary>
+        public static void DisableControls2()
+        {
+            DisableControlAction(1, 75, true); // INPUT_VEH_EXIT - Y
+            DisableControlAction(1, 37, true); // INPUT_SELECT_WEAPON - X
         }
 
         /// <summary>
@@ -783,74 +321,72 @@ namespace HandlingEditor.Client
         /// </summary>
         /// <param name="vehicle"></param>
         /// <param name="preset"></param>
-        private async void RefreshVehicleUsingPreset(int vehicle, HandlingPreset preset)
+        private void RefreshVehicleUsingPreset(int vehicle, HandlingPreset preset)
         {
-            if (DoesEntityExist(vehicle))
+            if (!DoesEntityExist(vehicle))
+                return;
+
+            foreach (var item in preset.Fields)
             {
-                foreach (var item in preset.Fields)
+                string fieldName = item.Key;
+                dynamic fieldValue = item.Value;
+
+                var fieldsInfo = HandlingInfo.FieldsInfo;
+                if (!fieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 {
-                    string fieldName = item.Key;
-                    dynamic fieldValue = item.Value;
+                    if (Debug)
+                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: No fieldInfo definition found for {fieldName}");
+                    continue;
+                }
 
-                    var fieldsInfo = handlingInfo.FieldsInfo;
-                    if (!fieldsInfo.ContainsKey(fieldName))
+                Type fieldType = fieldInfo.Type;
+                string className = fieldInfo.ClassName;
+
+                if (fieldType == FieldType.FloatType)
+                {
+                    var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
+                    if (Math.Abs(value - fieldValue) > FloatPrecision)
                     {
-                        if (debug)
-                            Debug.WriteLine($"{ScriptName}: No fieldInfo definition found for {fieldName}");
-                        continue;
+                        SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
+
+                        if (Debug)
+                            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
                     }
+                }
 
-                    FieldInfo fieldInfo = fieldsInfo[fieldName];
-                    Type fieldType = fieldInfo.Type;
-                    string className = fieldInfo.ClassName;
-
-                    if (fieldType == FieldType.FloatType)
+                else if (fieldType == FieldType.IntType)
+                {
+                    var value = GetVehicleHandlingInt(vehicle, className, fieldName);
+                    if (value != fieldValue)
                     {
-                        var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                        if (Math.Abs(value - fieldValue) > 0.001f)
-                        {
-                            SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
+                        SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
 
-                            if (debug)
-                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
-                        }     
+                        if (Debug)
+                            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
                     }
-                    
-                    else if (fieldType == FieldType.IntType)
-                    {
-                        var value = GetVehicleHandlingInt(vehicle, className, fieldName);
-                        if (value != fieldValue)
-                        {
-                            SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
+                }
 
-                            if (debug)
-                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
-                        }
-                    }
-                    
-                    else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == FieldType.Vector3Type)
+                {
+                    var value = GetVehicleHandlingVector(vehicle, className, fieldName);
+                    if (value != fieldValue) // TODO: Check why this is bugged
                     {
-                        var value = GetVehicleHandlingVector(vehicle, className, fieldName);
-                        if (value != fieldValue)
-                        {
-                            SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
+                        SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
 
-                            if (debug)
-                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
-                        }
+                        if (Debug)
+                            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
                     }
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
         /// Refreshes the handling for the vehicles in <paramref name="vehiclesList"/> if they are close enough.
         /// </summary>
         /// <param name="vehiclesList"></param>
-        private async void RefreshVehicles(IEnumerable<int> vehiclesList)
+        private void RefreshVehicles(IEnumerable<int> vehiclesList)
         {
-            Vector3 currentCoords = GetEntityCoords(playerPed, true);
+            Vector3 currentCoords = GetEntityCoords(PlayerPed, true);
 
             foreach (int entity in vehiclesList)
             {
@@ -858,20 +394,19 @@ namespace HandlingEditor.Client
                 {
                     Vector3 coords = GetEntityCoords(entity, true);
 
-                    if (Vector3.Distance(currentCoords, coords) <= maxSyncDistance)
+                    if (Vector3.Distance(currentCoords, coords) <= ScriptRange)
                         RefreshVehicleUsingDecorators(entity);
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
         /// Refreshes the handling for the <paramref name="vehicle"/> using the decorators attached to it.
         /// </summary>
         /// <param name="vehicle"></param>
-        private async void RefreshVehicleUsingDecorators(int vehicle)
+        private void RefreshVehicleUsingDecorators(int vehicle)
         {
-            foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable))
+            foreach (var item in HandlingInfo.FieldsInfo.Where(a => a.Value.Editable))
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -883,12 +418,12 @@ namespace HandlingEditor.Client
                     {
                         var decorValue = DecorGetFloat(vehicle, fieldName);
                         var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                        if (Math.Abs(value - decorValue) > 0.001f)
+                        if (Math.Abs(value - decorValue) > FloatPrecision)
                         {
                             SetVehicleHandlingFloat(vehicle, className, fieldName, decorValue);
 
-                            if (debug)
-                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                            if (Debug)
+                                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                         }
                     }
                 }
@@ -902,8 +437,8 @@ namespace HandlingEditor.Client
                         {
                             SetVehicleHandlingInt(vehicle, className, fieldName, decorValue);
 
-                            if (debug)
-                                Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                            if (Debug)
+                                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                         }
                     }
                 }
@@ -929,12 +464,11 @@ namespace HandlingEditor.Client
                     {
                         SetVehicleHandlingVector(vehicle, className, fieldName, decorValue);
 
-                        if (debug)
-                            Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                        if (Debug)
+                            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                     }
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
@@ -944,7 +478,7 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         private bool HasDecorators(int vehicle)
         {
-            foreach (var item in handlingInfo.FieldsInfo)
+            foreach (var item in HandlingInfo.FieldsInfo)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -963,9 +497,9 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Registers the decorators for this script
         /// </summary>
-        private async void RegisterDecorators()
+        private void RegisterDecorators()
         {
-            foreach (var item in handlingInfo.FieldsInfo)
+            foreach (var item in HandlingInfo.FieldsInfo)
             {
                 string fieldName = item.Key;
                 Type type = item.Value.Type;
@@ -995,16 +529,15 @@ namespace HandlingEditor.Client
                     DecorRegister($"{decorZ}_def", 1);
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
         /// Remove the handling decorators attached to the <paramref name="vehicle"/>.
         /// </summary>
         /// <param name="vehicle"></param>
-        private async void RemoveDecorators(int vehicle)
+        private void RemoveDecorators(int vehicle)
         {
-            foreach (var item in handlingInfo.FieldsInfo)
+            foreach (var item in HandlingInfo.FieldsInfo)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -1036,7 +569,11 @@ namespace HandlingEditor.Client
                     if (DecorExistOn(vehicle, defDecorZ)) DecorRemove(vehicle, defDecorZ);
                 }
             }
-            await Delay(0);
+
+            if(Debug)
+            {
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Removed all decorators on vehicle {vehicle}");
+            }
         }
 
         /// <summary>
@@ -1046,29 +583,28 @@ namespace HandlingEditor.Client
         /// <param name="name"></param>
         /// <param name="currentValue"></param>
         /// <param name="defaultValue"></param>
-        private async void UpdateFloatDecorator(int vehicle, string name, float currentValue, float defaultValue)
+        private void UpdateFloatDecorator(int vehicle, string name, float currentValue, float defaultValue)
         {
             // Decorator exists but needs to be updated
             if (DecorExistOn(vehicle, name))
             {
                 float decorValue = DecorGetFloat(vehicle, name);
-                if (Math.Abs(currentValue - decorValue) > 0.001f)
+                if (Math.Abs(currentValue - decorValue) > FloatPrecision)
                 {
                     DecorSetFloat(vehicle, name, currentValue);
-                    if (debug)
-                        Debug.WriteLine($"{ScriptName}: Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
+                    if (Debug)
+                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
                 }
             }
             else // Decorator doesn't exist, create it if required
             {
-                if (Math.Abs(currentValue - defaultValue) > 0.001f)
+                if (Math.Abs(currentValue - defaultValue) > FloatPrecision)
                 {
                     DecorSetFloat(vehicle, name, currentValue);
-                    if (debug)
-                        Debug.WriteLine($"{ScriptName}: Added decorator {name} with value {currentValue} to vehicle {vehicle}");
+                    if (Debug)
+                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
@@ -1078,7 +614,7 @@ namespace HandlingEditor.Client
         /// <param name="name"></param>
         /// <param name="currentValue"></param>
         /// <param name="defaultValue"></param>
-        private async void UpdateIntDecorator(int vehicle, string name, int currentValue, int defaultValue)
+        private void UpdateIntDecorator(int vehicle, string name, int currentValue, int defaultValue)
         {
             // Decorator exists but needs to be updated
             if (DecorExistOn(vehicle, name))
@@ -1087,8 +623,8 @@ namespace HandlingEditor.Client
                 if (currentValue != decorValue)
                 {
                     DecorSetInt(vehicle, name, currentValue);
-                    if (debug)
-                        Debug.WriteLine($"{ScriptName}: Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
+                    if (Debug)
+                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
                 }
             }
             else // Decorator doesn't exist, create it if required
@@ -1096,23 +632,22 @@ namespace HandlingEditor.Client
                 if (currentValue != defaultValue)
                 {
                     DecorSetInt(vehicle, name, currentValue);
-                    if (debug)
-                        Debug.WriteLine($"{ScriptName}: Added decorator {name} with value {currentValue} to vehicle {vehicle}");
+                    if (Debug)
+                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
         /// Updates the decorators on the <paramref name="vehicle"/> with updated values from the <paramref name="preset"/>
         /// </summary>
         /// <param name="vehicle"></param>
-        private async void UpdateVehicleDecorators(int vehicle, HandlingPreset preset)
+        private void UpdateVehicleDecorators(int vehicle, HandlingPreset preset)
         {
             foreach (var item in preset.Fields)
             {
                 string fieldName = item.Key;
-                Type fieldType = handlingInfo.FieldsInfo[fieldName].Type;
+                Type fieldType = HandlingInfo.FieldsInfo[fieldName].Type;
                 dynamic fieldValue = item.Value;
 
                 string defDecorName = $"{fieldName}_def";
@@ -1150,7 +685,6 @@ namespace HandlingEditor.Client
                     UpdateFloatDecorator(vehicle, defDecorNameZ, defaultValue.Z, fieldValue.Z);
                 }
             }
-            await Delay(0);
         }
 
         /// <summary>
@@ -1163,7 +697,7 @@ namespace HandlingEditor.Client
             Dictionary<string, dynamic> defaultFields = new Dictionary<string, dynamic>();
             Dictionary<string, dynamic> fields = new Dictionary<string, dynamic>();
             
-            foreach(var item in handlingInfo.FieldsInfo)
+            foreach(var item in HandlingInfo.FieldsInfo)
             {
                 string fieldName = item.Key;
                 string className = item.Value.ClassName;
@@ -1222,7 +756,7 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Prints the values of the decorators used on the <paramref name="vehicle"/>
         /// </summary>
-        private async void PrintDecorators(int vehicle)
+        private void PrintDecorators(int vehicle)
         {
             if (DoesEntityExist(vehicle))
             {
@@ -1231,7 +765,7 @@ namespace HandlingEditor.Client
                 s.AppendLine($"{ScriptName}: Vehicle:{vehicle} netID:{netID}");
                 s.AppendLine("Decorators List:");
 
-                foreach (var item in handlingInfo.FieldsInfo)
+                foreach (var item in HandlingInfo.FieldsInfo)
                 {
                     string fieldName = item.Key;
                     Type fieldType = item.Value.Type;
@@ -1288,21 +822,19 @@ namespace HandlingEditor.Client
                         
                     }
                 }
-                Debug.Write(s.ToString());
+                CitizenFX.Core.Debug.Write(s.ToString());
             }
-            else Debug.WriteLine($"{ScriptName}: Can't find vehicle with handle {vehicle}");
-
-            await Delay(0);
+            else CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Can't find vehicle with handle {vehicle}");
         }
 
         /// <summary>
         /// Prints the list of vehicles using any decorator for this script.
         /// </summary>
-        private async void PrintVehiclesWithDecorators(IEnumerable<int> vehiclesList)
+        private void PrintVehiclesWithDecorators(IEnumerable<int> vehiclesList)
         {
             IEnumerable<int> entities = vehiclesList.Where(entity => HasDecorators(entity));
 
-            Debug.WriteLine($"HANDLING EDITOR: Vehicles with decorators: {entities.Count()}");
+            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Vehicles with decorators: {entities.Count()}");
 
             StringBuilder s = new StringBuilder();
             foreach (var vehicle in entities)
@@ -1310,17 +842,14 @@ namespace HandlingEditor.Client
                 int netID = NetworkGetNetworkIdFromEntity(vehicle);      
                 s.AppendLine($"Vehicle:{vehicle} netID:{netID}");
             }
-            Debug.WriteLine(s.ToString());
-
-            await Delay(0);
+            CitizenFX.Core.Debug.WriteLine(s.ToString());
         }
 
-        private string GetXmlFromPreset(string name, HandlingPreset preset)
+        private static XmlDocument GetXmlFromPreset(HandlingPreset preset)
         {
             XmlDocument doc = new XmlDocument();
             XmlElement handlingItem = doc.CreateElement("Item");
             handlingItem.SetAttribute("type", "CHandlingData");
-            handlingItem.SetAttribute("presetName", name);
 
             foreach (var item in preset.Fields)
             {
@@ -1328,46 +857,68 @@ namespace HandlingEditor.Client
                 dynamic fieldValue = item.Value;
                 XmlElement field = doc.CreateElement(fieldName);
 
-                Type fieldType = handlingInfo.FieldsInfo[fieldName].Type;
+                Type fieldType = HandlingInfo.FieldsInfo[fieldName].Type;
                 if(fieldType == FieldType.FloatType)
                 {
-                    field.SetAttribute("value", ((float)(fieldValue)).ToString());
+                    var value = (float)fieldValue;
+                    field.SetAttribute("value", value.ToString());
                 }
                 else if (fieldType == FieldType.IntType)
                 {
-                    field.SetAttribute("value", ((int)(fieldValue)).ToString());
+                    var value = (int)fieldValue;
+                    field.SetAttribute("value", value.ToString());
                 }
                 else if (fieldType == FieldType.Vector3Type)
                 {
-                    field.SetAttribute("x", ((Vector3)(fieldValue)).X.ToString());
-                    field.SetAttribute("y", ((Vector3)(fieldValue)).Y.ToString());
-                    field.SetAttribute("z", ((Vector3)(fieldValue)).Z.ToString());
+                    var value = (Vector3)(fieldValue);
+                    field.SetAttribute("x", value.X.ToString());
+                    field.SetAttribute("y", value.Y.ToString());
+                    field.SetAttribute("z", value.Z.ToString());
                 }
                 else if (fieldType == FieldType.StringType)
                 {
                     field.InnerText = fieldValue;
                 }
-                else { }
+                else
+                {
+
+                }
                 handlingItem.AppendChild(field);
             }
             doc.AppendChild(handlingItem);
 
-            return doc.OuterXml;
+            return doc;
         }
 
-        private async void SavePreset(string name, HandlingPreset preset)
+        private static bool SavePresetAsKVP(string name, HandlingPreset preset)
         {
+            if (string.IsNullOrEmpty(name))
+                return false;
+
             string kvpName = $"{kvpPrefix}{name}";
+
+            //Key already used
             if(GetResourceKvpString(kvpName) != null)
-                CitizenFX.Core.UI.Screen.ShowNotification($"The name {name} is already used for another preset.");
-            else
-            {
-                string xml = GetXmlFromPreset(name, preset);;
-                SetResourceKvp(kvpName, xml);
-                await Delay(0);
-            }
+                return false;
+
+            var xml = GetXmlFromPreset(preset);
+            xml["Item"].SetAttribute("presetName", name);
+            SetResourceKvp(kvpName, xml.OuterXml);
+            return true;
         }
-        
+
+        private static bool DeletePresetKVP(string name)
+        {
+            string key = $"{kvpPrefix}{name}";
+
+            //Nothing to delete
+            if (GetResourceKvpString(key) == null)
+                return false;
+
+            DeleteResourceKvp(key);
+            return true;
+        }
+
         private void GetPresetFromXml(XmlNode node, HandlingPreset preset)
         {
             foreach (XmlNode item in node.ChildNodes)
@@ -1376,7 +927,7 @@ namespace HandlingEditor.Client
                     continue;
 
                 string fieldName = item.Name;
-                Type fieldType = FieldInfo.GetFieldType(fieldName);
+                Type fieldType = FieldType.GetFieldType(fieldName);
 
                 XmlElement elem = (XmlElement)item;
 
@@ -1408,15 +959,32 @@ namespace HandlingEditor.Client
             try
             {
                 strings = LoadResourceFile(ResourceName, filename);
-                handlingInfo.ParseXML(strings);
-                var editableFields = handlingInfo.FieldsInfo.Where(a => a.Value.Editable);
-                Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
+                HandlingInfo.ParseXml(strings);
+                var editableFields = HandlingInfo.FieldsInfo.Where(a => a.Value.Editable);
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {HandlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e.Message);
-                Debug.WriteLine(e.StackTrace);
-                Debug.WriteLine($"{ScriptName}: Error loading {filename}");
+                CitizenFX.Core.Debug.WriteLine(e.Message);
+                CitizenFX.Core.Debug.WriteLine(e.StackTrace);
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error loading {filename}");
+            }
+        }
+
+        private void ReadVehiclePermissions(string filename = "VehiclesPermissions.xml")
+        {
+            string strings = null;
+            try
+            {
+                strings = LoadResourceFile(ResourceName, filename);
+                VehiclesPermissions.ParseXml(strings);
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {VehiclesPermissions.Classes.Count} class rules and {VehiclesPermissions.Vehicles.Count} vehicle rules");
+            }
+            catch (Exception e)
+            {
+                CitizenFX.Core.Debug.WriteLine(e.Message);
+                CitizenFX.Core.Debug.WriteLine(e.StackTrace);
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error loading {filename}");
             }
         }
 
@@ -1426,6 +994,7 @@ namespace HandlingEditor.Client
             try
             {
                 strings = LoadResourceFile(ResourceName, filename);
+                strings = Helpers.RemoveByteOrderMarks(strings);
                 XmlDocument doc = new XmlDocument();
                 doc.LoadXml(strings);
 
@@ -1440,16 +1009,16 @@ namespace HandlingEditor.Client
                         HandlingPreset preset = new HandlingPreset();
 
                         GetPresetFromXml(node, preset);
-                        serverPresets[name] = preset;
+                        ServerPresets[name] = preset;
                     }
                 }
-                Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {serverPresets.Count} server presets.");
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {ServerPresets.Count} server presets.");
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e.Message);
-                Debug.WriteLine(e.StackTrace);
-                Debug.WriteLine($"{ScriptName}: Error loading {filename}");
+                CitizenFX.Core.Debug.WriteLine(e.Message);
+                CitizenFX.Core.Debug.WriteLine(e.StackTrace);
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error loading {filename}");
             }
         }
 
@@ -1460,27 +1029,27 @@ namespace HandlingEditor.Client
             {
                 strings = LoadResourceFile(ResourceName, filename);
 
-                Debug.WriteLine($"{ScriptName}: Loaded settings from {filename}");
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Loaded settings from {filename}");
             }
             catch (Exception e)
             {
-                Debug.WriteLine($"{ScriptName}: Impossible to load {filename}");
-                Debug.WriteLine(e.StackTrace);
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Impossible to load {filename}");
+                CitizenFX.Core.Debug.WriteLine(e.StackTrace);
             }
             finally
             {
                 Config config = new Config(strings);
 
-                toggleMenu = config.GetIntValue("toggleMenu", toggleMenu);
-                editingFactor = config.GetFloatValue("editingFactor", editingFactor);
-                maxSyncDistance = config.GetFloatValue("maxSyncDistance", maxSyncDistance);
-                timer = config.GetLongValue("timer", timer);
-                debug = config.GetBoolValue("debug", debug);
-                screenPosX = config.GetFloatValue("screenPosX", screenPosX);
-                screenPosY = config.GetFloatValue("screenPosY", screenPosY);
+                ToggleMenu = config.GetIntValue("toggleMenu", ToggleMenu);
+                FloatStep = config.GetFloatValue("FloatStep", FloatStep);
+                ScriptRange = config.GetFloatValue("ScriptRange", ScriptRange);
+                Timer = config.GetLongValue("timer", Timer);
+                Debug = config.GetBoolValue("debug", Debug);
 
-                Debug.WriteLine($"{ScriptName}: Settings {nameof(timer)}={timer} {nameof(debug)}={debug} {nameof(maxSyncDistance)}={maxSyncDistance}");
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Settings {nameof(Timer)}={Timer} {nameof(Debug)}={Debug} {nameof(ScriptRange)}={ScriptRange}");
             }
         }
+
+        #endregion
     }
 }

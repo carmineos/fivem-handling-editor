@@ -1,0 +1,44 @@
+install:
+- ps: $env:LAST_TAG = git describe --abbrev=0 --tags
+- ps: $env:TAG_NUMBER = $env:LAST_TAG.Substring($env:LAST_TAG.IndexOf('v') + 1)
+- ps: if ($env:APPVEYOR_REPO_TAG -eq $True){ $env:VERSION_NAME = $env:APPVEYOR_REPO_TAG_NAME } else { $env:VERSION_NAME = $env:TAG_NUMBER + "." +$env:APPVEYOR_BUILD_NUMBER }
+- cmd: git submodule update --init --recursive
+
+version: 1.0.{build}
+image: Visual Studio 2017
+configuration: Release
+
+assembly_info:
+  patch: true
+  file: AssemblyInfo.*
+  assembly_version: $(VERSION_NAME)
+  assembly_file_version: $(VERSION_NAME)
+  assembly_informational_version: $(VERSION_NAME)
+
+build:
+  parallel: true
+  verbosity: minimal
+  project: fivem-handling-editor.sln
+  
+after_build:
+- cmd: md %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
+- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\dist\*.* %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
+- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\HandlingEditor.Client.net.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
+- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\MenuAPI.net.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
+- 7z a handling-editor-v%VERSION_NAME%.zip %APPVEYOR_BUILD_FOLDER%\dist\*
+
+artifacts:
+- path: handling-editor-v$(VERSION_NAME).zip
+  name: handling-editor
+
+deploy:
+  provider: GitHub
+  tag: $(APPVEYOR_REPO_TAG_NAME)
+  release: handling-editor $(APPVEYOR_REPO_TAG_NAME)
+  auth_token: 
+    secure: koH1kqQLiJXw2cH24CMO1v9OA/RZ/HKeFZA8RSKOznBMsIvodL4HhzKPciA4qyfE
+  draft: true
+  prerelease: false
+  on:
+    branch: master
+    APPVEYOR_REPO_TAG: true

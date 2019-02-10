@@ -7,6 +7,8 @@ namespace HandlingEditor.Client
 {
     public class HandlingPreset : IEquatable<HandlingPreset>
     {
+        public static float FloatPrecision { get; private set; } = 0.001f;
+
         public Dictionary<string, dynamic> DefaultFields { get; private set; }
         public Dictionary<string, dynamic> Fields { get; set; }
 
@@ -79,17 +81,21 @@ namespace HandlingEditor.Client
             {
                 string key = item.Key;
 
-                if (!other.Fields.ContainsKey(key))
+                if (!other.Fields.TryGetValue(key, out dynamic otherValue))
                     return false;
 
                 var value = item.Value;
-                var otherValue = other.Fields[key];
 
                 Type fieldType = value.GetType();
 
-                if (fieldType == FieldType.FloatType || fieldType == FieldType.IntType)
+                if (fieldType == FieldType.IntType)
                 {
                     if (value != otherValue)
+                        return false;
+                }
+                else if(fieldType == FieldType.FloatType)
+                {
+                    if (Math.Abs(value - otherValue) > FloatPrecision)
                         return false;
                 }
                 else if (fieldType == FieldType.Vector3Type)

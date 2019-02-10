@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("HandlingUtility")]
+[assembly: AssemblyTitle("HandlingEditor.Server")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("HandlingUtility")]
+[assembly: AssemblyProduct("HandlingEditor.Server")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("b988bc1b-abe1-4e48-8d2f-f050edad10a4")]
+[assembly: Guid("b1517f18-a119-4e16-a626-4e24399db266")]
 
 // Version information for an assembly consists of the following four values:
 //
