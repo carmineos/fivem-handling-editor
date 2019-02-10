@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using CitizenFX.Core;
 using CitizenFX.Core.UI;
 using static CitizenFX.Core.Native.API;
-using System.Drawing;
 using MenuAPI;
 
 namespace HandlingEditor.Client
@@ -93,7 +90,7 @@ namespace HandlingEditor.Client
                     string kvpName = await GetOnScreenString("");
                     SavePersonalPreset_Pressed(PersonalPresetsMenu, kvpName);
                 }) , true));
-                PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>(async (sender, control) =>
+                PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) =>
                 {
                     if (PersonalPresetsMenu.GetMenuItems().Count > 0)
                     {
@@ -108,7 +105,7 @@ namespace HandlingEditor.Client
 
                     int currentSelection = PersonalPresetsMenu.CurrentIndex;
                     UpdateEditorMenu();
-                    PersonalPresetsMenu.SelectItem(currentSelection);
+                    //PersonalPresetsMenu.CurrentIndex = currentSelection;
                 };
 
             }
@@ -120,12 +117,16 @@ namespace HandlingEditor.Client
                 {
                     ApplyServerPreset_Pressed.Invoke(sender, item.Text);
 
+                    
                     int currentSelection = ServerPresetsMenu.CurrentIndex;
                     UpdateEditorMenu();
-                    ServerPresetsMenu.SelectItem(currentSelection);
+                    //ServerPresetsMenu.CurrentIndex = currentSelection;
+
                 };
             }
 
+            UpdatePersonalPresetsMenu();
+            UpdateServerPresetsMenu();
             UpdateEditorMenu();
 
             if (menuController == null)
@@ -200,8 +201,8 @@ namespace HandlingEditor.Client
                 }
             };
 
-            UpdatePersonalPresetsMenu();
-            UpdateServerPresetsMenu();
+            //UpdatePersonalPresetsMenu();
+            //UpdateServerPresetsMenu();
 
         }
 
@@ -232,11 +233,20 @@ namespace HandlingEditor.Client
 
         private async Task<string> GetOnScreenString(string defaultText)
         {
+            var currentMenu = MenuController.GetCurrentMenu();
+            currentMenu.Visible = false;
+
+            MenuController.DisableMenuButtons = true;
             DisableAllControlActions(1);
-            AddTextEntry("ENTER_VALUE", "Enter value");
-            DisplayOnscreenKeyboard(1, "ENTER_VALUE", "", defaultText, "", "", "", 128);
+
+            AddTextEntry("HANDLING_EDITOR_ENTER_VALUE", "Enter value (without spaces)");
+            DisplayOnscreenKeyboard(1, "HANDLING_EDITOR_ENTER_VALUE", "", defaultText, "", "", "", 128);
             while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(200);
+
             EnableAllControlActions(1);
+            MenuController.DisableMenuButtons = false;
+            currentMenu.Visible = true;
+
             return GetOnscreenKeyboardResult();
         }
 
@@ -287,24 +297,22 @@ namespace HandlingEditor.Client
             {
                 if (item.ItemData == newitem.ItemData)
                 {
-                    EditorMenu.Visible = false;
-
                     string text = await GetOnScreenString(value.ToString());
+
                     float newvalue = value;
 
                     if (float.TryParse(text, out newvalue))
                     {
                         if (newvalue >= min && newvalue <= max)
+                        {
+                            ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
                             CurrentPreset.Fields[name] = newvalue;
+                        }
                         else
                             Screen.ShowNotification($"{ScriptName}:  Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
                     }
                     else
                         Screen.ShowNotification($"{ScriptName}:  Invalid value for ~b~{name}~w~");
-
-                    ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
-                    EditorMenu.SelectItem(index);
-                    EditorMenu.Visible = true;
                 }
             };
 
@@ -358,25 +366,22 @@ namespace HandlingEditor.Client
             {
                 if (item == newitem)
                 {
-                    EditorMenu.Visible = false;
-
                     string text = await GetOnScreenString(value.ToString());
+
                     int newvalue = value;
 
                     if (int.TryParse(text, out newvalue))
                     {
                         if (newvalue >= min && newvalue <= max)
+                        {
+                            ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
                             CurrentPreset.Fields[name] = newvalue;
+                        }
                         else
                             Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
                     }
                     else
-                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{name}~w~");
-
-                    int currentSelection = EditorMenu.CurrentIndex;
-                    UpdateEditorMenu();  //Should just update the current item instead
-                    EditorMenu.SelectItem(currentSelection);
-                    EditorMenu.Visible = true;
+                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{name}~w~");                    
                 }
             };
 
@@ -506,69 +511,60 @@ namespace HandlingEditor.Client
             {
                 if (item == newitemX)
                 {
-                    EditorMenu.Visible = false;
-
                     string text = await GetOnScreenString(valueX.ToString());
+
                     float newvalue = valueX;
 
                     if (float.TryParse(text, out newvalue))
                     {
                         if (newvalue >= minValueX && newvalue <= maxValueX)
+                        {
+                            ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
                             CurrentPreset.Fields[fieldName].X = newvalue;
+                        }
                         else
                             Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldNameX}~w~, Min:{minValueX}, Max:{maxValueX}");
                     }
                     else
                         Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameX}~w~");
-
-                    int currentSelection = EditorMenu.CurrentIndex;
-                    UpdateEditorMenu();  //Should just update the current item instead
-                    EditorMenu.SelectItem(currentSelection);
-                    EditorMenu.Visible = true;
                 }
                 else if (item == newitemY)
                 {
-                    EditorMenu.Visible = false;
-
                     string text = await GetOnScreenString(valueY.ToString());
+
                     float newvalue = valueY;
 
                     if (float.TryParse(text, out newvalue))
                     {
                         if (newvalue >= minValueY && newvalue <= maxValueY)
+                        {
+                            ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
                             CurrentPreset.Fields[fieldName].Y = newvalue;
+                        }
                         else
                             Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldNameY}~w~, Min:{minValueY}, Max:{maxValueY}");
                     }
                     else
                         Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameY}~w~");
-
-                    int currentSelection = EditorMenu.CurrentIndex;
-                    UpdateEditorMenu();  //Should just update the current item instead
-                    EditorMenu.SelectItem(currentSelection);
-                    EditorMenu.Visible = true;
                 }
                 else if (item == newitemZ)
                 {
-                    EditorMenu.Visible = false;
-
                     string text = await GetOnScreenString(valueZ.ToString());
+
                     float newvalue = valueZ;
 
                     if (float.TryParse(text, out newvalue))
                     {
                         if (newvalue >= minValueZ && newvalue <= maxValueZ)
+                        {
+                            ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
                             CurrentPreset.Fields[fieldName].Z = newvalue;
+                        }
                         else
                             Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldNameZ}~w~, Min:{minValueZ}, Max:{maxValueZ}");
                     }
                     else
                         Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameZ}~w~");
-
-                    int currentSelection = EditorMenu.CurrentIndex;
-                    UpdateEditorMenu();  //Should just update the current item instead
-                    EditorMenu.SelectItem(currentSelection);
-                    EditorMenu.Visible = true;
                 }
             };
 
