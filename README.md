@@ -1,7 +1,7 @@
 # Handling Editor
 |Master|Development|
 |:-:|:-:|
-|[![Build status](https://ci.appveyor.com/api/projects/status/ar8rag9opc4169y1/branch/master?svg=true)](https://ci.appveyor.com/project/carmineos/fivem-handling-editor/branch/master)[![Build status](https://ci.appveyor.com/api/projects/status/ar8rag9opc4169y1/branch/development?svg=true)](https://ci.appveyor.com/project/carmineos/fivem-handling-editor/branch/development)
+|[![Build status](https://ci.appveyor.com/api/projects/status/ar8rag9opc4169y1/branch/master?svg=true)](https://ci.appveyor.com/project/carmineos/fivem-handling-editor/branch/master)|[![Build status](https://ci.appveyor.com/api/projects/status/ar8rag9opc4169y1/branch/development?svg=true)](https://ci.appveyor.com/project/carmineos/fivem-handling-editor/branch/development)
 
 ### Description
 A script which allows to edit the handling of each vehicle individually using FiveM API and [MenuAPI](https://github.com/TomGrobbe/MenuAPI) .
