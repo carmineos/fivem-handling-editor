@@ -295,13 +295,11 @@ namespace HandlingEditor.Client
 
             EditorMenu.OnItemSelect += async (sender, item, index) =>
             {
-                if (item.ItemData == newitem.ItemData)
+                if (item == newitem)
                 {
-                    string text = await GetOnScreenString(value.ToString());
+                    string text = await GetOnScreenString(((MenuDynamicListItem)item).CurrentItem);
 
-                    float newvalue = value;
-
-                    if (float.TryParse(text, out newvalue))
+                    if (float.TryParse(text, out float newvalue))
                     {
                         if (newvalue >= min && newvalue <= max)
                         {
@@ -366,11 +364,9 @@ namespace HandlingEditor.Client
             {
                 if (item == newitem)
                 {
-                    string text = await GetOnScreenString(value.ToString());
+                    string text = await GetOnScreenString(((MenuDynamicListItem)item).CurrentItem);
 
-                    int newvalue = value;
-
-                    if (int.TryParse(text, out newvalue))
+                    if (int.TryParse(text, out int newvalue))
                     {
                         if (newvalue >= min && newvalue <= max)
                         {
@@ -511,11 +507,9 @@ namespace HandlingEditor.Client
             {
                 if (item == newitemX)
                 {
-                    string text = await GetOnScreenString(valueX.ToString());
+                    string text = await GetOnScreenString(((MenuDynamicListItem)item).CurrentItem);
 
-                    float newvalue = valueX;
-
-                    if (float.TryParse(text, out newvalue))
+                    if (float.TryParse(text, out float newvalue))
                     {
                         if (newvalue >= minValueX && newvalue <= maxValueX)
                         {
@@ -530,11 +524,9 @@ namespace HandlingEditor.Client
                 }
                 else if (item == newitemY)
                 {
-                    string text = await GetOnScreenString(valueY.ToString());
+                    string text = await GetOnScreenString(((MenuDynamicListItem)item).CurrentItem);
 
-                    float newvalue = valueY;
-
-                    if (float.TryParse(text, out newvalue))
+                    if (float.TryParse(text, out float newvalue))
                     {
                         if (newvalue >= minValueY && newvalue <= maxValueY)
                         {
@@ -549,11 +541,9 @@ namespace HandlingEditor.Client
                 }
                 else if (item == newitemZ)
                 {
-                    string text = await GetOnScreenString(valueZ.ToString());
+                    string text = await GetOnScreenString(((MenuDynamicListItem)item).CurrentItem);
 
-                    float newvalue = valueZ;
-
-                    if (float.TryParse(text, out newvalue))
+                    if (float.TryParse(text, out float newvalue))
                     {
                         if (newvalue >= minValueZ && newvalue <= maxValueZ)
                         {
