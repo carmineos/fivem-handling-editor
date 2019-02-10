@@ -42,7 +42,7 @@ Prints the info about decorators on the vehicle with the specified int as local 
 `handling_print`
 Prints the list of all the vehicles with any decorator of this script
 
-`handling_distance <float>`
+`handling_range <float>`
 Sets the specified float as the maximum distance used to refresh wheels of the vehicles with decorators
 
 `handling_debug <bool>`
@@ -59,10 +59,10 @@ The `HandlingInfo.xml` is the file which controls how the script handles each ha
 `toggleMenu=168`
 The Control to toggle the Menu, default is 168 which is F7 (check the [controls list](https://docs.fivem.net/game-references/controls/))
 
-`editingFactor=0.01`
+`FloatStep=0.01`
 The step used to increase and decrease a value
 
-`maxSyncDistance=150.0`
+`ScriptRange=150.0`
 The max distance within which each client refreshes others clients' vehicles
 
 `timer=1000`

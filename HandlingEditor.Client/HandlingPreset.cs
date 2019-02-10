@@ -81,11 +81,10 @@ namespace HandlingEditor.Client
             {
                 string key = item.Key;
 
-                if (!other.Fields.ContainsKey(key))
+                if (!other.Fields.TryGetValue(key, out dynamic otherValue))
                     return false;
 
                 var value = item.Value;
-                var otherValue = other.Fields[key];
 
                 Type fieldType = value.GetType();
 
