@@ -1,11 +1,12 @@
 # Handling Editor
+|Master|Development|
+|:-:|:-:|
+|[![Build status](https://ci.appveyor.com/api/projects/status/ar8rag9opc4169y1/branch/master?svg=true)](https://ci.appveyor.com/project/carmineos/fivem-handling-editor/branch/master)[![Build status](https://ci.appveyor.com/api/projects/status/ar8rag9opc4169y1/branch/development?svg=true)](https://ci.appveyor.com/project/carmineos/fivem-handling-editor/branch/development)
 
 ### Description
-A script which allows to edit the handling of each vehicle individually using FiveM API and [FiveM port](https://github.com/citizenfx/NativeUI) of [Guad's NativeUI](https://github.com/Guad/NativeUI) .
+A script which allows to edit the handling of each vehicle individually using FiveM API and [MenuAPI](https://github.com/TomGrobbe/MenuAPI) .
 
-When a client edits a vehicle, it will be automatically synchronized with all the players.
-If a vehicle is reset to the default values it will stop from being synchronized.
-The synchronization is made using decorators.
+When a client edits a vehicle, it will be automatically synchronized with all the players using decorators.
 
 The default key to open the menu is F7
 
@@ -77,15 +78,15 @@ Enables the debug mode, which prints some logs in the console
 * Blacklist/Whitelist for vehicle classes and/or individual vehicle models
 
 
-[Source](https://github.com/neos7/fivem-handling-editor)
-[Download](https://github.com/neos7/fivem-handling-editor/releases)
+[Source](https://github.com/carmineos/fivem-handling-editor)
+[Download](https://github.com/carmineos/fivem-handling-editor/releases)
 I am open to any kind of feedback. Report suggestions and bugs you find.
 
 ### Build
-Open the `postbuild.bat` and edit the path of the resource folder. If in Debug configuration, the post build event will copy the following files to the specified path: the script, the `config.ini`, the `HandlingInfo.xml`, the `HandlingPresets.xml`, the `__resource.lua` and a copy of a built [NativeUI](https://github.com/citizenfx/NativeUI) script ported to FiveM.
+Open the `postbuild.bat` and edit the path of the resource folder. If in Debug configuration, the post build event will copy the following files to the specified path: the script, the `config.ini`, the `HandlingInfo.xml`, the `HandlingPresets.xml`, the `__resource.lua` and a copy of a built [MenuAPI](https://github.com/TomGrobbe/MenuAPI)
 
 ### Credits
 * FiveM by CitizenFX: https://github.com/citizenfx/fivem
-* NativeUI by Guad: https://github.com/Guad/NativeUI
+* MenuAPI by Vespura: https://github.com/TomGrobbe/MenuAPI
 * GTADrifting members: https://gtad.club/
 * All the testers
