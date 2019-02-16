@@ -68,16 +68,29 @@ namespace HandlingEditor.Client
             }
         }
 
+        /// <summary>
+        /// Returns true if the model is allowed
+        /// </summary>
+        /// <param name="handle">The handle of the vehicle entity</param>
+        /// <returns></returns>
         public static bool IsVehicleAllowed(int handle)
         {
+            // Get the model hash
             uint modelHash = unchecked((uint)GetEntityModel(handle));
 
+            // Get the vehicle class
             int vehicleClass = GetVehicleClass(handle);
 
-            Classes.TryGetValue(vehicleClass, out bool isAllowed);
-            Vehicles.TryGetValue(modelHash, out isAllowed);
+            // If a rule for the model is defined, then return its value
+            if (Vehicles.TryGetValue(modelHash, out bool isModelAllowed))
+                return isModelAllowed;
 
-            return isAllowed; // vehicle permission overrides class one
+            // Otherwise check if a rule its class is defined, and return its value
+            if (Classes.TryGetValue(vehicleClass, out bool isClassAllowed))
+                return isClassAllowed;
+
+            // No rule exists exists for this model or class
+            return false;
         }
     }
 }
