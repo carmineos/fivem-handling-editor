@@ -12,7 +12,7 @@ namespace HandlingEditor.Client
 {
     public class HandlingEditor : BaseScript
     {
-        #region Events
+        #region Public Events
 
         public static event EventHandler PresetChanged;
         public static event EventHandler PersonalPresetsListChanged;
@@ -50,6 +50,9 @@ namespace HandlingEditor.Client
 
         #region Constructor
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public HandlingEditor()
         {
             ResourceName = GetCurrentResourceName();
@@ -335,12 +338,12 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region Methods
+        #region Private Methods
 
         /// <summary>
         /// Disable controls for controller to use the script with the controller
         /// </summary>
-        public static void DisableControls()
+        private static void DisableMainMenuControls()
         {
             DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
             DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
@@ -353,7 +356,7 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Disable controls for controller to use the script with the controller
         /// </summary>
-        public static void DisableControls2()
+        private static void DisableAdditionalMainMenuControls()
         {
             DisableControlAction(1, 75, true); // INPUT_VEH_EXIT - Y
             DisableControlAction(1, 37, true); // INPUT_SELECT_WEAPON - X

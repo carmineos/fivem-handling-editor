@@ -22,13 +22,13 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region Menu Fields
+        #region Private Fields
 
-        public MenuController menuController;
-        public Menu EditorMenu;
-        public Menu PersonalPresetsMenu;
-        public Menu ServerPresetsMenu;
-        public List<MenuDynamicListItem> HandlingListItems;
+        private MenuController menuController;
+        private Menu EditorMenu;
+        private Menu PersonalPresetsMenu;
+        private Menu ServerPresetsMenu;
+        private List<MenuDynamicListItem> HandlingListItems;
 
         #endregion
 
@@ -38,7 +38,7 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region Events
+        #region Public Events
 
         public static event EditorMenuPresetValueChangedEvent MenuPresetValueChanged;
 
@@ -54,6 +54,9 @@ namespace HandlingEditor.Client
 
         #region Constructor
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public HandlingMenu()
         {
             InitializeMenu();
@@ -68,6 +71,10 @@ namespace HandlingEditor.Client
 
         #region Tasks
         
+        /// <summary>
+        /// The task that checks if the menu can be open
+        /// </summary>
+        /// <returns></returns>
         private async Task OnTick()
         {
             if (!CurrentPresetIsValid)
@@ -79,8 +86,11 @@ namespace HandlingEditor.Client
         
         #endregion
 
-        #region Menu Methods
+        #region Private Methods
 
+        /// <summary>
+        /// Setup the Menu to be used with the script
+        /// </summary>
         private void InitializeMenu()
         {
             if (EditorMenu == null)
@@ -94,6 +104,8 @@ namespace HandlingEditor.Client
             if (PersonalPresetsMenu == null)
             {
                 PersonalPresetsMenu = new Menu(ScriptName, "Personal Presets");
+
+                PersonalPresetsMenu.OnItemSelect += PersonalPresetsMenu_OnItemSelect;
 
                 #region Save/Delete Handler
 
@@ -119,22 +131,12 @@ namespace HandlingEditor.Client
                 }), true));
 
                 #endregion
-
-                PersonalPresetsMenu.OnItemSelect += (sender, item, index) =>
-                {
-                    MenuApplyPersonalPresetButtonPressed?.Invoke(sender, item.Text);
-                };
-
             }
             if (ServerPresetsMenu == null)
             {
                 ServerPresetsMenu = new Menu(ScriptName, "Server Presets");
-                
-                ServerPresetsMenu.OnItemSelect += (sender, item, index) =>
-                {
-                    MenuApplyServerPresetButtonPressed?.Invoke(sender, item.Text);
 
-                };
+                ServerPresetsMenu.OnItemSelect += ServerPresetsMenu_OnItemSelect;
             }
 
             UpdatePersonalPresetsMenu();
@@ -154,66 +156,24 @@ namespace HandlingEditor.Client
             }
         }
 
-        private void UpdateEditorMenu()
-        {
-            if (EditorMenu == null)
-                return;
-
-            EditorMenu.ClearMenuItems();
-
-            // Create Personal Presets sub menu and bind item to a button
-            var PersonalPresetsItem = new MenuItem("Personal Presets", "The handling presets saved by you.")
-            {
-                Label = "→→→"
-            };
-            EditorMenu.AddMenuItem(PersonalPresetsItem);
-            MenuController.BindMenuItem(EditorMenu, PersonalPresetsMenu, PersonalPresetsItem);
-
-            // Create Server Presets sub menu and bind item to a button
-            var ServerPresetsItem = new MenuItem("Server Presets", "The handling presets loaded from the server.")
-            {
-                Label = "→→→"
-            };
-            EditorMenu.AddMenuItem(ServerPresetsItem);
-            MenuController.BindMenuItem(EditorMenu, ServerPresetsMenu, ServerPresetsItem);
-
-            if (!CurrentPresetIsValid)
-                return;
-
-            // Add all the controllers
-            foreach (var item in HandlingInfo.FieldsInfo)
-            {
-                var fieldInfo = item.Value;
-
-                if (fieldInfo.Editable)
-                {
-
-                    //string fieldName = fieldInfo.Name;
-                    //string fieldDescription = fieldInfo.Description;
-                    Type fieldType = fieldInfo.Type;
-
-                    if (fieldType == FieldType.FloatType)
-                        AddDynamicFloatList(EditorMenu, (FieldInfo<float>)item.Value);
-                    else if (fieldType == FieldType.IntType)
-                        AddDynamicIntList(EditorMenu, (FieldInfo<int>)item.Value);
-                    else if (fieldType == FieldType.Vector3Type)
-                        AddDynamicVector3List(EditorMenu, (FieldInfo<Vector3>)item.Value);
-                }
-                else
-                {
-                    AddLockedItem(EditorMenu, item.Value);
-                }
-            }
-
-            var resetItem = new MenuItem("Reset", "Restores the default values")
-            {
-                ItemData = "handling_reset",
-            };
-            EditorMenu.AddMenuItem(resetItem);
-        }
+        /// <summary>
+        /// Invoked when the an item from the personal presets menu is selected
+        /// </summary>
+        /// <param name="menu"></param>
+        /// <param name="menuItem"></param>
+        /// <param name="itemIndex"></param>
+        private void PersonalPresetsMenu_OnItemSelect(Menu menu, MenuItem menuItem, int itemIndex) => MenuApplyPersonalPresetButtonPressed?.Invoke(menu, menuItem.Text);
 
         /// <summary>
-        /// Invoked when the user attempts to change a value manually
+        /// Invoked when the an item from the server presets menu is selected
+        /// </summary>
+        /// <param name="menu"></param>
+        /// <param name="menuItem"></param>
+        /// <param name="itemIndex"></param>
+        private void ServerPresetsMenu_OnItemSelect(Menu menu, MenuItem menuItem, int itemIndex) => MenuApplyServerPresetButtonPressed?.Invoke(menu, menuItem.Text);
+
+        /// <summary>
+        /// Invoked when an item from the main editor menu is selected
         /// </summary>
         /// <param name="menu"></param>
         /// <param name="menuItem"></param>
@@ -346,7 +306,7 @@ namespace HandlingEditor.Client
         }
 
         /// <summary>
-        /// Invoked when the value of a preset field is changed in the menu
+        /// Invoked when the value of a dynamic list item from the main editor menu is changed
         /// </summary>
         /// <param name="menu"></param>
         /// <param name="dynamicListItem"></param>
@@ -369,6 +329,70 @@ namespace HandlingEditor.Client
             MenuPresetValueChanged?.Invoke(fieldName, newValue, dynamicListItem.Text);
         }
 
+        /// <summary>
+        /// Rebuild the main editor menu
+        /// </summary>
+        private void UpdateEditorMenu()
+        {
+            if (EditorMenu == null)
+                return;
+
+            EditorMenu.ClearMenuItems();
+
+            // Create Personal Presets sub menu and bind item to a button
+            var PersonalPresetsItem = new MenuItem("Personal Presets", "The handling presets saved by you.")
+            {
+                Label = "→→→"
+            };
+            EditorMenu.AddMenuItem(PersonalPresetsItem);
+            MenuController.BindMenuItem(EditorMenu, PersonalPresetsMenu, PersonalPresetsItem);
+
+            // Create Server Presets sub menu and bind item to a button
+            var ServerPresetsItem = new MenuItem("Server Presets", "The handling presets loaded from the server.")
+            {
+                Label = "→→→"
+            };
+            EditorMenu.AddMenuItem(ServerPresetsItem);
+            MenuController.BindMenuItem(EditorMenu, ServerPresetsMenu, ServerPresetsItem);
+
+            if (!CurrentPresetIsValid)
+                return;
+
+            // Add all the controllers
+            foreach (var item in HandlingInfo.FieldsInfo)
+            {
+                var fieldInfo = item.Value;
+
+                if (fieldInfo.Editable)
+                {
+
+                    //string fieldName = fieldInfo.Name;
+                    //string fieldDescription = fieldInfo.Description;
+                    Type fieldType = fieldInfo.Type;
+
+                    if (fieldType == FieldType.FloatType)
+                        AddDynamicFloatList(EditorMenu, (FieldInfo<float>)item.Value);
+                    else if (fieldType == FieldType.IntType)
+                        AddDynamicIntList(EditorMenu, (FieldInfo<int>)item.Value);
+                    else if (fieldType == FieldType.Vector3Type)
+                        AddDynamicVector3List(EditorMenu, (FieldInfo<Vector3>)item.Value);
+                }
+                else
+                {
+                    AddLockedItem(EditorMenu, item.Value);
+                }
+            }
+
+            var resetItem = new MenuItem("Reset", "Restores the default values")
+            {
+                ItemData = "handling_reset",
+            };
+            EditorMenu.AddMenuItem(resetItem);
+        }
+
+        /// <summary>
+        /// Rebuild the personal presets menu
+        /// </summary>
         private void UpdatePersonalPresetsMenu()
         {
             if (PersonalPresetsMenu == null)
@@ -384,6 +408,9 @@ namespace HandlingEditor.Client
             }
         }
 
+        /// <summary>
+        /// Rebuild the server presets menu
+        /// </summary>
         private void UpdateServerPresetsMenu()
         {
             if (ServerPresetsMenu == null)
@@ -395,6 +422,11 @@ namespace HandlingEditor.Client
                 ServerPresetsMenu.AddMenuItem(new MenuItem(preset.Key));
         }
 
+        /// <summary>
+        /// Get a string from the user using the on screen keyboard
+        /// </summary>
+        /// <param name="defaultText">The default value to display</param>
+        /// <returns></returns>
         private async Task<string> GetOnScreenString(string defaultText)
         {
             var currentMenu = MenuController.GetCurrentMenu();
@@ -414,7 +446,13 @@ namespace HandlingEditor.Client
             return GetOnscreenKeyboardResult();
         }
 
-        string DynamicListChangeCallback(MenuDynamicListItem item, bool left)
+        /// <summary>
+        /// The method that defines how a dynamic list item changes its value when you press left/right arrow
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="left"></param>
+        /// <returns></returns>
+        private string DynamicListChangeCallback(MenuDynamicListItem item, bool left)
         {
             var currentItem = item.CurrentItem;
 
