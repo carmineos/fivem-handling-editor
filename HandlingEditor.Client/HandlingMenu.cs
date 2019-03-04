@@ -56,8 +56,10 @@ namespace HandlingEditor.Client
 
         public HandlingMenu()
         {
+            InitializeMenu();
+
             Tick += OnTick;
-            HandlingEditor.PresetChanged += new EventHandler((sender,args) => InitializeMenu());
+            HandlingEditor.PresetChanged += new EventHandler((sender,args) => UpdateEditorMenu());
             HandlingEditor.PersonalPresetsListChanged += new EventHandler((sender,args) => UpdatePersonalPresetsMenu());
             HandlingEditor.ServerPresetsListChanged += new EventHandler((sender,args) => UpdateServerPresetsMenu());
         }
@@ -93,32 +95,34 @@ namespace HandlingEditor.Client
             {
                 PersonalPresetsMenu = new Menu(ScriptName, "Personal Presets");
 
+                #region Save/Delete Handler
+
                 PersonalPresetsMenu.InstructionalButtons.Add(Control.PhoneExtraOption, GetLabelText("ITEM_SAVE"));
                 PersonalPresetsMenu.InstructionalButtons.Add(Control.PhoneOption, GetLabelText("ITEM_DEL"));
 
                 // Disable Controls binded on the same key
                 PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.SelectWeapon, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) => { }), true));
                 PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.VehicleExit, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) => { }), true));
-                
-                PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneExtraOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control> (async (sender, control) =>
-                {
-                    string kvpName = await GetOnScreenString("");
-                    MenuSavePersonalPresetButtonPressed(PersonalPresetsMenu, kvpName);
-                }) , true));
+
+                PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneExtraOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>(async (sender, control) =>
+               {
+                   string kvpName = await GetOnScreenString("");
+                   MenuSavePersonalPresetButtonPressed?.Invoke(PersonalPresetsMenu, kvpName);
+               }), true));
                 PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) =>
                 {
                     if (PersonalPresetsMenu.GetMenuItems().Count > 0)
                     {
                         string kvpName = PersonalPresetsMenu.GetMenuItems()[PersonalPresetsMenu.CurrentIndex].Text;
-                        MenuDeletePersonalPresetButtonPressed(PersonalPresetsMenu, kvpName);
+                        MenuDeletePersonalPresetButtonPressed?.Invoke(PersonalPresetsMenu, kvpName);
                     }
                 }), true));
 
+                #endregion
+
                 PersonalPresetsMenu.OnItemSelect += (sender, item, index) =>
                 {
-                    MenuApplyPersonalPresetButtonPressed.Invoke(sender, item.Text);
-
-                    UpdateEditorMenu();
+                    MenuApplyPersonalPresetButtonPressed?.Invoke(sender, item.Text);
                 };
 
             }
@@ -128,10 +132,7 @@ namespace HandlingEditor.Client
                 
                 ServerPresetsMenu.OnItemSelect += (sender, item, index) =>
                 {
-                    MenuApplyServerPresetButtonPressed.Invoke(sender, item.Text);
-
-                    
-                    UpdateEditorMenu();
+                    MenuApplyServerPresetButtonPressed?.Invoke(sender, item.Text);
 
                 };
             }
@@ -176,6 +177,9 @@ namespace HandlingEditor.Client
             EditorMenu.AddMenuItem(ServerPresetsItem);
             MenuController.BindMenuItem(EditorMenu, ServerPresetsMenu, ServerPresetsItem);
 
+            if (!CurrentPresetIsValid)
+                return;
+
             // Add all the controllers
             foreach (var item in HandlingInfo.FieldsInfo)
             {
@@ -206,9 +210,6 @@ namespace HandlingEditor.Client
                 ItemData = "handling_reset",
             };
             EditorMenu.AddMenuItem(resetItem);
-
-            //UpdatePersonalPresetsMenu();
-            //UpdateServerPresetsMenu();
         }
 
         /// <summary>
@@ -249,7 +250,7 @@ namespace HandlingEditor.Client
                         {
                             dynamicListItem.CurrentItem = newvalue.ToString();
                             // Notify the value is changed so the preset can update...
-                            MenuPresetValueChanged(fieldName, newvalue.ToString("F3"), itemText);
+                            MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                         }
                         else
                             Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
@@ -268,7 +269,7 @@ namespace HandlingEditor.Client
                         {
                             dynamicListItem.CurrentItem = newvalue.ToString();
                             // Notify the value is changed so the preset can update...
-                            MenuPresetValueChanged(fieldName, newvalue.ToString(), itemText);
+                            MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString(), itemText);
                         }
                         else
                             Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
@@ -296,7 +297,7 @@ namespace HandlingEditor.Client
                             {
                                 dynamicListItem.CurrentItem = newvalue.ToString("F3");
                                 // Notify the value is changed so the preset can update...
-                                MenuPresetValueChanged(fieldName, newvalue.ToString("F3"), itemText);
+                                MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                             }
                             else
                                 Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueX}, Max:{maxValueX}");
@@ -312,7 +313,7 @@ namespace HandlingEditor.Client
                             {
                                 dynamicListItem.CurrentItem = newvalue.ToString("F3");
                                 // Notify the value is changed so the preset can update...
-                                MenuPresetValueChanged(fieldName, newvalue.ToString("F3"), itemText);
+                                MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                             }
                             else
                                 Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueY}, Max:{maxValueY}");
@@ -328,7 +329,7 @@ namespace HandlingEditor.Client
                             {
                                 dynamicListItem.CurrentItem = newvalue.ToString("F3");
                                 // Notify the value is changed so the preset can update...
-                                MenuPresetValueChanged(fieldName, newvalue.ToString("F3"), itemText);
+                                MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                             }
                             else
                                 Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueZ}, Max:{maxValueZ}");
@@ -340,7 +341,7 @@ namespace HandlingEditor.Client
             }
             else if ((menuItem.ItemData as string) == "handling_reset")
             {
-                MenuResetPresetButtonPressed(this, EventArgs.Empty);
+                MenuResetPresetButtonPressed?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -365,7 +366,7 @@ namespace HandlingEditor.Client
             string fieldName = fieldInfo.Name;
 
             // Notify the value is changed so the preset can update...
-            MenuPresetValueChanged(fieldName, newValue, dynamicListItem.Text);
+            MenuPresetValueChanged?.Invoke(fieldName, newValue, dynamicListItem.Text);
         }
 
         private void UpdatePersonalPresetsMenu()

@@ -190,7 +190,7 @@ namespace HandlingEditor.Client
             RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
 
             await Delay(200);
-            PresetChanged(this, EventArgs.Empty);
+            PresetChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private async void GUI_MenuSavePersonalPresetButtonPressed(object sender, string name)
@@ -198,7 +198,7 @@ namespace HandlingEditor.Client
             if (SavePresetAsKVP(name, CurrentPreset))
             {
                 await Delay(200);
-                PersonalPresetsListChanged(this, EventArgs.Empty);
+                PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
                 Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{name}~w~ saved");
             }
             else
@@ -210,7 +210,7 @@ namespace HandlingEditor.Client
             if (DeletePresetKVP(name))
             {
                 await Delay(200);
-                PersonalPresetsListChanged(this, EventArgs.Empty);
+                PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
                 Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{name}~w~ deleted");
             }
         }
@@ -230,7 +230,8 @@ namespace HandlingEditor.Client
                     }
                     else CitizenFX.Core.Debug.Write($"Missing {field} field in currentPreset");
                 }
-                // PresetChanged(this, EventArgs.Empty);
+
+                PresetChanged?.Invoke(this, EventArgs.Empty);
                 Screen.ShowNotification($"{ScriptName}: Server preset ~b~{key}~w~ applied");
             }
             else
@@ -251,7 +252,7 @@ namespace HandlingEditor.Client
                 var handling = doc["Item"];
                 GetPresetFromXml(handling, CurrentPreset);
 
-                // PresetChanged(this, EventArgs.Empty);
+                PresetChanged?.Invoke(this, EventArgs.Empty);
                 Screen.ShowNotification($"{ScriptName}: Personal preset ~b~{name}~w~ applied");
             }
             else
@@ -283,7 +284,7 @@ namespace HandlingEditor.Client
                     {
                         CurrentVehicle = vehicle;
                         CurrentPreset = CreateHandlingPreset(CurrentVehicle);
-                        PresetChanged.Invoke(this, EventArgs.Empty);
+                        PresetChanged?.Invoke(this, EventArgs.Empty);
                     }
                 }
                 else
