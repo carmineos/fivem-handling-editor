@@ -32,7 +32,15 @@ namespace HandlingEditor.Client
 
         #endregion
 
+        #region Delegates
+
+        public delegate void EditorMenuPresetValueChangedEvent(string id, string value, string text);
+
+        #endregion
+
         #region Events
+
+        public static event EditorMenuPresetValueChangedEvent OnEditorMenuPresetValueChanged;
 
         public static event EventHandler ResetPresetButtonPressed;
         public static event EventHandler<string> ApplyPersonalPresetButtonPressed;
@@ -203,11 +211,19 @@ namespace HandlingEditor.Client
             //UpdateServerPresetsMenu();
         }
 
+        /// <summary>
+        /// Invoked when the user attempts to change a value manually
+        /// </summary>
+        /// <param name="menu"></param>
+        /// <param name="menuItem"></param>
+        /// <param name="itemIndex"></param>
         private async void EditorMenu_OnItemSelect(Menu menu, MenuItem menuItem, int itemIndex)
         {
+            // If the sender isn't the main editor menu...
             if (menu != EditorMenu)
                 return;
 
+            // If the item is a controller of a preset field...
             if (menuItem is MenuDynamicListItem dynamicListItem)
             {
                 if (!(dynamicListItem.ItemData is BaseFieldInfo fieldInfo))
@@ -218,8 +234,10 @@ namespace HandlingEditor.Client
                 string fieldName = fieldInfo.Name;
                 var fieldType = fieldInfo.Type;
 
+                // Get the user input value
                 string text = await GetOnScreenString(currentItem);
 
+                // Check if the value can be accepted
                 if (fieldType == FieldType.FloatType)
                 {
                     var min = (fieldInfo as FieldInfo<float>).Min;
@@ -230,8 +248,8 @@ namespace HandlingEditor.Client
                         if (newvalue >= min && newvalue <= max)
                         {
                             dynamicListItem.CurrentItem = newvalue.ToString();
-                            // TODO: Move outside UI 
-                            CurrentPreset.Fields[fieldName] = newvalue;
+                            // Notify the value is changed so the preset can update...
+                            OnEditorMenuPresetValueChanged(fieldName, newvalue.ToString("F3"), itemText);
                         }
                         else
                             Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
@@ -249,8 +267,8 @@ namespace HandlingEditor.Client
                         if (newvalue >= min && newvalue <= max)
                         {
                             dynamicListItem.CurrentItem = newvalue.ToString();
-                            // TODO: Move outside UI 
-                            CurrentPreset.Fields[fieldName] = newvalue;
+                            // Notify the value is changed so the preset can update...
+                            OnEditorMenuPresetValueChanged(fieldName, newvalue.ToString(), itemText);
                         }
                         else
                             Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
@@ -276,9 +294,9 @@ namespace HandlingEditor.Client
                         {
                             if (newvalue >= minValueX && newvalue <= maxValueX)
                             {
-                                dynamicListItem.CurrentItem = newvalue.ToString();
-                                // TODO: Move outside UI 
-                                CurrentPreset.Fields[fieldName].X = newvalue;
+                                dynamicListItem.CurrentItem = newvalue.ToString("F3");
+                                // Notify the value is changed so the preset can update...
+                                OnEditorMenuPresetValueChanged(fieldName, newvalue.ToString("F3"), itemText);
                             }
                             else
                                 Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueX}, Max:{maxValueX}");
@@ -292,9 +310,9 @@ namespace HandlingEditor.Client
                         {
                             if (newvalue >= minValueY && newvalue <= maxValueY)
                             {
-                                dynamicListItem.CurrentItem = newvalue.ToString();
-                                // TODO: Move outside UI 
-                                CurrentPreset.Fields[fieldName].Y = newvalue;
+                                dynamicListItem.CurrentItem = newvalue.ToString("F3");
+                                // Notify the value is changed so the preset can update...
+                                OnEditorMenuPresetValueChanged(fieldName, newvalue.ToString("F3"), itemText);
                             }
                             else
                                 Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueY}, Max:{maxValueY}");
@@ -308,9 +326,9 @@ namespace HandlingEditor.Client
                         {
                             if (newvalue >= minValueZ && newvalue <= maxValueZ)
                             {
-                                dynamicListItem.CurrentItem = newvalue.ToString();
-                                // TODO: Move outside UI 
-                                CurrentPreset.Fields[fieldName].Z = newvalue;
+                                dynamicListItem.CurrentItem = newvalue.ToString("F3");
+                                // Notify the value is changed so the preset can update...
+                                OnEditorMenuPresetValueChanged(fieldName, newvalue.ToString("F3"), itemText);
                             }
                             else
                                 Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueZ}, Max:{maxValueZ}");
@@ -326,39 +344,35 @@ namespace HandlingEditor.Client
             }
         }
 
+        /// <summary>
+        /// Invoked when the value of a preset field is changed in the menu
+        /// </summary>
+        /// <param name="menu"></param>
+        /// <param name="dynamicListItem"></param>
+        /// <param name="oldValue"></param>
+        /// <param name="newValue"></param>
         private void EditorMenu_OnMenuDynamicListItemCurrentItemChange(Menu menu, MenuDynamicListItem dynamicListItem, string oldValue, string newValue)
         {
+            // If the sender isn't the main editor menu...
             if (menu != EditorMenu)
                 return;
 
+            // If item data is not the expected one...
             if (!(dynamicListItem.ItemData is BaseFieldInfo fieldInfo))
                 return;
 
             // Get field name which is controlled by this dynamic list item
             string fieldName = fieldInfo.Name;
-            var text = dynamicListItem.Text;
-            var fieldType = fieldInfo.Type;
 
-            if (fieldType == FieldType.FloatType)
-                CurrentPreset.Fields[fieldName] = float.Parse(newValue);
-            else if (fieldType == FieldType.IntType)
-                CurrentPreset.Fields[fieldName] = int.Parse(newValue);
-            else if (fieldType == FieldType.Vector3Type)
-            {
-                if(text.EndsWith("_x"))
-                    CurrentPreset.Fields[fieldName].X = float.Parse(newValue);
-                else if (text.EndsWith("_y"))
-                    CurrentPreset.Fields[fieldName].Y = float.Parse(newValue);
-                else if (text.EndsWith("_z"))
-                    CurrentPreset.Fields[fieldName].Z = float.Parse(newValue);
-            }
-
+            // Notify the value is changed so the preset can update...
+            OnEditorMenuPresetValueChanged(fieldName, newValue, dynamicListItem.Text);
         }
 
         private void UpdatePersonalPresetsMenu()
         {
             if (PersonalPresetsMenu == null)
                 return;
+
             PersonalPresetsMenu.ClearMenuItems();
 
             KvpEnumerable kvpList = new KvpEnumerable(kvpPrefix);
@@ -390,7 +404,7 @@ namespace HandlingEditor.Client
 
             AddTextEntry("HANDLING_EDITOR_ENTER_VALUE", "Enter value (without spaces)");
             DisplayOnscreenKeyboard(1, "HANDLING_EDITOR_ENTER_VALUE", "", defaultText, "", "", "", 128);
-            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(200);
+            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(500);
 
             EnableAllControlActions(1);
             MenuController.DisableMenuButtons = false;
@@ -558,16 +572,16 @@ namespace HandlingEditor.Client
 
         private MenuDynamicListItem AddDynamicFloatList(Menu menu, FieldInfo<float> fieldInfo)
         {
-            string name = fieldInfo.Name;
+            string fieldName = fieldInfo.Name;
             string description = fieldInfo.Description;
             float min = fieldInfo.Min;
             float max = fieldInfo.Max;
 
-            if (!CurrentPreset.Fields.ContainsKey(name))
+            if (!CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
                 return null;
 
-            float value = CurrentPreset.Fields[name];
-            var newitem = new MenuDynamicListItem(name, value.ToString("F3"), DynamicListChangeCallback, description)
+            var value = (float)tmp;
+            var newitem = new MenuDynamicListItem(fieldName, value.ToString("F3"), DynamicListChangeCallback, description)
             {
                 ItemData = fieldInfo
             };
@@ -578,16 +592,16 @@ namespace HandlingEditor.Client
 
         private MenuDynamicListItem AddDynamicIntList(Menu menu, FieldInfo<int> fieldInfo)
         {
-            string name = fieldInfo.Name;
+            string fieldName = fieldInfo.Name;
             string description = fieldInfo.Description;
             int min = fieldInfo.Min;
             int max = fieldInfo.Max;
 
-            if (!CurrentPreset.Fields.ContainsKey(name))
+            if (!CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
                 return null;
 
-            int value = CurrentPreset.Fields[name];
-            var newitem = new MenuDynamicListItem(name, value.ToString(), DynamicListChangeCallback, description)
+            var value = (int)tmp;
+            var newitem = new MenuDynamicListItem(fieldName, value.ToString(), DynamicListChangeCallback, description)
             {
                 ItemData = fieldInfo
             };
@@ -600,41 +614,30 @@ namespace HandlingEditor.Client
         {
             string fieldName = fieldInfo.Name;
 
-            if (!CurrentPreset.Fields.ContainsKey(fieldName))
+            if (!CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
                 return null;
 
+            var value = (Vector3)tmp;
+
             string fieldDescription = fieldInfo.Description;
-            Vector3 fieldMin = fieldInfo.Min;
-            Vector3 fieldMax = fieldInfo.Max;
 
             string fieldNameX = $"{fieldName}_x";
-            float valueX = CurrentPreset.Fields[fieldName].X;
-            float minValueX = fieldMin.X;
-            float maxValueX = fieldMax.X;
-            
-            var newitemX = new MenuDynamicListItem(fieldNameX, valueX.ToString("F3"), DynamicListChangeCallback, fieldDescription)
+            string fieldNameY = $"{fieldName}_y";
+            string fieldNameZ = $"{fieldName}_z";
+
+            var newitemX = new MenuDynamicListItem(fieldNameX, value.X.ToString("F3"), DynamicListChangeCallback, fieldDescription)
             {
                 ItemData = fieldInfo
             };
             menu.AddMenuItem(newitemX);
 
-            string fieldNameY = $"{fieldName}_y";
-            float valueY = CurrentPreset.Fields[fieldName].Y;
-            float minValueY = fieldMin.Y;
-            float maxValueY = fieldMax.Y;
-
-            var newitemY = new MenuDynamicListItem(fieldNameY, valueY.ToString("F3"), DynamicListChangeCallback, fieldDescription)
+            var newitemY = new MenuDynamicListItem(fieldNameY, value.Y.ToString("F3"), DynamicListChangeCallback, fieldDescription)
             {
                 ItemData = fieldInfo
             };
             menu.AddMenuItem(newitemY);
 
-            string fieldNameZ = $"{fieldName}_z";
-            float valueZ = CurrentPreset.Fields[fieldName].Z;
-            float minValueZ = fieldMin.Z;
-            float maxValueZ = fieldMax.Z;
-
-            var newitemZ = new MenuDynamicListItem(fieldNameZ, valueZ.ToString("F3"), DynamicListChangeCallback, fieldDescription)
+            var newitemZ = new MenuDynamicListItem(fieldNameZ, value.Z.ToString("F3"), DynamicListChangeCallback, fieldDescription)
             {
                 ItemData = fieldInfo
             };
@@ -649,18 +652,10 @@ namespace HandlingEditor.Client
             {
                 Enabled = false,
                 RightIcon = MenuItem.Icon.LOCK,
-                ItemData = fieldInfo.Name,
+                ItemData = fieldInfo,
             };
 
             menu.AddMenuItem(newitem);
-
-            menu.OnItemSelect += (sender, item, index) =>
-            {
-                if (item == newitem)
-                {
-                    Screen.ShowNotification($"{ScriptName}: The server doesn't allow to edit this field.");
-                }
-            };
             return newitem;
         }
 

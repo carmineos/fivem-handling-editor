@@ -214,6 +214,29 @@ namespace HandlingEditor.Client
                 PresetChanged(this, EventArgs.Empty);
             };
 
+            // When the UI changed a preset field
+            HandlingMenu.OnEditorMenuPresetValueChanged += (fieldName, value, text) =>
+            {
+                if (!HandlingInfo.FieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
+                    return;
+
+                var fieldType = fieldInfo.Type;
+
+                if (fieldType == FieldType.FloatType)
+                    CurrentPreset.Fields[fieldName] = float.Parse(value);
+                else if (fieldType == FieldType.IntType)
+                    CurrentPreset.Fields[fieldName] = int.Parse(value);
+                else if (fieldType == FieldType.Vector3Type)
+                {
+                    if (text.EndsWith("_x"))
+                        CurrentPreset.Fields[fieldName].X = float.Parse(value);
+                    else if (text.EndsWith("_y"))
+                        CurrentPreset.Fields[fieldName].Y = float.Parse(value);
+                    else if (text.EndsWith("_z"))
+                        CurrentPreset.Fields[fieldName].Z = float.Parse(value);
+                }
+            };
+
             Tick += GetCurrentVehicle;
             Tick += ScriptTask;
         }
