@@ -210,9 +210,12 @@ namespace HandlingEditor.Client
 
             if (menuItem is MenuDynamicListItem dynamicListItem)
             {
+                if (!(dynamicListItem.ItemData is BaseFieldInfo fieldInfo))
+                    return;
+
                 var currentItem = dynamicListItem.CurrentItem;
-                string fieldName = dynamicListItem.ItemData;
-                var fieldInfo = HandlingInfo.FieldsInfo[fieldName];
+                var itemText = dynamicListItem.Text;
+                string fieldName = fieldInfo.Name;
                 var fieldType = fieldInfo.Type;
 
                 string text = await GetOnScreenString(currentItem);
@@ -267,7 +270,7 @@ namespace HandlingEditor.Client
                     var maxValueY = max.Y;
                     var maxValueZ = max.Z;
 
-                    if (fieldName.EndsWith("_x"))
+                    if (itemText.EndsWith("_x"))
                     {
                         if (float.TryParse(text, out float newvalue))
                         {
@@ -275,15 +278,15 @@ namespace HandlingEditor.Client
                             {
                                 dynamicListItem.CurrentItem = newvalue.ToString();
                                 // TODO: Move outside UI 
-                                CurrentPreset.Fields[fieldName] = newvalue;
+                                CurrentPreset.Fields[fieldName].X = newvalue;
                             }
                             else
-                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{minValueX}, Max:{maxValueX}");
+                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueX}, Max:{maxValueX}");
                         }
                         else
-                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
                     }
-                    else if (fieldName.EndsWith("_y"))
+                    else if (itemText.EndsWith("_y"))
                     {
                         if (float.TryParse(text, out float newvalue))
                         {
@@ -291,15 +294,15 @@ namespace HandlingEditor.Client
                             {
                                 dynamicListItem.CurrentItem = newvalue.ToString();
                                 // TODO: Move outside UI 
-                                CurrentPreset.Fields[fieldName] = newvalue;
+                                CurrentPreset.Fields[fieldName].Y = newvalue;
                             }
                             else
-                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{minValueY}, Max:{maxValueY}");
+                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueY}, Max:{maxValueY}");
                         }
                         else
-                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
                     }
-                    else if (fieldName.EndsWith("_z"))
+                    else if (itemText.EndsWith("_z"))
                     {
                         if (float.TryParse(text, out float newvalue))
                         {
@@ -307,13 +310,13 @@ namespace HandlingEditor.Client
                             {
                                 dynamicListItem.CurrentItem = newvalue.ToString();
                                 // TODO: Move outside UI 
-                                CurrentPreset.Fields[fieldName] = newvalue;
+                                CurrentPreset.Fields[fieldName].Z = newvalue;
                             }
                             else
-                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{minValueZ}, Max:{maxValueZ}");
+                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueZ}, Max:{maxValueZ}");
                         }
                         else
-                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
                     }
                 }
             }
@@ -328,10 +331,13 @@ namespace HandlingEditor.Client
             if (menu != EditorMenu)
                 return;
 
-            // Get field name which is controlled by this dynamic list item
-            string fieldName = dynamicListItem.ItemData;
+            if (!(dynamicListItem.ItemData is BaseFieldInfo fieldInfo))
+                return;
 
-            var fieldType = HandlingInfo.FieldsInfo[fieldName].Type;
+            // Get field name which is controlled by this dynamic list item
+            string fieldName = fieldInfo.Name;
+            var text = dynamicListItem.Text;
+            var fieldType = fieldInfo.Type;
 
             if (fieldType == FieldType.FloatType)
                 CurrentPreset.Fields[fieldName] = float.Parse(newValue);
@@ -339,7 +345,6 @@ namespace HandlingEditor.Client
                 CurrentPreset.Fields[fieldName] = int.Parse(newValue);
             else if (fieldType == FieldType.Vector3Type)
             {
-                var text = dynamicListItem.Text;
                 if(text.EndsWith("_x"))
                     CurrentPreset.Fields[fieldName].X = float.Parse(newValue);
                 else if (text.EndsWith("_y"))
@@ -397,8 +402,12 @@ namespace HandlingEditor.Client
         string DynamicListChangeCallback(MenuDynamicListItem item, bool left)
         {
             var currentItem = item.CurrentItem;
-            string fieldName = item.ItemData;
-            var fieldInfo = HandlingInfo.FieldsInfo[fieldName];
+
+            if (!(item.ItemData is BaseFieldInfo fieldInfo))
+                return currentItem;
+
+            var itemText = item.Text;
+            var fieldName = fieldInfo.Name;
             var fieldType = fieldInfo.Type;
 
             if (fieldType == FieldType.IntType)
@@ -470,13 +479,13 @@ namespace HandlingEditor.Client
                 var maxValueY = max.Y;
                 var maxValueZ = max.Z;
 
-                if (fieldName.EndsWith("_x"))
+                if (itemText.EndsWith("_x"))
                 {
                     if (left)
                     {
                         var newvalue = value - FloatStep;
                         if (newvalue < minValueX)
-                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldName}~w~ is {minValueX}");
+                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{itemText}~w~ is {minValueX}");
                         else
                         {
                             value = newvalue;
@@ -486,7 +495,7 @@ namespace HandlingEditor.Client
                     {
                         var newvalue = value + FloatStep;
                         if (newvalue > maxValueX)
-                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldName}~w~ is {maxValueX}");
+                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{itemText}~w~ is {maxValueX}");
                         else
                         {
                             value = newvalue;
@@ -494,13 +503,13 @@ namespace HandlingEditor.Client
                     }
                     return value.ToString("F3");
                 }
-                else if (fieldName.EndsWith("_y"))
+                else if (itemText.EndsWith("_y"))
                 {
                     if (left)
                     {
                         var newvalue = value - FloatStep;
                         if (newvalue < minValueY)
-                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldName}~w~ is {minValueY}");
+                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{itemText}~w~ is {minValueY}");
                         else
                         {
                             value = newvalue;
@@ -510,7 +519,7 @@ namespace HandlingEditor.Client
                     {
                         var newvalue = value + FloatStep;
                         if (newvalue > maxValueY)
-                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldName}~w~ is {maxValueY}");
+                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{itemText}~w~ is {maxValueY}");
                         else
                         {
                             value = newvalue;
@@ -518,13 +527,13 @@ namespace HandlingEditor.Client
                     }
                     return value.ToString("F3");
                 }
-                else if (fieldName.EndsWith("_z"))
+                else if (itemText.EndsWith("_z"))
                 {
                     if (left)
                     {
                         var newvalue = value - FloatStep;
                         if (newvalue < minValueZ)
-                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldName}~w~ is {minValueZ}");
+                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{itemText}~w~ is {minValueZ}");
                         else
                         {
                             value = newvalue;
@@ -534,7 +543,7 @@ namespace HandlingEditor.Client
                     {
                         var newvalue = value + FloatStep;
                         if (newvalue > maxValueZ)
-                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldName}~w~ is {maxValueZ}");
+                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{itemText}~w~ is {maxValueZ}");
                         else
                         {
                             value = newvalue;
@@ -558,10 +567,9 @@ namespace HandlingEditor.Client
                 return null;
 
             float value = CurrentPreset.Fields[name];
-
             var newitem = new MenuDynamicListItem(name, value.ToString("F3"), DynamicListChangeCallback, description)
             {
-                ItemData = name
+                ItemData = fieldInfo
             };
             menu.AddMenuItem(newitem);
 
@@ -581,7 +589,7 @@ namespace HandlingEditor.Client
             int value = CurrentPreset.Fields[name];
             var newitem = new MenuDynamicListItem(name, value.ToString(), DynamicListChangeCallback, description)
             {
-                ItemData = name
+                ItemData = fieldInfo
             };
             menu.AddMenuItem(newitem);
 
@@ -606,7 +614,7 @@ namespace HandlingEditor.Client
             
             var newitemX = new MenuDynamicListItem(fieldNameX, valueX.ToString("F3"), DynamicListChangeCallback, fieldDescription)
             {
-                ItemData = fieldNameX
+                ItemData = fieldInfo
             };
             menu.AddMenuItem(newitemX);
 
@@ -617,7 +625,7 @@ namespace HandlingEditor.Client
 
             var newitemY = new MenuDynamicListItem(fieldNameY, valueY.ToString("F3"), DynamicListChangeCallback, fieldDescription)
             {
-                ItemData = fieldNameY
+                ItemData = fieldInfo
             };
             menu.AddMenuItem(newitemY);
 
@@ -628,7 +636,7 @@ namespace HandlingEditor.Client
 
             var newitemZ = new MenuDynamicListItem(fieldNameZ, valueZ.ToString("F3"), DynamicListChangeCallback, fieldDescription)
             {
-                ItemData = fieldNameZ
+                ItemData = fieldInfo
             };
             menu.AddMenuItem(newitemZ);
 
