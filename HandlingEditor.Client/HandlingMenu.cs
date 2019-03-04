@@ -76,6 +76,9 @@ namespace HandlingEditor.Client
             if (EditorMenu == null)
             {
                 EditorMenu = new Menu(ScriptName, "Editor");
+
+                EditorMenu.OnItemSelect += EditorMenu_OnItemSelect;
+                EditorMenu.OnMenuDynamicListItemCurrentItemChange += EditorMenu_OnMenuDynamicListItemCurrentItemChange;
             }
             
             if (PersonalPresetsMenu == null)
@@ -190,19 +193,160 @@ namespace HandlingEditor.Client
                 }
             }
 
-            var resetItem = new MenuItem("Reset", "Restores the default values");
-            EditorMenu.AddMenuItem(resetItem);
-
-            EditorMenu.OnItemSelect += (sender, item, index) =>
+            var resetItem = new MenuItem("Reset", "Restores the default values")
             {
-                if (item == resetItem)
-                {
-                    ResetPresetButtonPressed(this, EventArgs.Empty);
-                }
+                ItemData = "handling_reset",
             };
+            EditorMenu.AddMenuItem(resetItem);
 
             //UpdatePersonalPresetsMenu();
             //UpdateServerPresetsMenu();
+        }
+
+        private async void EditorMenu_OnItemSelect(Menu menu, MenuItem menuItem, int itemIndex)
+        {
+            if (menu != EditorMenu)
+                return;
+
+            if (menuItem is MenuDynamicListItem dynamicListItem)
+            {
+                var currentItem = dynamicListItem.CurrentItem;
+                string fieldName = dynamicListItem.ItemData;
+                var fieldInfo = HandlingInfo.FieldsInfo[fieldName];
+                var fieldType = fieldInfo.Type;
+
+                string text = await GetOnScreenString(currentItem);
+
+                if (fieldType == FieldType.FloatType)
+                {
+                    var min = (fieldInfo as FieldInfo<float>).Min;
+                    var max = (fieldInfo as FieldInfo<float>).Max;
+
+                    if (float.TryParse(text, out float newvalue))
+                    {
+                        if (newvalue >= min && newvalue <= max)
+                        {
+                            dynamicListItem.CurrentItem = newvalue.ToString();
+                            // TODO: Move outside UI 
+                            CurrentPreset.Fields[fieldName] = newvalue;
+                        }
+                        else
+                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
+                    }
+                    else
+                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                }
+                else if (fieldType == FieldType.IntType)
+                {
+                    var min = (fieldInfo as FieldInfo<int>).Min;
+                    var max = (fieldInfo as FieldInfo<int>).Max;
+
+                    if (int.TryParse(text, out int newvalue))
+                    {
+                        if (newvalue >= min && newvalue <= max)
+                        {
+                            dynamicListItem.CurrentItem = newvalue.ToString();
+                            // TODO: Move outside UI 
+                            CurrentPreset.Fields[fieldName] = newvalue;
+                        }
+                        else
+                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
+                    }
+                    else
+                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                }
+                else if (fieldType == FieldType.Vector3Type)
+                {
+                    var min = (fieldInfo as FieldInfo<Vector3>).Min;
+                    var max = (fieldInfo as FieldInfo<Vector3>).Max;
+
+                    var minValueX = min.X;
+                    var minValueY = min.Y;
+                    var minValueZ = min.Z;
+                    var maxValueX = max.X;
+                    var maxValueY = max.Y;
+                    var maxValueZ = max.Z;
+
+                    if (fieldName.EndsWith("_x"))
+                    {
+                        if (float.TryParse(text, out float newvalue))
+                        {
+                            if (newvalue >= minValueX && newvalue <= maxValueX)
+                            {
+                                dynamicListItem.CurrentItem = newvalue.ToString();
+                                // TODO: Move outside UI 
+                                CurrentPreset.Fields[fieldName] = newvalue;
+                            }
+                            else
+                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{minValueX}, Max:{maxValueX}");
+                        }
+                        else
+                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                    }
+                    else if (fieldName.EndsWith("_y"))
+                    {
+                        if (float.TryParse(text, out float newvalue))
+                        {
+                            if (newvalue >= minValueY && newvalue <= maxValueY)
+                            {
+                                dynamicListItem.CurrentItem = newvalue.ToString();
+                                // TODO: Move outside UI 
+                                CurrentPreset.Fields[fieldName] = newvalue;
+                            }
+                            else
+                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{minValueY}, Max:{maxValueY}");
+                        }
+                        else
+                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                    }
+                    else if (fieldName.EndsWith("_z"))
+                    {
+                        if (float.TryParse(text, out float newvalue))
+                        {
+                            if (newvalue >= minValueZ && newvalue <= maxValueZ)
+                            {
+                                dynamicListItem.CurrentItem = newvalue.ToString();
+                                // TODO: Move outside UI 
+                                CurrentPreset.Fields[fieldName] = newvalue;
+                            }
+                            else
+                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{minValueZ}, Max:{maxValueZ}");
+                        }
+                        else
+                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                    }
+                }
+            }
+            else if ((menuItem.ItemData as string) == "handling_reset")
+            {
+                ResetPresetButtonPressed(this, EventArgs.Empty);
+            }
+        }
+
+        private void EditorMenu_OnMenuDynamicListItemCurrentItemChange(Menu menu, MenuDynamicListItem dynamicListItem, string oldValue, string newValue)
+        {
+            if (menu != EditorMenu)
+                return;
+
+            // Get field name which is controlled by this dynamic list item
+            string fieldName = dynamicListItem.ItemData;
+
+            var fieldType = HandlingInfo.FieldsInfo[fieldName].Type;
+
+            if (fieldType == FieldType.FloatType)
+                CurrentPreset.Fields[fieldName] = float.Parse(newValue);
+            else if (fieldType == FieldType.IntType)
+                CurrentPreset.Fields[fieldName] = int.Parse(newValue);
+            else if (fieldType == FieldType.Vector3Type)
+            {
+                var text = dynamicListItem.Text;
+                if(text.EndsWith("_x"))
+                    CurrentPreset.Fields[fieldName].X = float.Parse(newValue);
+                else if (text.EndsWith("_y"))
+                    CurrentPreset.Fields[fieldName].Y = float.Parse(newValue);
+                else if (text.EndsWith("_z"))
+                    CurrentPreset.Fields[fieldName].Z = float.Parse(newValue);
+            }
 
         }
 
@@ -250,6 +394,159 @@ namespace HandlingEditor.Client
             return GetOnscreenKeyboardResult();
         }
 
+        string DynamicListChangeCallback(MenuDynamicListItem item, bool left)
+        {
+            var currentItem = item.CurrentItem;
+            string fieldName = item.ItemData;
+            var fieldInfo = HandlingInfo.FieldsInfo[fieldName];
+            var fieldType = fieldInfo.Type;
+
+            if (fieldType == FieldType.IntType)
+            {
+                var value = int.Parse(currentItem);
+                var min = (fieldInfo as FieldInfo<int>).Min;
+                var max = (fieldInfo as FieldInfo<int>).Max;
+
+                if (left)
+                {
+                    var newvalue = value - 1;
+                    if (newvalue < min)
+                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldName}~w~ is {min}");
+                    else
+                    {
+                        value = newvalue;
+                    }
+                }
+                else
+                {
+                    var newvalue = value + 1;
+                    if (newvalue > max)
+                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldName}~w~ is {max}");
+                    else
+                    {
+                        value = newvalue;
+                    }
+                }
+                return value.ToString();
+            }
+            else if (fieldType == FieldType.FloatType)
+            {
+                var value = float.Parse(currentItem);
+                var min = (fieldInfo as FieldInfo<float>).Min;
+                var max = (fieldInfo as FieldInfo<float>).Max;
+
+                if (left)
+                {
+                    var newvalue = value - FloatStep;
+                    if (newvalue < min)
+                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldName}~w~ is {min}");
+                    else
+                    {
+                        value = newvalue;
+                    }
+                }
+                else
+                {
+                    var newvalue = value + FloatStep;
+                    if (newvalue > max)
+                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldName}~w~ is {max}");
+                    else
+                    {
+                        value = newvalue;
+                    }
+                }
+                return value.ToString("F3");
+            }
+            else if (fieldType == FieldType.Vector3Type)
+            {
+                var value = float.Parse(currentItem);
+                var min = (fieldInfo as FieldInfo<Vector3>).Min;
+                var max = (fieldInfo as FieldInfo<Vector3>).Max;
+
+                var minValueX = min.X;
+                var minValueY = min.Y;
+                var minValueZ = min.Z;
+                var maxValueX = max.X;
+                var maxValueY = max.Y;
+                var maxValueZ = max.Z;
+
+                if (fieldName.EndsWith("_x"))
+                {
+                    if (left)
+                    {
+                        var newvalue = value - FloatStep;
+                        if (newvalue < minValueX)
+                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldName}~w~ is {minValueX}");
+                        else
+                        {
+                            value = newvalue;
+                        }
+                    }
+                    else
+                    {
+                        var newvalue = value + FloatStep;
+                        if (newvalue > maxValueX)
+                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldName}~w~ is {maxValueX}");
+                        else
+                        {
+                            value = newvalue;
+                        }
+                    }
+                    return value.ToString("F3");
+                }
+                else if (fieldName.EndsWith("_y"))
+                {
+                    if (left)
+                    {
+                        var newvalue = value - FloatStep;
+                        if (newvalue < minValueY)
+                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldName}~w~ is {minValueY}");
+                        else
+                        {
+                            value = newvalue;
+                        }
+                    }
+                    else
+                    {
+                        var newvalue = value + FloatStep;
+                        if (newvalue > maxValueY)
+                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldName}~w~ is {maxValueY}");
+                        else
+                        {
+                            value = newvalue;
+                        }
+                    }
+                    return value.ToString("F3");
+                }
+                else if (fieldName.EndsWith("_z"))
+                {
+                    if (left)
+                    {
+                        var newvalue = value - FloatStep;
+                        if (newvalue < minValueZ)
+                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldName}~w~ is {minValueZ}");
+                        else
+                        {
+                            value = newvalue;
+                        }
+                    }
+                    else
+                    {
+                        var newvalue = value + FloatStep;
+                        if (newvalue > maxValueZ)
+                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldName}~w~ is {maxValueZ}");
+                        else
+                        {
+                            value = newvalue;
+                        }
+                    }
+                    return value.ToString("F3");
+                }
+            }
+
+            return currentItem;
+        }
+
         private MenuDynamicListItem AddDynamicFloatList(Menu menu, FieldInfo<float> fieldInfo)
         {
             string name = fieldInfo.Name;
@@ -261,58 +558,12 @@ namespace HandlingEditor.Client
                 return null;
 
             float value = CurrentPreset.Fields[name];
-            string FloatChangeCallBack(MenuDynamicListItem item, bool left)
-            {
-                if (left)
-                {
-                    var newvalue = value - FloatStep;
-                    if (newvalue < min)
-                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{name}~w~ is {min}");
-                    else
-                    {
-                        value = newvalue;
-                        CurrentPreset.Fields[name] = newvalue;
-                    }
-                }
-                else
-                {
-                    var newvalue = value + FloatStep;
-                    if (newvalue > max)
-                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{name}~w~ is {max}");
-                    else
-                    {
-                        value = newvalue;
-                        CurrentPreset.Fields[name] = newvalue;
-                    }
-                }
-                return value.ToString("F3");
-            };
-            var newitem = new MenuDynamicListItem(name, value.ToString("F3"), FloatChangeCallBack, description)
+
+            var newitem = new MenuDynamicListItem(name, value.ToString("F3"), DynamicListChangeCallback, description)
             {
                 ItemData = name
             };
             menu.AddMenuItem(newitem);
-
-            EditorMenu.OnItemSelect += async (sender, item, index) =>
-            {
-                if (item == newitem)
-                {
-                    string text = await GetOnScreenString(((MenuDynamicListItem)item).CurrentItem);
-
-                    if (float.TryParse(text, out float newvalue))
-                    {
-                        if (newvalue >= min && newvalue <= max)
-                        {
-                            ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
-                            CurrentPreset.Fields[name] = newvalue;
-                        }
-                        else
-                            Screen.ShowNotification($"{ScriptName}:  Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
-                    }
-                    else
-                        Screen.ShowNotification($"{ScriptName}:  Invalid value for ~b~{name}~w~");
-                }
-            };
 
             return newitem;
         }
@@ -328,58 +579,11 @@ namespace HandlingEditor.Client
                 return null;
 
             int value = CurrentPreset.Fields[name];
-            string IntChangeCallBack(MenuDynamicListItem item, bool left)
-            {
-                if (left)
-                {
-                    var newvalue = value - 1;
-                    if (newvalue < min)
-                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{name}~w~ is {min}");
-                    else
-                    {
-                        value = newvalue;
-                        CurrentPreset.Fields[name] = newvalue;
-                    }
-                }
-                else
-                {
-                    var newvalue = value + 1;
-                    if (newvalue > max)
-                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{name}~w~ is {max}");
-                    else
-                    {
-                        value = newvalue;
-                        CurrentPreset.Fields[name] = newvalue;
-                    }
-                }
-                return value.ToString();
-            };
-            var newitem = new MenuDynamicListItem(name, value.ToString(), IntChangeCallBack, description)
+            var newitem = new MenuDynamicListItem(name, value.ToString(), DynamicListChangeCallback, description)
             {
                 ItemData = name
             };
             menu.AddMenuItem(newitem);
-
-            EditorMenu.OnItemSelect += async (sender, item, index) =>
-            {
-                if (item == newitem)
-                {
-                    string text = await GetOnScreenString(((MenuDynamicListItem)item).CurrentItem);
-
-                    if (int.TryParse(text, out int newvalue))
-                    {
-                        if (newvalue >= min && newvalue <= max)
-                        {
-                            ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
-                            CurrentPreset.Fields[name] = newvalue;
-                        }
-                        else
-                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{name}~w~, Min:{min}, Max:{max}");
-                    }
-                    else
-                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{name}~w~");                    
-                }
-            };
 
             return newitem;
         }
@@ -399,33 +603,8 @@ namespace HandlingEditor.Client
             float valueX = CurrentPreset.Fields[fieldName].X;
             float minValueX = fieldMin.X;
             float maxValueX = fieldMax.X;
-            string XChangeCallback(MenuDynamicListItem item, bool left)
-            {
-                if (left)
-                {
-                    var newvalue = valueX - FloatStep;
-                    if (newvalue < minValueX)
-                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldNameX}~w~ is {minValueX}");
-                    else
-                    {
-                        valueX = newvalue;
-                        CurrentPreset.Fields[fieldInfo.Name].X = newvalue;
-                    }
-                }
-                else
-                {
-                    var newvalue = valueX + FloatStep;
-                    if (newvalue > maxValueX)
-                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldNameX}~w~ is {maxValueX}");
-                    else
-                    {
-                        valueX = newvalue;
-                        CurrentPreset.Fields[fieldInfo.Name].X = newvalue;
-                    }
-                }
-                return valueX.ToString("F3");
-            }
-            var newitemX = new MenuDynamicListItem(fieldNameX, valueX.ToString("F3"), XChangeCallback, fieldDescription)
+            
+            var newitemX = new MenuDynamicListItem(fieldNameX, valueX.ToString("F3"), DynamicListChangeCallback, fieldDescription)
             {
                 ItemData = fieldNameX
             };
@@ -435,33 +614,8 @@ namespace HandlingEditor.Client
             float valueY = CurrentPreset.Fields[fieldName].Y;
             float minValueY = fieldMin.Y;
             float maxValueY = fieldMax.Y;
-            string YChangeCallback(MenuDynamicListItem item, bool left)
-            {
-                if (left)
-                {
-                    var newvalue = valueY - FloatStep;
-                    if (newvalue < minValueY)
-                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldNameY}~w~ is {minValueY}");
-                    else
-                    {
-                        valueY = newvalue;
-                        CurrentPreset.Fields[fieldInfo.Name].Y = newvalue;
-                    }
-                }
-                else
-                {
-                    var newvalue = valueY + FloatStep;
-                    if (newvalue > maxValueY)
-                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldNameY}~w~ is {maxValueY}");
-                    else
-                    {
-                        valueY = newvalue;
-                        CurrentPreset.Fields[fieldInfo.Name].Y = newvalue;
-                    }
-                }
-                return valueY.ToString("F3");
-            }
-            var newitemY = new MenuDynamicListItem(fieldNameY, valueY.ToString("F3"), YChangeCallback, fieldDescription)
+
+            var newitemY = new MenuDynamicListItem(fieldNameY, valueY.ToString("F3"), DynamicListChangeCallback, fieldDescription)
             {
                 ItemData = fieldNameY
             };
@@ -471,92 +625,12 @@ namespace HandlingEditor.Client
             float valueZ = CurrentPreset.Fields[fieldName].Z;
             float minValueZ = fieldMin.Z;
             float maxValueZ = fieldMax.Z;
-            string ZChangeCallBack(MenuDynamicListItem item, bool left)
-            {
-                if (left)
-                {
-                    var newvalue = valueZ - FloatStep;
-                    if (newvalue < minValueZ)
-                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldNameZ}~w~ is {minValueZ}");
-                    else
-                    {
-                        valueZ = newvalue;
-                        CurrentPreset.Fields[fieldInfo.Name].Z = newvalue;
-                    }
-                }
-                else
-                {
-                    var newvalue = valueZ + FloatStep;
-                    if (newvalue > maxValueZ)
-                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldNameZ}~w~ is {maxValueZ}");
-                    else
-                    {
-                        valueZ = newvalue;
-                        CurrentPreset.Fields[fieldInfo.Name].Z = newvalue;
-                    }
-                }
-                return valueZ.ToString("F3");
-            }
-            var newitemZ = new MenuDynamicListItem(fieldNameZ, valueZ.ToString("F3"), ZChangeCallBack, fieldDescription)
+
+            var newitemZ = new MenuDynamicListItem(fieldNameZ, valueZ.ToString("F3"), DynamicListChangeCallback, fieldDescription)
             {
                 ItemData = fieldNameZ
             };
             menu.AddMenuItem(newitemZ);
-
-            EditorMenu.OnItemSelect += async (sender, item, index) =>
-            {
-                if (item == newitemX)
-                {
-                    string text = await GetOnScreenString(((MenuDynamicListItem)item).CurrentItem);
-
-                    if (float.TryParse(text, out float newvalue))
-                    {
-                        if (newvalue >= minValueX && newvalue <= maxValueX)
-                        {
-                            ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
-                            CurrentPreset.Fields[fieldName].X = newvalue;
-                        }
-                        else
-                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldNameX}~w~, Min:{minValueX}, Max:{maxValueX}");
-                    }
-                    else
-                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameX}~w~");
-                }
-                else if (item == newitemY)
-                {
-                    string text = await GetOnScreenString(((MenuDynamicListItem)item).CurrentItem);
-
-                    if (float.TryParse(text, out float newvalue))
-                    {
-                        if (newvalue >= minValueY && newvalue <= maxValueY)
-                        {
-                            ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
-                            CurrentPreset.Fields[fieldName].Y = newvalue;
-                        }
-                        else
-                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldNameY}~w~, Min:{minValueY}, Max:{maxValueY}");
-                    }
-                    else
-                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameY}~w~");
-                }
-                else if (item == newitemZ)
-                {
-                    string text = await GetOnScreenString(((MenuDynamicListItem)item).CurrentItem);
-
-                    if (float.TryParse(text, out float newvalue))
-                    {
-                        if (newvalue >= minValueZ && newvalue <= maxValueZ)
-                        {
-                            ((MenuDynamicListItem)item).CurrentItem = newvalue.ToString();
-                            CurrentPreset.Fields[fieldName].Z = newvalue;
-                        }
-                        else
-                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldNameZ}~w~, Min:{minValueZ}, Max:{maxValueZ}");
-                    }
-                    else
-                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldNameZ}~w~");
-                }
-            };
 
             return new MenuDynamicListItem[3] { newitemX, newitemY, newitemZ };
         }
