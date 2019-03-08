@@ -404,7 +404,7 @@ namespace HandlingEditor.Client
             foreach (var key in kvpList)
             {
                 string value = GetResourceKvpString(key);
-                PersonalPresetsMenu.AddMenuItem(new MenuItem(key.Remove(0, kvpPrefix.Length)));
+                PersonalPresetsMenu.AddMenuItem(new MenuItem(key.Remove(0, kvpPrefix.Length)) { ItemData = key });
             }
         }
 
@@ -419,7 +419,7 @@ namespace HandlingEditor.Client
             ServerPresetsMenu.ClearMenuItems();
 
             foreach (var preset in ServerPresets)
-                ServerPresetsMenu.AddMenuItem(new MenuItem(preset.Key));
+                ServerPresetsMenu.AddMenuItem(new MenuItem(preset.Key) { ItemData = preset.Key});
         }
 
         /// <summary>

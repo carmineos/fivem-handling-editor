@@ -196,32 +196,31 @@ namespace HandlingEditor.Client
             PresetChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        private async void GUI_MenuSavePersonalPresetButtonPressed(object sender, string name)
+        private async void GUI_MenuSavePersonalPresetButtonPressed(object sender, string presetName)
         {
-            if (SavePresetAsKVP(name, CurrentPreset))
+            if (SavePresetAsKVP(presetName, CurrentPreset))
             {
                 await Delay(200);
                 PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
-                Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{name}~w~ saved");
+                Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{presetName}~w~ saved");
             }
             else
-                Screen.ShowNotification($"{ScriptName}: The name {name} is invalid or already used.");
+                Screen.ShowNotification($"{ScriptName}: The name {presetName} is invalid or already used.");
         }
 
-        private async void GUI_MenuDeletePersonalPresetButtonPressed(object sender, string name)
+        private async void GUI_MenuDeletePersonalPresetButtonPressed(object sender, string presetName)
         {
-            if (DeletePresetKVP(name))
+            if (DeletePresetKVP(presetName))
             {
                 await Delay(200);
                 PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
-                Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{name}~w~ deleted");
+                Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{presetName}~w~ deleted");
             }
         }
 
-        private async void GUI_MenuApplyServerPresetButtonPressed(object sender, string name)
+        private async void GUI_MenuApplyServerPresetButtonPressed(object sender, string presetName)
         {
-            string key = name;
-            if (ServerPresets.TryGetValue(key, out HandlingPreset preset))
+            if (ServerPresets.TryGetValue(presetName, out HandlingPreset preset))
             {
                 var presetFields = preset.Fields;
                 foreach (var field in presetFields.Keys)
@@ -235,17 +234,17 @@ namespace HandlingEditor.Client
                 }
 
                 PresetChanged?.Invoke(this, EventArgs.Empty);
-                Screen.ShowNotification($"{ScriptName}: Server preset ~b~{key}~w~ applied");
+                Screen.ShowNotification($"{ScriptName}: Server preset ~b~{presetName}~w~ applied");
             }
             else
-                Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Server preset ~b~{key}~w~ corrupted");
+                Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Server preset ~b~{presetName}~w~ corrupted");
 
             await Delay(200);
         }
 
-        private async void GUI_MenuApplyPersonalPresetButtonPressed(object sender, string name)
+        private async void GUI_MenuApplyPersonalPresetButtonPressed(object sender, string presetName)
         {
-            string key = $"{kvpPrefix}{name}";
+            string key = $"{kvpPrefix}{presetName}";
             string value = GetResourceKvpString(key);
             if (value != null)
             {
@@ -256,10 +255,10 @@ namespace HandlingEditor.Client
                 GetPresetFromXml(handling, CurrentPreset);
 
                 PresetChanged?.Invoke(this, EventArgs.Empty);
-                Screen.ShowNotification($"{ScriptName}: Personal preset ~b~{name}~w~ applied");
+                Screen.ShowNotification($"{ScriptName}: Personal preset ~b~{presetName}~w~ applied");
             }
             else
-                Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Personal preset ~b~{name}~w~ corrupted");
+                Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Personal preset ~b~{presetName}~w~ corrupted");
 
             await Delay(200);
         }
