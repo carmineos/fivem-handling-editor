@@ -84,6 +84,8 @@ namespace HandlingEditor.Client
                 if (MenuController.IsAnyMenuOpen())
                     MenuController.CloseAllMenus();
             }
+
+            await Task.FromResult(0);
         }
         
         #endregion
