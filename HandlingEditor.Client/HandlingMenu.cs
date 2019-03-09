@@ -59,6 +59,8 @@ namespace HandlingEditor.Client
         /// </summary>
         public HandlingMenu()
         {
+            // Used for the on screen keyboard
+            AddTextEntry("HANDLING_EDITOR_ENTER_VALUE", "Enter value (without spaces)");
             InitializeMenu();
 
             Tick += OnTick;
@@ -98,7 +100,8 @@ namespace HandlingEditor.Client
                 EditorMenu = new Menu(ScriptName, "Editor");
 
                 EditorMenu.OnItemSelect += EditorMenu_OnItemSelect;
-                EditorMenu.OnMenuDynamicListItemCurrentItemChange += EditorMenu_OnMenuDynamicListItemCurrentItemChange;
+                EditorMenu.OnDynamicListItemSelect += EditorMenu_OnDynamicListItemSelect;
+                EditorMenu.OnDynamicListItemCurrentItemChange += EditorMenu_OnDynamicListItemCurrentItemChange;
             }
             
             if (PersonalPresetsMenu == null)
@@ -178,130 +181,137 @@ namespace HandlingEditor.Client
         /// <param name="menu"></param>
         /// <param name="menuItem"></param>
         /// <param name="itemIndex"></param>
-        private async void EditorMenu_OnItemSelect(Menu menu, MenuItem menuItem, int itemIndex)
+        private void EditorMenu_OnItemSelect(Menu menu, MenuItem menuItem, int itemIndex)
         {
             // If the sender isn't the main editor menu...
             if (menu != EditorMenu)
                 return;
 
-            // If the item is a controller of a preset field...
-            if (menuItem is MenuDynamicListItem dynamicListItem)
+            if ((menuItem.ItemData as string) == "handling_reset")
             {
-                if (!(dynamicListItem.ItemData is BaseFieldInfo fieldInfo))
-                    return;
+                MenuResetPresetButtonPressed?.Invoke(this, EventArgs.Empty);
+            }
+        }
 
-                var currentItem = dynamicListItem.CurrentItem;
-                var itemText = dynamicListItem.Text;
-                string fieldName = fieldInfo.Name;
-                var fieldType = fieldInfo.Type;
+        /// <summary>
+        /// Invoked when a <see cref="MenuDynamicListItem"/> from the main editor menu is selected
+        /// </summary>
+        /// <param name="menu"></param>
+        /// <param name="dynamicListItem"></param>
+        /// <param name="currentItem"></param>
+        private async void EditorMenu_OnDynamicListItemSelect(Menu menu, MenuDynamicListItem dynamicListItem, string currentItem)
+        {
+            // If the item doesn't control any preset field...
+            if (!(dynamicListItem.ItemData is BaseFieldInfo fieldInfo))
+                return;
 
-                // Get the user input value
-                string text = await GetOnScreenString(currentItem);
+            //var currentItem = dynamicListItem.CurrentItem;
+            var itemText = dynamicListItem.Text;
+            string fieldName = fieldInfo.Name;
+            var fieldType = fieldInfo.Type;
 
-                // Check if the value can be accepted
-                if (fieldType == FieldType.FloatType)
+            // Get the user input value
+            string text = await GetOnScreenString(currentItem);
+
+            // Check if the value can be accepted
+            if (fieldType == FieldType.FloatType)
+            {
+                var min = (fieldInfo as FieldInfo<float>).Min;
+                var max = (fieldInfo as FieldInfo<float>).Max;
+
+                if (float.TryParse(text, out float newvalue))
                 {
-                    var min = (fieldInfo as FieldInfo<float>).Min;
-                    var max = (fieldInfo as FieldInfo<float>).Max;
+                    if (newvalue >= min && newvalue <= max)
+                    {
+                        dynamicListItem.CurrentItem = newvalue.ToString();
+                        // Notify the value is changed so the preset can update...
+                        MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
+                    }
+                    else
+                        Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
+                }
+                else
+                    Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+            }
+            else if (fieldType == FieldType.IntType)
+            {
+                var min = (fieldInfo as FieldInfo<int>).Min;
+                var max = (fieldInfo as FieldInfo<int>).Max;
 
+                if (int.TryParse(text, out int newvalue))
+                {
+                    if (newvalue >= min && newvalue <= max)
+                    {
+                        dynamicListItem.CurrentItem = newvalue.ToString();
+                        // Notify the value is changed so the preset can update...
+                        MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString(), itemText);
+                    }
+                    else
+                        Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
+                }
+                else
+                    Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+            }
+            else if (fieldType == FieldType.Vector3Type)
+            {
+                var min = (fieldInfo as FieldInfo<Vector3>).Min;
+                var max = (fieldInfo as FieldInfo<Vector3>).Max;
+
+                var minValueX = min.X;
+                var minValueY = min.Y;
+                var minValueZ = min.Z;
+                var maxValueX = max.X;
+                var maxValueY = max.Y;
+                var maxValueZ = max.Z;
+
+                if (itemText.EndsWith("_x"))
+                {
                     if (float.TryParse(text, out float newvalue))
                     {
-                        if (newvalue >= min && newvalue <= max)
+                        if (newvalue >= minValueX && newvalue <= maxValueX)
                         {
-                            dynamicListItem.CurrentItem = newvalue.ToString();
+                            dynamicListItem.CurrentItem = newvalue.ToString("F3");
                             // Notify the value is changed so the preset can update...
                             MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                         }
                         else
-                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
+                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueX}, Max:{maxValueX}");
                     }
                     else
-                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
                 }
-                else if (fieldType == FieldType.IntType)
+                else if (itemText.EndsWith("_y"))
                 {
-                    var min = (fieldInfo as FieldInfo<int>).Min;
-                    var max = (fieldInfo as FieldInfo<int>).Max;
-
-                    if (int.TryParse(text, out int newvalue))
+                    if (float.TryParse(text, out float newvalue))
                     {
-                        if (newvalue >= min && newvalue <= max)
+                        if (newvalue >= minValueY && newvalue <= maxValueY)
                         {
-                            dynamicListItem.CurrentItem = newvalue.ToString();
+                            dynamicListItem.CurrentItem = newvalue.ToString("F3");
                             // Notify the value is changed so the preset can update...
-                            MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString(), itemText);
+                            MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                         }
                         else
-                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
+                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueY}, Max:{maxValueY}");
                     }
                     else
-                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
                 }
-                else if (fieldType == FieldType.Vector3Type)
+                else if (itemText.EndsWith("_z"))
                 {
-                    var min = (fieldInfo as FieldInfo<Vector3>).Min;
-                    var max = (fieldInfo as FieldInfo<Vector3>).Max;
-
-                    var minValueX = min.X;
-                    var minValueY = min.Y;
-                    var minValueZ = min.Z;
-                    var maxValueX = max.X;
-                    var maxValueY = max.Y;
-                    var maxValueZ = max.Z;
-
-                    if (itemText.EndsWith("_x"))
+                    if (float.TryParse(text, out float newvalue))
                     {
-                        if (float.TryParse(text, out float newvalue))
+                        if (newvalue >= minValueZ && newvalue <= maxValueZ)
                         {
-                            if (newvalue >= minValueX && newvalue <= maxValueX)
-                            {
-                                dynamicListItem.CurrentItem = newvalue.ToString("F3");
-                                // Notify the value is changed so the preset can update...
-                                MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
-                            }
-                            else
-                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueX}, Max:{maxValueX}");
+                            dynamicListItem.CurrentItem = newvalue.ToString("F3");
+                            // Notify the value is changed so the preset can update...
+                            MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                         }
                         else
-                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
+                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueZ}, Max:{maxValueZ}");
                     }
-                    else if (itemText.EndsWith("_y"))
-                    {
-                        if (float.TryParse(text, out float newvalue))
-                        {
-                            if (newvalue >= minValueY && newvalue <= maxValueY)
-                            {
-                                dynamicListItem.CurrentItem = newvalue.ToString("F3");
-                                // Notify the value is changed so the preset can update...
-                                MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
-                            }
-                            else
-                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueY}, Max:{maxValueY}");
-                        }
-                        else
-                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
-                    }
-                    else if (itemText.EndsWith("_z"))
-                    {
-                        if (float.TryParse(text, out float newvalue))
-                        {
-                            if (newvalue >= minValueZ && newvalue <= maxValueZ)
-                            {
-                                dynamicListItem.CurrentItem = newvalue.ToString("F3");
-                                // Notify the value is changed so the preset can update...
-                                MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
-                            }
-                            else
-                                Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueZ}, Max:{maxValueZ}");
-                        }
-                        else
-                            Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
-                    }
+                    else
+                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
                 }
-            }
-            else if ((menuItem.ItemData as string) == "handling_reset")
-            {
-                MenuResetPresetButtonPressed?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -312,7 +322,7 @@ namespace HandlingEditor.Client
         /// <param name="dynamicListItem"></param>
         /// <param name="oldValue"></param>
         /// <param name="newValue"></param>
-        private void EditorMenu_OnMenuDynamicListItemCurrentItemChange(Menu menu, MenuDynamicListItem dynamicListItem, string oldValue, string newValue)
+        private void EditorMenu_OnDynamicListItemCurrentItemChange(Menu menu, MenuDynamicListItem dynamicListItem, string oldValue, string newValue)
         {
             // If the sender isn't the main editor menu...
             if (menu != EditorMenu)
@@ -429,19 +439,19 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         private async Task<string> GetOnScreenString(string defaultText)
         {
-            var currentMenu = MenuController.GetCurrentMenu();
-            currentMenu.Visible = false;
+            //var currentMenu = MenuController.GetCurrentMenu();
+            //currentMenu.Visible = false;
+            //MenuController.DisableMenuButtons = true;
 
-            MenuController.DisableMenuButtons = true;
-            DisableAllControlActions(1);
-
-            AddTextEntry("HANDLING_EDITOR_ENTER_VALUE", "Enter value (without spaces)");
+            //DisableAllControlActions(1);
+   
             DisplayOnscreenKeyboard(1, "HANDLING_EDITOR_ENTER_VALUE", "", defaultText, "", "", "", 128);
-            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(500);
+            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(100);
 
-            EnableAllControlActions(1);
-            MenuController.DisableMenuButtons = false;
-            currentMenu.Visible = true;
+            //EnableAllControlActions(1);
+
+            //MenuController.DisableMenuButtons = false;
+            //currentMenu.Visible = true;
 
             return GetOnscreenKeyboardResult();
         }
