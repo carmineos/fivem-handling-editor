@@ -302,6 +302,8 @@ namespace HandlingEditor.Client
                 CurrentVehicle = -1;
                 CurrentPreset = null;
             }
+
+            await Task.FromResult(0);
         }      
 
         /// <summary>
@@ -333,6 +335,8 @@ namespace HandlingEditor.Client
 
                 LastTime = GetGameTimer();
             }
+
+            await Task.FromResult(0);
         }
 
         #endregion

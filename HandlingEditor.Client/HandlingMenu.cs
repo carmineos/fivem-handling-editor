@@ -121,10 +121,10 @@ namespace HandlingEditor.Client
                 PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.VehicleExit, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) => { }), true));
 
                 PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneExtraOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>(async (sender, control) =>
-               {
-                   string kvpName = await GetOnScreenString("");
-                   MenuSavePersonalPresetButtonPressed?.Invoke(PersonalPresetsMenu, kvpName);
-               }), true));
+                {
+                    string kvpName = await GetOnScreenString("");
+                    MenuSavePersonalPresetButtonPressed?.Invoke(PersonalPresetsMenu, kvpName);
+                }), true));
                 PersonalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) =>
                 {
                     if (PersonalPresetsMenu.GetMenuItems().Count > 0)
