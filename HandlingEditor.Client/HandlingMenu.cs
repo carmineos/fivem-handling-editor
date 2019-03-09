@@ -28,7 +28,6 @@ namespace HandlingEditor.Client
         private Menu EditorMenu;
         private Menu PersonalPresetsMenu;
         private Menu ServerPresetsMenu;
-        private List<MenuDynamicListItem> HandlingListItems;
 
         #endregion
 
@@ -625,8 +624,6 @@ namespace HandlingEditor.Client
         {
             string fieldName = fieldInfo.Name;
             string description = fieldInfo.Description;
-            float min = fieldInfo.Min;
-            float max = fieldInfo.Max;
 
             if (!CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
                 return null;
@@ -645,8 +642,6 @@ namespace HandlingEditor.Client
         {
             string fieldName = fieldInfo.Name;
             string description = fieldInfo.Description;
-            int min = fieldInfo.Min;
-            int max = fieldInfo.Max;
 
             if (!CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
                 return null;
