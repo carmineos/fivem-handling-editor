@@ -39,7 +39,7 @@ namespace HandlingEditor.Client
         public const string ScriptName = "Handling Editor";
         public const string kvpPrefix = "handling_";
         public static string ResourceName { get; private set; }
-        public static Dictionary<string,HandlingPreset> ServerPresets { get; private set; }
+        public static Dictionary<string,HandlingPreset> ServerPresets { get; private set; } = new Dictionary<string, HandlingPreset>();
         public static long CurrentTime { get; private set; }
         public static long LastTime { get; private set; }
         public static int PlayerPed { get; private set; }
@@ -56,15 +56,11 @@ namespace HandlingEditor.Client
         public HandlingEditor()
         {
             ResourceName = GetCurrentResourceName();
-            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Script by Neos7");
+
             LoadConfig();
-            
             ReadFieldInfo();
-            ServerPresets = new Dictionary<string, HandlingPreset>();
             ReadServerPresets();
-
             RegisterDecorators();
-
             ReadVehiclePermissions();
 
             CurrentTime = GetGameTimer();
@@ -743,10 +739,9 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         private HandlingPreset CreateHandlingPreset(int vehicle)
         {
-            Dictionary<string, dynamic> defaultFields = new Dictionary<string, dynamic>();
-            Dictionary<string, dynamic> fields = new Dictionary<string, dynamic>();
+            HandlingPreset preset = new HandlingPreset();
             
-            foreach(var item in HandlingInfo.FieldsInfo)
+            foreach (var item in HandlingInfo.FieldsInfo)
             {
                 string fieldName = item.Key;
                 string className = item.Value.ClassName;
@@ -756,14 +751,14 @@ namespace HandlingEditor.Client
                 if (fieldType == FieldType.FloatType)
                 {
                     var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetFloat(vehicle, defDecorName) : GetVehicleHandlingFloat(vehicle, className, fieldName);
-                    defaultFields[fieldName] = defaultValue;
-                    fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetFloat(vehicle, fieldName) : defaultValue;
+                    preset.DefaultFields[fieldName] = defaultValue;
+                    preset.Fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetFloat(vehicle, fieldName) : defaultValue;
                 }/*
                 else if (fieldType == FieldType.IntType)
                 {
                     var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetInt(vehicle, defDecorName) : GetVehicleHandlingInt(vehicle, className, fieldName);
-                    defaultFields[fieldName] = defaultValue;
-                    fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetInt(vehicle, fieldName) : defaultValue;
+                    preset.DefaultFields[fieldName] = defaultValue;
+                    preset.Fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetInt(vehicle, fieldName) : defaultValue;
                 }*/
                 else if (fieldType == FieldType.Vector3Type)
                 {
@@ -784,7 +779,7 @@ namespace HandlingEditor.Client
                     if (DecorExistOn(vehicle, defDecorNameZ))
                         vec.Z = DecorGetFloat(vehicle, defDecorNameZ);
 
-                    defaultFields[fieldName] = vec;
+                    preset.DefaultFields[fieldName] = vec;
 
                     if (DecorExistOn(vehicle, decorX))
                         vec.X = DecorGetFloat(vehicle, decorX);
@@ -793,11 +788,9 @@ namespace HandlingEditor.Client
                     if (DecorExistOn(vehicle, decorZ))
                         vec.Z = DecorGetFloat(vehicle, decorZ);
 
-                    fields[fieldName] = vec;
+                    preset.Fields[fieldName] = vec;
                 }
             }
-
-            HandlingPreset preset = new HandlingPreset(defaultFields, fields);
 
             return preset;
         }

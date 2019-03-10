@@ -18,12 +18,6 @@ namespace HandlingEditor.Client
             Fields = new Dictionary<string, dynamic>();
         }
 
-        public HandlingPreset(Dictionary<string, dynamic> defaultFields, Dictionary<string, dynamic> fields)
-        {
-            Fields = fields;
-            DefaultFields = defaultFields;
-        }
-
         public bool IsEdited
         {
             get
