@@ -12,7 +12,7 @@ namespace HandlingEditor.Client
 {
     public class HandlingEditor : BaseScript
     {
-        #region Events
+        #region Public Events
 
         public static event EventHandler PresetChanged;
         public static event EventHandler PersonalPresetsListChanged;
@@ -50,6 +50,9 @@ namespace HandlingEditor.Client
 
         #region Constructor
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public HandlingEditor()
         {
             ResourceName = GetCurrentResourceName();
@@ -70,9 +73,11 @@ namespace HandlingEditor.Client
             CurrentVehicle = -1;
             Vehicles = Enumerable.Empty<int>();
 
+            #region Register Commands
+
             RegisterCommand("handling_range", new Action<int, dynamic>((source, args) =>
             {
-                if(args.Count < 1)
+                if (args.Count < 1)
                 {
                     CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Missing float argument");
                     return;
@@ -138,84 +143,124 @@ namespace HandlingEditor.Client
                     CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
             }), false);
 
-            HandlingMenu.ApplyPersonalPresetButtonPressed += async (sender, name) =>
-            {
-                string key = $"{kvpPrefix}{name}";
-                string value = GetResourceKvpString(key);
-                if (value != null)
-                {
-                    value = Helpers.RemoveByteOrderMarks(value);
-                    XmlDocument doc = new XmlDocument();
-                    doc.LoadXml(value);
-                    var handling = doc["Item"];
-                    GetPresetFromXml(handling, CurrentPreset);
+            #endregion
 
-                    Screen.ShowNotification($"{ScriptName}: Personal preset ~b~{name}~w~ applied");
-                }
-                else
-                    Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Personal preset ~b~{name}~w~ corrupted");
+            #region GUI Event Handling
 
-                await Delay(200);
-            };
+            HandlingMenu.MenuApplyPersonalPresetButtonPressed += GUI_MenuApplyPersonalPresetButtonPressed;
+            HandlingMenu.MenuApplyServerPresetButtonPressed += GUI_MenuApplyServerPresetButtonPressed;
+            HandlingMenu.MenuSavePersonalPresetButtonPressed += GUI_MenuSavePersonalPresetButtonPressed;
+            HandlingMenu.MenuDeletePersonalPresetButtonPressed += GUI_MenuDeletePersonalPresetButtonPressed;
+            HandlingMenu.MenuResetPresetButtonPressed += GUI_MenuResetPresetButtonPressed;
+            HandlingMenu.MenuPresetValueChanged += GUI_MenuPresetValueChanged;
 
-            HandlingMenu.ApplyServerPresetButtonPressed += async (sender, name) =>
-            {
-                string key = name;
-                if (ServerPresets.TryGetValue(key, out HandlingPreset preset))
-                {
-                    var presetFields = preset.Fields; 
-                    foreach (var field in presetFields.Keys)
-                    {
-                        // TODO: Add a flag to decide if a field should be added to the preset anyway
-                        if (CurrentPreset.Fields.ContainsKey(field))
-                        {
-                            CurrentPreset.Fields[field] = presetFields[field];
-                        }
-                        else CitizenFX.Core.Debug.Write($"Missing {field} field in currentPreset");
-                    }
-
-                    Screen.ShowNotification($"{ScriptName}: Server preset ~b~{key}~w~ applied");
-                }
-                else
-                    Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Server preset ~b~{key}~w~ corrupted");
-
-                await Delay(200);
-            };
-
-            HandlingMenu.SavePersonalPresetButtonPressed += async (sender, name) =>
-            {
-                if (SavePresetAsKVP(name, CurrentPreset))
-                {
-                    await Delay(200);
-                    PersonalPresetsListChanged(this, EventArgs.Empty);
-                    Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{name}~w~ saved");
-                }
-                else
-                    Screen.ShowNotification($"{ScriptName}: The name {name} is invalid or already used.");
-            };
-
-            HandlingMenu.DeletePersonalPresetButtonPressed += async (sender, name) =>
-            {
-                if (DeletePresetKVP(name))
-                {
-                    await Delay(200);
-                    PersonalPresetsListChanged(this, EventArgs.Empty);
-                    Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{name}~w~ deleted");
-                }
-            };
-
-            HandlingMenu.ResetPresetButtonPressed += async (sender, args) =>
-            {
-                CurrentPreset.Reset();
-                RemoveDecorators(CurrentVehicle);
-                RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
-
-                await Delay(200);
-                PresetChanged(this, EventArgs.Empty);
-            };
+            #endregion
 
             Tick += GetCurrentVehicle;
             Tick += ScriptTask;
+        }
+
+        #endregion
+
+        #region GUI Event Handlers
+
+        private void GUI_MenuPresetValueChanged(string fieldName, string value, string text)
+        {
+            if (!HandlingInfo.FieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
+                return;
+
+            var fieldType = fieldInfo.Type;
+
+            if (fieldType == FieldType.FloatType)
+                CurrentPreset.Fields[fieldName] = float.Parse(value);
+            else if (fieldType == FieldType.IntType)
+                CurrentPreset.Fields[fieldName] = int.Parse(value);
+            else if (fieldType == FieldType.Vector3Type)
+            {
+                if (text.EndsWith("_x"))
+                    CurrentPreset.Fields[fieldName].X = float.Parse(value);
+                else if (text.EndsWith("_y"))
+                    CurrentPreset.Fields[fieldName].Y = float.Parse(value);
+                else if (text.EndsWith("_z"))
+                    CurrentPreset.Fields[fieldName].Z = float.Parse(value);
+            }
+        }
+
+        private async void GUI_MenuResetPresetButtonPressed(object sender, EventArgs e)
+        {
+            CurrentPreset.Reset();
+            RemoveDecorators(CurrentVehicle);
+            RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
+
+            await Delay(200);
+            PresetChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private async void GUI_MenuSavePersonalPresetButtonPressed(object sender, string presetName)
+        {
+            if (SavePresetAsKVP(presetName, CurrentPreset))
+            {
+                await Delay(200);
+                PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
+                Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{presetName}~w~ saved");
+            }
+            else
+                Screen.ShowNotification($"{ScriptName}: The name {presetName} is invalid or already used.");
+        }
+
+        private async void GUI_MenuDeletePersonalPresetButtonPressed(object sender, string presetName)
+        {
+            if (DeletePresetKVP(presetName))
+            {
+                await Delay(200);
+                PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
+                Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{presetName}~w~ deleted");
+            }
+        }
+
+        private async void GUI_MenuApplyServerPresetButtonPressed(object sender, string presetName)
+        {
+            if (ServerPresets.TryGetValue(presetName, out HandlingPreset preset))
+            {
+                var presetFields = preset.Fields;
+                foreach (var field in presetFields.Keys)
+                {
+                    // TODO: Add a flag to decide if a field should be added to the preset anyway
+                    if (CurrentPreset.Fields.ContainsKey(field))
+                    {
+                        CurrentPreset.Fields[field] = presetFields[field];
+                    }
+                    else CitizenFX.Core.Debug.Write($"Missing {field} field in currentPreset");
+                }
+
+                PresetChanged?.Invoke(this, EventArgs.Empty);
+                Screen.ShowNotification($"{ScriptName}: Server preset ~b~{presetName}~w~ applied");
+            }
+            else
+                Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Server preset ~b~{presetName}~w~ corrupted");
+
+            await Delay(200);
+        }
+
+        private async void GUI_MenuApplyPersonalPresetButtonPressed(object sender, string presetName)
+        {
+            string key = $"{kvpPrefix}{presetName}";
+            string value = GetResourceKvpString(key);
+            if (value != null)
+            {
+                value = Helpers.RemoveByteOrderMarks(value);
+                XmlDocument doc = new XmlDocument();
+                doc.LoadXml(value);
+                var handling = doc["Item"];
+                GetPresetFromXml(handling, CurrentPreset);
+
+                PresetChanged?.Invoke(this, EventArgs.Empty);
+                Screen.ShowNotification($"{ScriptName}: Personal preset ~b~{presetName}~w~ applied");
+            }
+            else
+                Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Personal preset ~b~{presetName}~w~ corrupted");
+
+            await Delay(200);
         }
 
         #endregion
@@ -241,7 +286,7 @@ namespace HandlingEditor.Client
                     {
                         CurrentVehicle = vehicle;
                         CurrentPreset = CreateHandlingPreset(CurrentVehicle);
-                        PresetChanged.Invoke(this, EventArgs.Empty);
+                        PresetChanged?.Invoke(this, EventArgs.Empty);
                     }
                 }
                 else
@@ -257,6 +302,8 @@ namespace HandlingEditor.Client
                 CurrentVehicle = -1;
                 CurrentPreset = null;
             }
+
+            await Task.FromResult(0);
         }      
 
         /// <summary>
@@ -288,16 +335,18 @@ namespace HandlingEditor.Client
 
                 LastTime = GetGameTimer();
             }
+
+            await Task.FromResult(0);
         }
 
         #endregion
 
-        #region Methods
+        #region Private Methods
 
         /// <summary>
         /// Disable controls for controller to use the script with the controller
         /// </summary>
-        public static void DisableControls()
+        private static void DisableMainMenuControls()
         {
             DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
             DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
@@ -310,7 +359,7 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Disable controls for controller to use the script with the controller
         /// </summary>
-        public static void DisableControls2()
+        private static void DisableAdditionalMainMenuControls()
         {
             DisableControlAction(1, 75, true); // INPUT_VEH_EXIT - Y
             DisableControlAction(1, 37, true); // INPUT_SELECT_WEAPON - X
