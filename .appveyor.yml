@@ -1,7 +1,7 @@
 install:
 - ps: $env:LAST_TAG = git describe --abbrev=0 --tags
 - ps: $env:TAG_NUMBER = $env:LAST_TAG.Substring($env:LAST_TAG.IndexOf('v') + 1)
-- ps: if ($env:APPVEYOR_REPO_TAG -ne $True){ $env:TAG_NUMBER = $env:TAG_NUMBER + "." +$env:APPVEYOR_BUILD_NUMBER }
+- ps: if ($env:APPVEYOR_REPO_TAG -ne $True){ $env:TAG_NUMBER = $env:TAG_NUMBER + "." +$env:APPVEYOR_BUILD_NUMBER } else { $env:TAG_NUMBER = $env:TAG_NUMBER + "." + 0 }
 - cmd: git submodule update --init --recursive
 
 version: 1.0.{build}
