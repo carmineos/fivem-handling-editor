@@ -31,9 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CitizenFX.Core, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\vendor\CitizenFX.Core.Client\CitizenFX.Core.dll</HintPath>
+    <Reference Include="CitizenFX.Core.Client, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CitizenFX.Core.Client.1.0.1117\lib\net45\CitizenFX.Core.Client.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -63,6 +62,9 @@
       <Name>MenuAPI</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if '$(CI)' == '' (
@@ -72,7 +74,7 @@ call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\__resource.lua"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\HandlingInfo.xml"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\HandlingPresets.xml"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\VehiclesPermissions.xml"
-call "$(SolutionDir)postbuild.bat" "$(TargetDir)\MenuAPI.net.dll"
+call "$(SolutionDir)postbuild.bat" "$(TargetDir)\MenuAPI.dll"
 call "$(SolutionDir)postbuild.bat" "$(SolutionDir)dist\System.Xml.Mono.net.dll"
 )</PostBuildEvent>
   </PropertyGroup>

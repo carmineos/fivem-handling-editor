@@ -24,7 +24,7 @@ after_build:
 - cmd: md %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
 - cmd: move /Y %APPVEYOR_BUILD_FOLDER%\dist\*.* %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
 - cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\HandlingEditor.Client.net.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
-- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\MenuAPI.net.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
+- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\MenuAPI.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
 - 7z a handling-editor-v%TAG_NUMBER%.zip %APPVEYOR_BUILD_FOLDER%\dist\*
 
 artifacts:
