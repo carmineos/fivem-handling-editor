@@ -800,73 +800,76 @@ namespace HandlingEditor.Client
         /// </summary>
         private void PrintDecorators(int vehicle)
         {
-            if (DoesEntityExist(vehicle))
+            if (!DoesEntityExist(vehicle))
             {
-                int netID = NetworkGetNetworkIdFromEntity(vehicle);
-                StringBuilder s = new StringBuilder();
-                s.AppendLine($"{ScriptName}: Vehicle:{vehicle} netID:{netID}");
-                s.AppendLine("Decorators List:");
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Can't find vehicle with handle {vehicle}");
+                return;
+            }
 
-                foreach (var item in HandlingInfo.FieldsInfo)
+            int netID = NetworkGetNetworkIdFromEntity(vehicle);
+            StringBuilder s = new StringBuilder();
+            s.AppendLine($"{ScriptName}: Vehicle:{vehicle} netID:{netID}");
+            s.AppendLine("Decorators List:");
+
+            foreach (var item in HandlingInfo.FieldsInfo)
+            {
+                string fieldName = item.Key;
+                Type fieldType = item.Value.Type;
+                string defDecorName = $"{fieldName}_def";
+
+                dynamic value = 0, defaultValue = 0;
+
+                if (fieldType == FieldType.FloatType)
                 {
-                    string fieldName = item.Key;
-                    Type fieldType = item.Value.Type;
-                    string defDecorName = $"{fieldName}_def";
-
-                    dynamic value = 0, defaultValue = 0;
-
-                    if (fieldType == FieldType.FloatType)
+                    if (DecorExistOn(vehicle, item.Key))
                     {
-                        if (DecorExistOn(vehicle, item.Key))
-                        {
-                            value = DecorGetFloat(vehicle, fieldName);
-                            defaultValue = DecorGetFloat(vehicle, defDecorName);
-                            s.AppendLine($"{fieldName}: {value}({defaultValue})");
-                        }
-                    }
-                    else if (fieldType == FieldType.IntType)
-                    {
-                        if (DecorExistOn(vehicle, item.Key))
-                        {
-                            value = DecorGetInt(vehicle, fieldName);
-                            defaultValue = DecorGetInt(vehicle, defDecorName);
-                            s.AppendLine($"{fieldName}: {value}({defaultValue})");
-                        }
-                    }
-                    else if (fieldType == FieldType.Vector3Type)
-                    {
-                        string decorX = $"{fieldName}_x";
-                        if (DecorExistOn(vehicle, decorX))
-                        {
-                            string defDecorNameX = $"{decorX}_def";
-                            var x = DecorGetFloat(vehicle, decorX);
-                            var defX = DecorGetFloat(vehicle, defDecorNameX);
-                            s.AppendLine($"{decorX}: {x}({defX})");
-                        }
-
-                        string decorY = $"{fieldName}_y";
-                        if (DecorExistOn(vehicle, decorY))
-                        {
-                            string defDecorNameY = $"{decorY}_def";
-                            var y = DecorGetFloat(vehicle, decorY);
-                            var defY = DecorGetFloat(vehicle, defDecorNameY);
-                            s.AppendLine($"{decorY}: {y}({defY})");
-                        }
-
-                        string decorZ = $"{fieldName}_z";
-                        if (DecorExistOn(vehicle, decorZ))
-                        {
-                            string defDecorNameZ = $"{decorZ}_def";
-                            var z = DecorGetFloat(vehicle, decorZ);
-                            var defZ = DecorGetFloat(vehicle, defDecorNameZ);
-                            s.AppendLine($"{decorZ}: {z}({defZ})");
-                        }
-                        
+                        value = DecorGetFloat(vehicle, fieldName);
+                        defaultValue = DecorGetFloat(vehicle, defDecorName);
+                        s.AppendLine($"{fieldName}: {value}({defaultValue})");
                     }
                 }
-                CitizenFX.Core.Debug.Write(s.ToString());
+                else if (fieldType == FieldType.IntType)
+                {
+                    if (DecorExistOn(vehicle, item.Key))
+                    {
+                        value = DecorGetInt(vehicle, fieldName);
+                        defaultValue = DecorGetInt(vehicle, defDecorName);
+                        s.AppendLine($"{fieldName}: {value}({defaultValue})");
+                    }
+                }
+                else if (fieldType == FieldType.Vector3Type)
+                {
+                    string decorX = $"{fieldName}_x";
+                    if (DecorExistOn(vehicle, decorX))
+                    {
+                        string defDecorNameX = $"{decorX}_def";
+                        var x = DecorGetFloat(vehicle, decorX);
+                        var defX = DecorGetFloat(vehicle, defDecorNameX);
+                        s.AppendLine($"{decorX}: {x}({defX})");
+                    }
+
+                    string decorY = $"{fieldName}_y";
+                    if (DecorExistOn(vehicle, decorY))
+                    {
+                        string defDecorNameY = $"{decorY}_def";
+                        var y = DecorGetFloat(vehicle, decorY);
+                        var defY = DecorGetFloat(vehicle, defDecorNameY);
+                        s.AppendLine($"{decorY}: {y}({defY})");
+                    }
+
+                    string decorZ = $"{fieldName}_z";
+                    if (DecorExistOn(vehicle, decorZ))
+                    {
+                        string defDecorNameZ = $"{decorZ}_def";
+                        var z = DecorGetFloat(vehicle, decorZ);
+                        var defZ = DecorGetFloat(vehicle, defDecorNameZ);
+                        s.AppendLine($"{decorZ}: {z}({defZ})");
+                    }
+
+                }
             }
-            else CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Can't find vehicle with handle {vehicle}");
+
+            CitizenFX.Core.Debug.Write(s.ToString());
         }
 
         /// <summary>
@@ -934,7 +937,7 @@ namespace HandlingEditor.Client
 
         private static bool SavePresetAsKVP(string name, HandlingPreset preset)
         {
-            if (string.IsNullOrEmpty(name))
+            if (string.IsNullOrEmpty(name) || preset == null)
                 return false;
 
             string kvpName = $"{kvpPrefix}{name}";
@@ -951,6 +954,9 @@ namespace HandlingEditor.Client
 
         private static bool DeletePresetKVP(string name)
         {
+            if (string.IsNullOrEmpty(name))
+                return false;
+
             string key = $"{kvpPrefix}{name}";
 
             //Nothing to delete
