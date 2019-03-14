@@ -20,6 +20,9 @@ build:
   verbosity: minimal
   project: fivem-handling-editor.sln
   
+before_build:
+- nuget restore
+  
 after_build:
 - cmd: md %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
 - cmd: move /Y %APPVEYOR_BUILD_FOLDER%\dist\*.* %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
