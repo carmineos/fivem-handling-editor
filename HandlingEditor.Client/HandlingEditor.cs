@@ -14,38 +14,118 @@ namespace HandlingEditor.Client
     {
         #region Public Events
 
-        public static event EventHandler PresetChanged;
-        public static event EventHandler PersonalPresetsListChanged;
-        public static event EventHandler ServerPresetsListChanged;
+        /// <summary>
+        /// An event triggered when <see cref="CurrentPreset"/> changes
+        /// </summary>
+        public event EventHandler PresetChanged;
+
+        /// <summary>
+        /// An event triggered when the list of the personal presets changes
+        /// </summary>
+        public event EventHandler PersonalPresetsListChanged;
+
+        /// <summary>
+        /// An event triggered when the list of the server presets changes
+        /// </summary>
+        public event EventHandler ServerPresetsListChanged;
 
         #endregion
 
-        #region Config Fields
-        public static float FloatPrecision { get; private set; } = 0.001f;
-        public static float FloatStep { get; private set; } = 0.01f;
-        public static float ScriptRange { get; private set; } = 150.0f;
-        public static long Timer { get; private set; } = 1000;
-        public static bool Debug { get; private set; } = false;
-        public static int ToggleMenu { get; private set; } = 168;
-        
+        #region Public Fields
+
+        #region Config
+
+        /// <summary>
+        /// The minimum difference to determine if two floats are equal
+        /// </summary>
+        public float FloatPrecision = 0.001f;
+
+        /// <summary>
+        /// The amount used to change a float when left/right arrows are pressed in the menu
+        /// </summary>
+        public float FloatStep = 0.01f;
+
+        /// <summary>
+        /// The max distance within which the script will refresh the vehicles
+        /// </summary>
+        public float ScriptRange = 150.0f;
+
+        /// <summary>
+        /// The timer used to determine when the script should do some tasks
+        /// </summary>
+        public long Timer = 1000;
+
+        /// <summary>
+        /// Wheter debug should be enabled
+        /// </summary>
+        public bool Debug = false;
+
+        /// <summary>
+        /// The <see cref="Control"/> used to open the menu
+        /// </summary>
+        public int ToggleMenu = 168;
+
+        #endregion
+
+        /// <summary>
+        /// The name of the script
+        /// </summary>
+        public const string ScriptName = "Handling Editor";
+
+        /// <summary>
+        /// The prefix used for key-value pairs used to store personal presets
+        /// </summary>
+        public const string KvpPrefix = "handling_";
+
+        /// <summary>
+        /// The expected name of the resource
+        /// </summary>
+        public const string ResourceName = "handling-editor";
+
+        /// <summary>
+        /// The script which controls the menu
+        /// </summary>
+        private HandlingMenu _handlingMenu;
+
+        /// <summary>
+        /// The server presets
+        /// </summary>
+        public Dictionary<string, HandlingPreset> ServerPresets;
+
+        /// <summary>
+        /// The last game time the <see cref="ScriptTask"/> was executed
+        /// </summary>
+        public long LastTime;
+
+        /// <summary>
+        /// The ped of the player
+        /// </summary>
+        public int PlayerPed;
+
+        /// <summary>
+        /// The current vehicle the player is driving (-1 otherwise)
+        /// </summary>
+        public int CurrentVehicle;
+
+        /// <summary>
+        /// The handling preset for the <see cref="CurrentVehicle"/> 
+        /// </summary>
+        public HandlingPreset CurrentPreset;
+
+        /// <summary>
+        /// All the world vehicles
+        /// </summary>
+        public IEnumerable<int> Vehicles;
+
+        #endregion
+
+        #region Public Properties
+
         /// <summary>
         /// Wheter <see cref="CurrentVehicle"/> and <see cref="CurrentPreset"/> are valid
         /// </summary>
-        public static bool CurrentPresetIsValid => CurrentVehicle != -1 && CurrentPreset != null;
+        public bool CurrentPresetIsValid => CurrentVehicle != -1 && CurrentPreset != null;
 
-        #endregion
-
-        #region Fields
-        public const string ScriptName = "Handling Editor";
-        public const string kvpPrefix = "handling_";
-        public static string ResourceName { get; private set; }
-        public static Dictionary<string,HandlingPreset> ServerPresets { get; private set; } = new Dictionary<string, HandlingPreset>();
-        public static long CurrentTime { get; private set; }
-        public static long LastTime { get; private set; }
-        public static int PlayerPed { get; private set; }
-        public static int CurrentVehicle { get; private set; }
-        public static HandlingPreset CurrentPreset { get; private set; }
-        public static IEnumerable<int> Vehicles { get; private set; }
         #endregion
 
         #region Constructor
@@ -55,19 +135,24 @@ namespace HandlingEditor.Client
         /// </summary>
         public HandlingEditor()
         {
-            ResourceName = GetCurrentResourceName();
+            // If the resource name is not the expected one ...
+            if (GetCurrentResourceName() != ResourceName)
+            {
+                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Invalid resource name, be sure the resource name is {ResourceName}");
+                return;
+            }
+
+            LastTime = GetGameTimer();
+            CurrentPreset = null;
+            CurrentVehicle = -1;
+            Vehicles = Enumerable.Empty<int>();
+            ServerPresets = new Dictionary<string, HandlingPreset>();
 
             LoadConfig();
             ReadFieldInfo();
             ReadServerPresets();
             RegisterDecorators();
             ReadVehiclePermissions();
-
-            CurrentTime = GetGameTimer();
-            LastTime = CurrentTime;
-            CurrentPreset = null;
-            CurrentVehicle = -1;
-            Vehicles = Enumerable.Empty<int>();
 
             #region Register Commands
 
@@ -141,19 +226,23 @@ namespace HandlingEditor.Client
 
             #endregion
 
-            #region GUI Event Handling
+            // Create the script for the menu
+            _handlingMenu = new HandlingMenu(this);
 
-            HandlingMenu.MenuApplyPersonalPresetButtonPressed += GUI_MenuApplyPersonalPresetButtonPressed;
-            HandlingMenu.MenuApplyServerPresetButtonPressed += GUI_MenuApplyServerPresetButtonPressed;
-            HandlingMenu.MenuSavePersonalPresetButtonPressed += GUI_MenuSavePersonalPresetButtonPressed;
-            HandlingMenu.MenuDeletePersonalPresetButtonPressed += GUI_MenuDeletePersonalPresetButtonPressed;
-            HandlingMenu.MenuResetPresetButtonPressed += GUI_MenuResetPresetButtonPressed;
-            HandlingMenu.MenuPresetValueChanged += GUI_MenuPresetValueChanged;
+            #region GUI Events Handling
+
+            _handlingMenu.MenuApplyPersonalPresetButtonPressed += GUI_MenuApplyPersonalPresetButtonPressed;
+            _handlingMenu.MenuApplyServerPresetButtonPressed += GUI_MenuApplyServerPresetButtonPressed;
+            _handlingMenu.MenuSavePersonalPresetButtonPressed += GUI_MenuSavePersonalPresetButtonPressed;
+            _handlingMenu.MenuDeletePersonalPresetButtonPressed += GUI_MenuDeletePersonalPresetButtonPressed;
+            _handlingMenu.MenuResetPresetButtonPressed += GUI_MenuResetPresetButtonPressed;
+            _handlingMenu.MenuPresetValueChanged += GUI_MenuPresetValueChanged;
 
             #endregion
 
             Tick += GetCurrentVehicle;
             Tick += ScriptTask;
+
         }
 
         #endregion
@@ -240,7 +329,7 @@ namespace HandlingEditor.Client
 
         private async void GUI_MenuApplyPersonalPresetButtonPressed(object sender, string presetName)
         {
-            string key = $"{kvpPrefix}{presetName}";
+            string key = $"{KvpPrefix}{presetName}";
             string value = GetResourceKvpString(key);
             if (value != null)
             {
@@ -308,7 +397,7 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         private async Task ScriptTask()
         {
-            CurrentTime = (GetGameTimer() - LastTime);
+            var CurrentTime = (GetGameTimer() - LastTime);
 
             // Check if decorators needs to be updated
             if (CurrentTime > Timer)
@@ -342,7 +431,7 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Disable controls for controller to use the script with the controller
         /// </summary>
-        private static void DisableMainMenuControls()
+        private void DisableMainMenuControls()
         {
             DisableControlAction(1, 85, true); // INPUT_VEH_RADIO_WHEEL = DPAD - LEFT
             DisableControlAction(1, 74, true); // INPUT_VEH_HEADLIGHT = DPAD - RIGHT
@@ -355,7 +444,7 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Disable controls for controller to use the script with the controller
         /// </summary>
-        private static void DisableAdditionalMainMenuControls()
+        private void DisableAdditionalMainMenuControls()
         {
             DisableControlAction(1, 75, true); // INPUT_VEH_EXIT - Y
             DisableControlAction(1, 37, true); // INPUT_SELECT_WEAPON - X
@@ -689,6 +778,9 @@ namespace HandlingEditor.Client
         /// <param name="vehicle"></param>
         private void UpdateVehicleDecorators(int vehicle, HandlingPreset preset)
         {
+            if (!DoesEntityExist(vehicle))
+                return;
+
             foreach (var item in preset.Fields)
             {
                 string fieldName = item.Key;
@@ -890,7 +982,7 @@ namespace HandlingEditor.Client
             CitizenFX.Core.Debug.WriteLine(s.ToString());
         }
 
-        private static XmlDocument GetXmlFromPreset(HandlingPreset preset)
+        private XmlDocument GetXmlFromPreset(HandlingPreset preset)
         {
             XmlDocument doc = new XmlDocument();
             XmlElement handlingItem = doc.CreateElement("Item");
@@ -935,12 +1027,12 @@ namespace HandlingEditor.Client
             return doc;
         }
 
-        private static bool SavePresetAsKVP(string name, HandlingPreset preset)
+        private bool SavePresetAsKVP(string name, HandlingPreset preset)
         {
             if (string.IsNullOrEmpty(name) || preset == null)
                 return false;
 
-            string kvpName = $"{kvpPrefix}{name}";
+            string kvpName = $"{KvpPrefix}{name}";
 
             //Key already used
             if(GetResourceKvpString(kvpName) != null)
@@ -952,12 +1044,12 @@ namespace HandlingEditor.Client
             return true;
         }
 
-        private static bool DeletePresetKVP(string name)
+        private bool DeletePresetKVP(string name)
         {
             if (string.IsNullOrEmpty(name))
                 return false;
 
-            string key = $"{kvpPrefix}{name}";
+            string key = $"{KvpPrefix}{name}";
 
             //Nothing to delete
             if (GetResourceKvpString(key) == null)
