@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
+using System.Xml;
 using CitizenFX.Core;
 using CitizenFX.Core.UI;
 using static CitizenFX.Core.Native.API;
-using System.Xml;
 
 namespace HandlingEditor.Client
 {
@@ -95,17 +95,17 @@ namespace HandlingEditor.Client
         /// <summary>
         /// The last game time the <see cref="ScriptTask"/> was executed
         /// </summary>
-        public long LastTime;
+        private long LastTime;
 
         /// <summary>
         /// The ped of the player
         /// </summary>
-        public int PlayerPed;
+        private int PlayerPed;
 
         /// <summary>
         /// The current vehicle the player is driving (-1 otherwise)
         /// </summary>
-        public int CurrentVehicle;
+        private int CurrentVehicle;
 
         /// <summary>
         /// The handling preset for the <see cref="CurrentVehicle"/> 
@@ -115,7 +115,7 @@ namespace HandlingEditor.Client
         /// <summary>
         /// All the world vehicles
         /// </summary>
-        public IEnumerable<int> Vehicles;
+        private IEnumerable<int> Vehicles;
 
         #endregion
 
@@ -229,6 +229,9 @@ namespace HandlingEditor.Client
             // Create the script for the menu
             _handlingMenu = new HandlingMenu(this);
 
+            if (_handlingMenu != null)
+                RegisterScript(_handlingMenu);
+
             #region GUI Events Handling
 
             _handlingMenu.MenuApplyPersonalPresetButtonPressed += GUI_MenuApplyPersonalPresetButtonPressed;
@@ -249,7 +252,7 @@ namespace HandlingEditor.Client
 
         #region GUI Event Handlers
 
-        private void GUI_MenuPresetValueChanged(string fieldName, string value, string text)
+        private void GUI_MenuPresetValueChanged(string fieldName, string value, string id)
         {
             if (!HandlingInfo.FieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 return;
@@ -262,11 +265,11 @@ namespace HandlingEditor.Client
                 CurrentPreset.Fields[fieldName] = int.Parse(value);
             else if (fieldType == FieldType.Vector3Type)
             {
-                if (text.EndsWith("_x"))
+                if (id.EndsWith("_x"))
                     CurrentPreset.Fields[fieldName].X = float.Parse(value);
-                else if (text.EndsWith("_y"))
+                else if (id.EndsWith("_y"))
                     CurrentPreset.Fields[fieldName].Y = float.Parse(value);
-                else if (text.EndsWith("_z"))
+                else if (id.EndsWith("_z"))
                     CurrentPreset.Fields[fieldName].Z = float.Parse(value);
             }
         }

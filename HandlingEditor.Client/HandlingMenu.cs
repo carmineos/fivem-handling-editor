@@ -51,7 +51,6 @@ namespace HandlingEditor.Client
 
         #endregion
 
-
         #region Delegates
 
         public delegate void EditorMenuPresetValueChangedEvent(string id, string value, string text);
