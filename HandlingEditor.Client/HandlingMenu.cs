@@ -74,17 +74,9 @@ namespace HandlingEditor.Client
         #region Constructor
 
         /// <summary>
-        /// Default constructor
-        /// </summary>
-        public HandlingMenu()
-        {
-
-        }
-
-        /// <summary>
         /// Constructor with the <see cref="HandlingEditor"/> script
         /// </summary>
-        public HandlingMenu(HandlingEditor handlingEditor)
+        internal HandlingMenu(HandlingEditor handlingEditor)
         {
             if (handlingEditor == null)
                 return;
