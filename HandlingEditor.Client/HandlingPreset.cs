@@ -36,10 +36,7 @@ namespace HandlingEditor.Client
                     }
                     else if (fieldType == FieldType.Vector3Type)
                     {
-                        value = (Vector3)value;
-                        defaultValue = (Vector3)defaultValue;
-
-                        if (value.Equals(defaultValue))
+                        if (!((Vector3)value).Equals((Vector3)defaultValue))
                             return true;
                     }
                 }
