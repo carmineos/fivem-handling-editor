@@ -38,7 +38,7 @@ namespace HandlingEditor.Client
         /// <summary>
         /// The minimum difference to determine if two floats are equal
         /// </summary>
-        public float FloatPrecision = 0.001f;
+        public float Epsilon = 0.001f;
 
         /// <summary>
         /// The amount used to change a float when left/right arrows are pressed in the menu
@@ -512,7 +512,7 @@ namespace HandlingEditor.Client
                 if (fieldType == FieldType.FloatType)
                 {
                     var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                    if (Math.Abs(value - fieldValue) > FloatPrecision)
+                    if (!MathUtil.WithinEpsilon(value, fieldValue, Epsilon))
                     {
                         SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
 
@@ -585,7 +585,7 @@ namespace HandlingEditor.Client
                     {
                         var decorValue = DecorGetFloat(vehicle, fieldName);
                         var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                        if (Math.Abs(value - decorValue) > FloatPrecision)
+                        if (!MathUtil.WithinEpsilon(value, decorValue, Epsilon))
                         {
                             SetVehicleHandlingFloat(vehicle, className, fieldName, decorValue);
 
@@ -756,7 +756,7 @@ namespace HandlingEditor.Client
             if (DecorExistOn(vehicle, name))
             {
                 float decorValue = DecorGetFloat(vehicle, name);
-                if (Math.Abs(currentValue - decorValue) > FloatPrecision)
+                if (!MathUtil.WithinEpsilon(currentValue, decorValue, Epsilon))
                 {
                     DecorSetFloat(vehicle, name, currentValue);
                     if (Debug)
@@ -765,7 +765,7 @@ namespace HandlingEditor.Client
             }
             else // Decorator doesn't exist, create it if required
             {
-                if (Math.Abs(currentValue - defaultValue) > FloatPrecision)
+                if (!MathUtil.WithinEpsilon(currentValue, defaultValue, Epsilon))
                 {
                     DecorSetFloat(vehicle, name, currentValue);
                     if (Debug)
