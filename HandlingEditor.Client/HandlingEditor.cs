@@ -252,25 +252,55 @@ namespace HandlingEditor.Client
 
         #region GUI Event Handlers
 
-        private void GUI_MenuPresetValueChanged(string fieldName, string value, string id)
+        /// <summary>
+        /// Updates a field of the current preset
+        /// </summary>
+        /// <param name="fieldName">The name of the field which needs to be updated</param>
+        /// <param name="fieldValue">The new value of the field</param>
+        /// <param name="fieldId">The ID of the field</param>
+        private void GUI_MenuPresetValueChanged(string fieldName, string fieldValue, string fieldId)
         {
+            // Be sure the field is supported
+
             if (!HandlingInfo.FieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 return;
 
+            // Get the field type
             var fieldType = fieldInfo.Type;
 
+            // If it's a float field
             if (fieldType == FieldType.FloatType)
-                CurrentPreset.Fields[fieldName] = float.Parse(value);
+            {
+                if (float.TryParse(fieldValue, out float result))
+                    CurrentPreset.Fields[fieldName] = result;
+            }
+
+            // If it's a int field
             else if (fieldType == FieldType.IntType)
-                CurrentPreset.Fields[fieldName] = int.Parse(value);
+            {
+                if (int.TryParse(fieldValue, out int result))
+                    CurrentPreset.Fields[fieldName] = result;
+            }
+
+            // If it's a Vector3 field
             else if (fieldType == FieldType.Vector3Type)
             {
-                if (id.EndsWith("_x"))
-                    CurrentPreset.Fields[fieldName].X = float.Parse(value);
-                else if (id.EndsWith("_y"))
-                    CurrentPreset.Fields[fieldName].Y = float.Parse(value);
-                else if (id.EndsWith("_z"))
-                    CurrentPreset.Fields[fieldName].Z = float.Parse(value);
+                // Update the correct Vector3 component
+                if (fieldId.EndsWith("_x"))
+                {
+                    if (float.TryParse(fieldValue, out float result))
+                        CurrentPreset.Fields[fieldName].X = result;
+                }
+                else if (fieldId.EndsWith("_y"))
+                {
+                    if (float.TryParse(fieldValue, out float result))
+                        CurrentPreset.Fields[fieldName].Y = result;
+                }
+                else if (fieldId.EndsWith("_z"))
+                {
+                    if (float.TryParse(fieldValue, out float result))
+                        CurrentPreset.Fields[fieldName].Z = result;
+                }
             }
         }
 
