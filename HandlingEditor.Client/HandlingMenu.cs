@@ -23,6 +23,11 @@ namespace HandlingEditor.Client
         private MenuController menuController;
 
         /// <summary>
+        /// The main menu
+        /// </summary>
+        private Menu mainMenu;
+
+        /// <summary>
         /// The main menu which allows to edit each field
         /// </summary>
         private Menu editorMenu;
@@ -36,6 +41,13 @@ namespace HandlingEditor.Client
         /// The menu which shows the server presets
         /// </summary>
         private Menu serverPresetsMenu;
+
+        /// <summary>
+        /// The menu which shows the settings
+        /// </summary>
+        private Menu settingsMenu;
+
+        private bool showLockedFields = true;
 
         #endregion
 
@@ -121,9 +133,14 @@ namespace HandlingEditor.Client
         /// </summary>
         private void InitializeMenu()
         {
+            if(mainMenu == null)
+            {
+                mainMenu = new Menu(ScriptName, "Main Menu");
+            }
+
             if (editorMenu == null)
             {
-                editorMenu = new Menu(ScriptName, "Editor");
+                editorMenu = new Menu(ScriptName, "Editor Menu");
 
                 editorMenu.OnItemSelect += EditorMenu_OnItemSelect;
                 editorMenu.OnDynamicListItemSelect += EditorMenu_OnDynamicListItemSelect;
@@ -132,7 +149,7 @@ namespace HandlingEditor.Client
             
             if (personalPresetsMenu == null)
             {
-                personalPresetsMenu = new Menu(ScriptName, "Personal Presets");
+                personalPresetsMenu = new Menu(ScriptName, "Personal Presets Menu");
 
                 personalPresetsMenu.OnItemSelect += PersonalPresetsMenu_OnItemSelect;
 
@@ -163,25 +180,65 @@ namespace HandlingEditor.Client
             }
             if (serverPresetsMenu == null)
             {
-                serverPresetsMenu = new Menu(ScriptName, "Server Presets");
+                serverPresetsMenu = new Menu(ScriptName, "Server Presets Menu");
 
                 serverPresetsMenu.OnItemSelect += ServerPresetsMenu_OnItemSelect;
             }
 
+            if(settingsMenu == null)
+            {
+                settingsMenu = new Menu(ScriptName, "Settings Menu");
+            }
+
+            UpdateSettingsMenu();
             UpdatePersonalPresetsMenu();
             UpdateServerPresetsMenu();
             UpdateEditorMenu();
 
+            // Create Editor sub menu and bind item to a button
+            var editorMenuItem = new MenuItem("Edit Preset", "The menu to edit the handling fields.")
+            {
+                Label = "→→→"
+            };
+            mainMenu.AddMenuItem(editorMenuItem);
+            MenuController.BindMenuItem(mainMenu, editorMenu, editorMenuItem);
+
+            // Create Personal Presets sub menu and bind item to a button
+            var PersonalPresetsItem = new MenuItem("Personal Presets", "The menu containing the handling presets saved by you.")
+            {
+                Label = "→→→"
+            };
+            mainMenu.AddMenuItem(PersonalPresetsItem);
+            MenuController.BindMenuItem(mainMenu, personalPresetsMenu, PersonalPresetsItem);
+
+            // Create Server Presets sub menu and bind item to a button
+            var ServerPresetsItem = new MenuItem("Server Presets", "The menu containing the handling presets loaded from the server.")
+            {
+                Label = "→→→"
+            };
+            mainMenu.AddMenuItem(ServerPresetsItem);
+            MenuController.BindMenuItem(mainMenu, serverPresetsMenu, ServerPresetsItem);
+
+            // Create Settings sub menu and bind item to a button
+            var settingsMenuItem = new MenuItem("Settings", "The menu containing the handling editor settings.")
+            {
+                Label = "→→→"
+            };
+            mainMenu.AddMenuItem(settingsMenuItem);
+            MenuController.BindMenuItem(mainMenu, settingsMenu, settingsMenuItem);
+
             if (menuController == null)
             {
                 menuController = new MenuController();
+                MenuController.AddMenu(mainMenu);
                 MenuController.AddMenu(editorMenu);
                 MenuController.AddMenu(personalPresetsMenu);
                 MenuController.AddMenu(serverPresetsMenu);
+                MenuController.AddMenu(settingsMenu);
                 MenuController.MenuAlignment = MenuController.MenuAlignmentOption.Right;
                 MenuController.MenuToggleKey = (Control)ToggleMenu;
                 MenuController.EnableMenuToggleKeyOnController = false;
-                MenuController.MainMenu = editorMenu;
+                MenuController.MainMenu = mainMenu;
             }
         }
 
@@ -365,6 +422,35 @@ namespace HandlingEditor.Client
             MenuPresetValueChanged?.Invoke(fieldName, newValue, dynamicListItem.Text);
         }
 
+        private void UpdateSettingsMenu()
+        {
+            if (settingsMenu == null)
+                return;
+
+            settingsMenu.ClearMenuItems();
+
+            var showLockedFieldsCheckboxItem = new MenuCheckboxItem("Show Locked Fields", "Whether the editor menu should show or not the fields you can't edit.", showLockedFields)
+            {
+                ItemData = "handling_settings_show_locked_fields"
+            };
+            settingsMenu.AddMenuItem(showLockedFieldsCheckboxItem);
+
+            settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
+        }
+
+        private void SettingsMenu_OnCheckboxChange(Menu menu, MenuCheckboxItem menuItem, int itemIndex, bool newCheckedState)
+        {
+            // If the sender isn't the settings menu...
+            if (menu != settingsMenu)
+                return;
+
+            if ((menuItem.ItemData as string) == "handling_settings_show_locked_fields")
+            {
+                showLockedFields = newCheckedState;
+                UpdateEditorMenu();
+            }
+        }
+
         /// <summary>
         /// Rebuild the main editor menu
         /// </summary>
@@ -374,22 +460,6 @@ namespace HandlingEditor.Client
                 return;
 
             editorMenu.ClearMenuItems();
-
-            // Create Personal Presets sub menu and bind item to a button
-            var PersonalPresetsItem = new MenuItem("Personal Presets", "The handling presets saved by you.")
-            {
-                Label = "→→→"
-            };
-            editorMenu.AddMenuItem(PersonalPresetsItem);
-            MenuController.BindMenuItem(editorMenu, personalPresetsMenu, PersonalPresetsItem);
-
-            // Create Server Presets sub menu and bind item to a button
-            var ServerPresetsItem = new MenuItem("Server Presets", "The handling presets loaded from the server.")
-            {
-                Label = "→→→"
-            };
-            editorMenu.AddMenuItem(ServerPresetsItem);
-            MenuController.BindMenuItem(editorMenu, serverPresetsMenu, ServerPresetsItem);
 
             if (!CurrentPresetIsValid)
                 return;
@@ -415,7 +485,8 @@ namespace HandlingEditor.Client
                 }
                 else
                 {
-                    AddLockedItem(editorMenu, item.Value);
+                    if(showLockedFields)
+                        AddLockedItem(editorMenu, item.Value);
                 }
             }
 
