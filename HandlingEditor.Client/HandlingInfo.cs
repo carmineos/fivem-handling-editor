@@ -59,77 +59,93 @@ namespace HandlingEditor.Client
 
         public static void ParseXml(string xml)
         {
+            // Remove BOM if present
             xml = Helpers.RemoveByteOrderMarks(xml);
-            XmlDocument doc = new XmlDocument();
-            
+
+            // Load the Xml document
+            XmlDocument doc = new XmlDocument();  
             doc.LoadXml(xml);
             
+            // Iterate all the nodes
             foreach (XmlNode classNode in doc.ChildNodes)
             {
                 if (classNode.NodeType == XmlNodeType.Comment)
                     continue;
 
+                // Root nodes are class names
                 string className = classNode.Name;
 
+                // Iterate fields of each class
                 foreach (XmlNode item in classNode.ChildNodes)
                 {
-
                     if (item.NodeType == XmlNodeType.Comment)
                         continue;
 
-                    string name = item.Name;
-                    Type type = FieldType.GetFieldType(name);
+                    // Get the field name
+                    string fieldName = item.Name;
 
-                    bool editable = bool.Parse(item.Attributes["Editable"].Value);
+                    // Get the field type
+                    Type type = FieldType.GetFieldType(fieldName);
+
+                    if(!bool.TryParse(item.Attributes["Editable"].Value, out bool editable))
+                        CitizenFX.Core.Debug.WriteLine($"Error parsing Editable attribute in {fieldName}.");
+
                     string description = item["Description"].InnerText;
 
                     var minNode = item["Min"];
                     var maxNode = item["Max"];
 
+                    // If it's a float field
                     if (type == FieldType.FloatType)
                     {
-                        float min = float.Parse(minNode.Attributes["value"].Value);
-                        float max = float.Parse(maxNode.Attributes["value"].Value);
+                        if (!float.TryParse(minNode.Attributes["value"].Value, out float min))
+                            CitizenFX.Core.Debug.WriteLine($"Error parsing Min attribute in {fieldName}.");
+                        if (!float.TryParse(maxNode.Attributes["value"].Value, out float max))
+                            CitizenFX.Core.Debug.WriteLine($"Error parsing Max attribute in {fieldName}.");
 
-                        FieldInfo<float> fieldInfo = new FieldInfo<float>(name, className, description, editable, min, max);
-                        FieldsInfo[name] = fieldInfo;
+                        FieldInfo<float> fieldInfo = new FieldInfo<float>(fieldName, className, description, editable, min, max);
+                        FieldsInfo[fieldName] = fieldInfo;
                     }
 
+                    // If it's a int field
                     else if (type == FieldType.IntType)
                     {
-                        int min = int.Parse(minNode.Attributes["value"].Value);
-                        int max = int.Parse(maxNode.Attributes["value"].Value);
+                        if (!int.TryParse(minNode.Attributes["value"].Value, out int min))
+                            CitizenFX.Core.Debug.WriteLine($"Error parsing Min attribute in {fieldName}.");
+                        if (!int.TryParse(maxNode.Attributes["value"].Value, out int max))
+                            CitizenFX.Core.Debug.WriteLine($"Error parsing Max attribute in {fieldName}.");
 
-                        FieldInfo<int> fieldInfo = new FieldInfo<int>(name, className, description, editable, min, max);
-                        FieldsInfo[name] = fieldInfo;
+                        FieldInfo<int> fieldInfo = new FieldInfo<int>(fieldName, className, description, editable, min, max);
+                        FieldsInfo[fieldName] = fieldInfo;
                     }
 
+                    // If it's a Vector3 field
                     else if (type == FieldType.Vector3Type)
                     {
-                        Vector3 min = new Vector3(
-                            float.Parse(minNode.Attributes["x"].Value),
-                            float.Parse(minNode.Attributes["y"].Value),
-                            float.Parse(minNode.Attributes["z"].Value));
+                        if(!float.TryParse(minNode.Attributes["x"].Value, out float minX)) CitizenFX.Core.Debug.WriteLine($"Error parsing Min attribute in {fieldName}.");
+                        if(!float.TryParse(minNode.Attributes["y"].Value, out float minY)) CitizenFX.Core.Debug.WriteLine($"Error parsing Min attribute in {fieldName}.");
+                        if(!float.TryParse(minNode.Attributes["z"].Value, out float minZ)) CitizenFX.Core.Debug.WriteLine($"Error parsing Min attribute in {fieldName}.");
+                        Vector3 min = new Vector3(minX, minY, minZ);
 
-                        Vector3 max = new Vector3(
-                            float.Parse(maxNode.Attributes["x"].Value),
-                            float.Parse(maxNode.Attributes["y"].Value),
-                            float.Parse(maxNode.Attributes["z"].Value));
+                        if (!float.TryParse(maxNode.Attributes["x"].Value, out float maxX)) CitizenFX.Core.Debug.WriteLine($"Error parsing Max attribute in {fieldName}.");
+                        if (!float.TryParse(maxNode.Attributes["y"].Value, out float maxY)) CitizenFX.Core.Debug.WriteLine($"Error parsing Max attribute in {fieldName}.");
+                        if (!float.TryParse(maxNode.Attributes["z"].Value, out float maxZ)) CitizenFX.Core.Debug.WriteLine($"Error parsing Max attribute in {fieldName}.");
+                        Vector3 max = new Vector3(maxX, maxY, maxZ);
 
-                        FieldInfo<Vector3> fieldInfo = new FieldInfo<Vector3>(name, className, description, editable, min, max);
-                        FieldsInfo[name] = fieldInfo;
+                        FieldInfo<Vector3> fieldInfo = new FieldInfo<Vector3>(fieldName, className, description, editable, min, max);
+                        FieldsInfo[fieldName] = fieldInfo;
                     }
 
                     else if (type == FieldType.StringType)
                     {
-                        BaseFieldInfo fieldInfo = new BaseFieldInfo(name, className, description, editable);
-                        FieldsInfo[name] = fieldInfo;
+                        BaseFieldInfo fieldInfo = new BaseFieldInfo(fieldName, className, description, editable);
+                        FieldsInfo[fieldName] = fieldInfo;
                     }
 
                     else
                     {
-                        BaseFieldInfo fieldInfo = new BaseFieldInfo(name, className, description, editable);
-                        FieldsInfo[name] = fieldInfo;
+                        BaseFieldInfo fieldInfo = new BaseFieldInfo(fieldName, className, description, editable);
+                        FieldsInfo[fieldName] = fieldInfo;
                     }
                 }
             }
