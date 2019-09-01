@@ -501,7 +501,7 @@ namespace HandlingEditor.Client
 
             if (fieldType == FieldType.IntType)
             {
-                var value = int.Parse(currentItem);
+                int.TryParse(currentItem, out int value);
                 var min = (fieldInfo as FieldInfo<int>).Min;
                 var max = (fieldInfo as FieldInfo<int>).Max;
 
@@ -529,7 +529,7 @@ namespace HandlingEditor.Client
             }
             else if (fieldType == FieldType.FloatType)
             {
-                var value = float.Parse(currentItem);
+                float.TryParse(currentItem, out float value);
                 var min = (fieldInfo as FieldInfo<float>).Min;
                 var max = (fieldInfo as FieldInfo<float>).Max;
 
@@ -557,7 +557,7 @@ namespace HandlingEditor.Client
             }
             else if (fieldType == FieldType.Vector3Type)
             {
-                var value = float.Parse(currentItem);
+                float.TryParse(currentItem, out float value);
                 var min = (fieldInfo as FieldInfo<Vector3>).Min;
                 var max = (fieldInfo as FieldInfo<Vector3>).Max;
 
