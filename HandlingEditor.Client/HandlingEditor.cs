@@ -1094,35 +1094,57 @@ namespace HandlingEditor.Client
 
         private void GetPresetFromXml(XmlNode node, HandlingPreset preset)
         {
+            // Iterate Xml nodes
             foreach (XmlNode item in node.ChildNodes)
             {
                 if (item.NodeType != XmlNodeType.Element)
                     continue;
 
+                // Get the field name
                 string fieldName = item.Name;
+
+                // Get the field type
                 Type fieldType = FieldType.GetFieldType(fieldName);
 
+                // Get the item as element to access attributes
                 XmlElement elem = (XmlElement)item;
 
+                // If it's a float field
                 if (fieldType == FieldType.FloatType)
                 {
-                    preset.Fields[fieldName] = float.Parse(elem.GetAttribute("value"));
-                }/*
+                    if (!float.TryParse(elem.GetAttribute("value"), out float result))
+                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute value in {fieldName} as float.");
+
+                    preset.Fields[fieldName] = result;
+                }
+                // If it's a int field
+                /*
                 else if (fieldType == FieldType.IntType)
                 {
-                    preset.Fields[fieldName] = int.Parse(elem.GetAttribute("value"));
+                    if (!int.TryParse(elem.GetAttribute("value"), out int result))
+                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute value in {fieldName} from preset.");
+
+                    preset.Fields[fieldName] = result;
                 }*/
+                // If it's a Vector3 field
                 else if (fieldType == FieldType.Vector3Type)
                 {
-                    float x = float.Parse(elem.GetAttribute("x"));
-                    float y = float.Parse(elem.GetAttribute("y"));
-                    float z = float.Parse(elem.GetAttribute("z"));
+                    if (!float.TryParse(elem.GetAttribute("x"), out float x))
+                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute x in {fieldName} from preset.");
+                    if (!float.TryParse(elem.GetAttribute("y"), out float y))
+                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute y in {fieldName} from preset."); 
+                    if (!float.TryParse(elem.GetAttribute("z"), out float z))
+                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute z in {fieldName} from preset.");
                     preset.Fields[fieldName] = new Vector3(x, y, z);
                 }/*
                 else if (fieldType == FieldType.StringType)
                 {
                     preset.Fields[fieldName] = elem.InnerText;
                 }*/
+                else
+                {
+                    // Unexpected
+                }
             }
         }
 
