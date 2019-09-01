@@ -7,7 +7,7 @@ namespace HandlingEditor.Client
 {
     public class HandlingPreset : IEquatable<HandlingPreset>
     {
-        public static float FloatPrecision { get; private set; } = 0.001f;
+        public static float Epsilon { get; private set; } = 0.001f;
 
         public Dictionary<string, dynamic> DefaultFields { get; private set; }
         public Dictionary<string, dynamic> Fields { get; set; }
@@ -29,9 +29,14 @@ namespace HandlingEditor.Client
 
                     Type fieldType = value.GetType();
 
-                    if (fieldType == FieldType.FloatType || fieldType == FieldType.IntType)
+                    if (fieldType == FieldType.FloatType)
                     {
                         if (defaultValue != value)
+                            return true;
+                    }
+                    else if(fieldType == FieldType.IntType)
+                    {
+                        if (!MathUtil.WithinEpsilon(value, defaultValue, Epsilon))
                             return true;
                     }
                     else if (fieldType == FieldType.Vector3Type)
@@ -86,14 +91,12 @@ namespace HandlingEditor.Client
                 }
                 else if(fieldType == FieldType.FloatType)
                 {
-                    if (Math.Abs(value - otherValue) > FloatPrecision)
+                    if (!MathUtil.WithinEpsilon(value, otherValue, Epsilon))
                         return false;
                 }
                 else if (fieldType == FieldType.Vector3Type)
                 {
-                    value = (Vector3)value;
-                    otherValue = (Vector3)otherValue;
-                    if (!value.Equals(otherValue))
+                    if (!((Vector3)value).Equals((Vector3)otherValue))
                         return false;
                 }
             }
