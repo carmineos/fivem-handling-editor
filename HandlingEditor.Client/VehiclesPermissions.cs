@@ -36,8 +36,8 @@ namespace HandlingEditor.Client
                     continue;
 
                 //var className = item.Attributes["name"].Value;
-                int classId = int.Parse(idAttribute.Value);
-                bool classIsAllowed = bool.Parse(allowedAttribute.Value);
+                int.TryParse(idAttribute.Value, out int classId);
+                bool.TryParse(allowedAttribute.Value, out bool classIsAllowed);
 
                 Classes[classId] = classIsAllowed;
             }
@@ -58,7 +58,7 @@ namespace HandlingEditor.Client
                     continue;
 
                 var modelName = nameAttribute.Value;
-                bool modelIsAllowed = bool.Parse(allowedAttribute.Value);
+                bool.TryParse(allowedAttribute.Value, out bool modelIsAllowed);
 
                 uint modelHash = unchecked((uint)GetHashKey(modelName));
 
