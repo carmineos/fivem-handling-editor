@@ -10,6 +10,8 @@ namespace HandlingEditor.Client
 {
     internal class HandlingMenu : BaseScript
     {
+        private readonly INotificationHandler notifier;
+
         #region Private Fields
 
         /// <summary>
@@ -53,8 +55,6 @@ namespace HandlingEditor.Client
 
         #region Public Properties
 
-        public string ScriptName => HandlingEditor.ScriptName;
-        public string KvpPrefix => HandlingEditor.KvpPrefix;
         public float FloatStep => _handlingEditor.FloatStep;
         public int ToggleMenu => _handlingEditor.ToggleMenu;
         public bool CurrentPresetIsValid => _handlingEditor.CurrentPresetIsValid;
@@ -90,6 +90,8 @@ namespace HandlingEditor.Client
         /// </summary>
         internal HandlingMenu(HandlingEditor handlingEditor)
         {
+            notifier = Framework.Notifier;
+
             if (handlingEditor == null)
                 return;
 
@@ -135,12 +137,12 @@ namespace HandlingEditor.Client
         {
             if(mainMenu == null)
             {
-                mainMenu = new Menu(ScriptName, "Main Menu");
+                mainMenu = new Menu(Globals.ScriptName, "Main Menu");
             }
 
             if (editorMenu == null)
             {
-                editorMenu = new Menu(ScriptName, "Editor Menu");
+                editorMenu = new Menu(Globals.ScriptName, "Editor Menu");
 
                 editorMenu.OnItemSelect += EditorMenu_OnItemSelect;
                 editorMenu.OnDynamicListItemSelect += EditorMenu_OnDynamicListItemSelect;
@@ -149,7 +151,7 @@ namespace HandlingEditor.Client
             
             if (personalPresetsMenu == null)
             {
-                personalPresetsMenu = new Menu(ScriptName, "Personal Presets Menu");
+                personalPresetsMenu = new Menu(Globals.ScriptName, "Personal Presets Menu");
 
                 personalPresetsMenu.OnItemSelect += PersonalPresetsMenu_OnItemSelect;
 
@@ -180,14 +182,14 @@ namespace HandlingEditor.Client
             }
             if (serverPresetsMenu == null)
             {
-                serverPresetsMenu = new Menu(ScriptName, "Server Presets Menu");
+                serverPresetsMenu = new Menu(Globals.ScriptName, "Server Presets Menu");
 
                 serverPresetsMenu.OnItemSelect += ServerPresetsMenu_OnItemSelect;
             }
 
             if(settingsMenu == null)
             {
-                settingsMenu = new Menu(ScriptName, "Settings Menu");
+                settingsMenu = new Menu(Globals.ScriptName, "Settings Menu");
             }
 
             UpdateSettingsMenu();
@@ -311,10 +313,10 @@ namespace HandlingEditor.Client
                         MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                     }
                     else
-                        Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
+                        notifier.Notify($"Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
                 }
                 else
-                    Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                    notifier.Notify($"Invalid value for ~b~{fieldName}~w~");
             }
             else if (fieldType == FieldType.IntType)
             {
@@ -330,10 +332,10 @@ namespace HandlingEditor.Client
                         MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString(), itemText);
                     }
                     else
-                        Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
+                        notifier.Notify($"Value out of allowed limits for ~b~{fieldName}~w~, Min:{min}, Max:{max}");
                 }
                 else
-                    Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{fieldName}~w~");
+                    notifier.Notify($"Invalid value for ~b~{fieldName}~w~");
             }
             else if (fieldType == FieldType.Vector3Type)
             {
@@ -358,10 +360,10 @@ namespace HandlingEditor.Client
                             MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                         }
                         else
-                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueX}, Max:{maxValueX}");
+                            notifier.Notify($"Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueX}, Max:{maxValueX}");
                     }
                     else
-                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
+                        notifier.Notify($"Invalid value for ~b~{itemText}~w~");
                 }
                 else if (itemText.EndsWith("_y"))
                 {
@@ -374,10 +376,10 @@ namespace HandlingEditor.Client
                             MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                         }
                         else
-                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueY}, Max:{maxValueY}");
+                            notifier.Notify($"Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueY}, Max:{maxValueY}");
                     }
                     else
-                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
+                        notifier.Notify($"Invalid value for ~b~{itemText}~w~");
                 }
                 else if (itemText.EndsWith("_z"))
                 {
@@ -390,10 +392,10 @@ namespace HandlingEditor.Client
                             MenuPresetValueChanged?.Invoke(fieldName, newvalue.ToString("F3"), itemText);
                         }
                         else
-                            Screen.ShowNotification($"{ScriptName}: Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueZ}, Max:{maxValueZ}");
+                            notifier.Notify($"Value out of allowed limits for ~b~{itemText}~w~, Min:{minValueZ}, Max:{maxValueZ}");
                     }
                     else
-                        Screen.ShowNotification($"{ScriptName}: Invalid value for ~b~{itemText}~w~");
+                        notifier.Notify($"Invalid value for ~b~{itemText}~w~");
                 }
             }
         }
@@ -507,11 +509,11 @@ namespace HandlingEditor.Client
 
             personalPresetsMenu.ClearMenuItems();
 
-            KvpEnumerable kvpList = new KvpEnumerable(KvpPrefix);
+            KvpEnumerable kvpList = new KvpEnumerable(Globals.KvpPrefix);
             foreach (var key in kvpList)
             {
                 string value = GetResourceKvpString(key);
-                personalPresetsMenu.AddMenuItem(new MenuItem(key.Remove(0, KvpPrefix.Length)) { ItemData = key });
+                personalPresetsMenu.AddMenuItem(new MenuItem(key.Remove(0, Globals.KvpPrefix.Length)) { ItemData = key });
             }
         }
 
@@ -580,7 +582,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = value - 1;
                     if (newvalue < min)
-                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldName}~w~ is {min}");
+                        notifier.Notify($"Min value allowed for ~b~{fieldName}~w~ is {min}");
                     else
                     {
                         value = newvalue;
@@ -590,7 +592,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = value + 1;
                     if (newvalue > max)
-                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldName}~w~ is {max}");
+                        notifier.Notify($"Max value allowed for ~b~{fieldName}~w~ is {max}");
                     else
                     {
                         value = newvalue;
@@ -608,7 +610,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = value - FloatStep;
                     if (newvalue < min)
-                        Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{fieldName}~w~ is {min}");
+                        notifier.Notify($"Min value allowed for ~b~{fieldName}~w~ is {min}");
                     else
                     {
                         value = newvalue;
@@ -618,7 +620,7 @@ namespace HandlingEditor.Client
                 {
                     var newvalue = value + FloatStep;
                     if (newvalue > max)
-                        Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{fieldName}~w~ is {max}");
+                        notifier.Notify($"Max value allowed for ~b~{fieldName}~w~ is {max}");
                     else
                     {
                         value = newvalue;
@@ -645,7 +647,7 @@ namespace HandlingEditor.Client
                     {
                         var newvalue = value - FloatStep;
                         if (newvalue < minValueX)
-                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{itemText}~w~ is {minValueX}");
+                            notifier.Notify($"Min value allowed for ~b~{itemText}~w~ is {minValueX}");
                         else
                         {
                             value = newvalue;
@@ -655,7 +657,7 @@ namespace HandlingEditor.Client
                     {
                         var newvalue = value + FloatStep;
                         if (newvalue > maxValueX)
-                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{itemText}~w~ is {maxValueX}");
+                            notifier.Notify($"Max value allowed for ~b~{itemText}~w~ is {maxValueX}");
                         else
                         {
                             value = newvalue;
@@ -669,7 +671,7 @@ namespace HandlingEditor.Client
                     {
                         var newvalue = value - FloatStep;
                         if (newvalue < minValueY)
-                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{itemText}~w~ is {minValueY}");
+                            notifier.Notify($"Min value allowed for ~b~{itemText}~w~ is {minValueY}");
                         else
                         {
                             value = newvalue;
@@ -679,7 +681,7 @@ namespace HandlingEditor.Client
                     {
                         var newvalue = value + FloatStep;
                         if (newvalue > maxValueY)
-                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{itemText}~w~ is {maxValueY}");
+                            notifier.Notify($"Max value allowed for ~b~{itemText}~w~ is {maxValueY}");
                         else
                         {
                             value = newvalue;
@@ -693,7 +695,7 @@ namespace HandlingEditor.Client
                     {
                         var newvalue = value - FloatStep;
                         if (newvalue < minValueZ)
-                            Screen.ShowNotification($"{ScriptName}: Min value allowed for ~b~{itemText}~w~ is {minValueZ}");
+                            notifier.Notify($"Min value allowed for ~b~{itemText}~w~ is {minValueZ}");
                         else
                         {
                             value = newvalue;
@@ -703,7 +705,7 @@ namespace HandlingEditor.Client
                     {
                         var newvalue = value + FloatStep;
                         if (newvalue > maxValueZ)
-                            Screen.ShowNotification($"{ScriptName}: Max value allowed for ~b~{itemText}~w~ is {maxValueZ}");
+                            notifier.Notify($"Max value allowed for ~b~{itemText}~w~ is {maxValueZ}");
                         else
                         {
                             value = newvalue;

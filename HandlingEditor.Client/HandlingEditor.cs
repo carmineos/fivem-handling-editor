@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Text;
+using System.Threading.Tasks;
 using System.Xml;
 using CitizenFX.Core;
-using CitizenFX.Core.UI;
 using static CitizenFX.Core.Native.API;
 
 namespace HandlingEditor.Client
 {
     public class HandlingEditor : BaseScript
     {
+        private readonly ILogger logger;
+        private readonly INotificationHandler notifier;
+        private readonly IPresetManager localPresets;
+
         #region Public Events
 
         /// <summary>
@@ -68,21 +71,6 @@ namespace HandlingEditor.Client
         #endregion
 
         /// <summary>
-        /// The name of the script
-        /// </summary>
-        public const string ScriptName = "Handling Editor";
-
-        /// <summary>
-        /// The prefix used for key-value pairs used to store personal presets
-        /// </summary>
-        public const string KvpPrefix = "handling_";
-
-        /// <summary>
-        /// The expected name of the resource
-        /// </summary>
-        public const string ResourceName = "handling-editor";
-
-        /// <summary>
         /// The script which controls the menu
         /// </summary>
         private HandlingMenu _handlingMenu;
@@ -135,12 +123,19 @@ namespace HandlingEditor.Client
         /// </summary>
         public HandlingEditor()
         {
+            Framework.Build();
+
+            logger = Framework.Logger;
+            notifier = Framework.Notifier;
+
             // If the resource name is not the expected one ...
-            if (GetCurrentResourceName() != ResourceName)
+            if (GetCurrentResourceName() != Globals.ResourceName)
             {
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Invalid resource name, be sure the resource name is {ResourceName}");
+                logger.Log($"Invalid resource name, be sure the resource name is {Globals.ResourceName}");
                 return;
             }
+
+            localPresets = new KvpPresetManager(Globals.KvpPrefix);
 
             LastTime = GetGameTimer();
             CurrentPreset = null;
@@ -160,16 +155,16 @@ namespace HandlingEditor.Client
             {
                 if (args.Count < 1)
                 {
-                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Missing float argument");
+                    logger.Log("Missing float argument");
                     return;
                 }
 
                 if (float.TryParse(args[0], out float value))
                 {
                     ScriptRange = value;
-                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Received new {nameof(ScriptRange)} value {value}");
+                    logger.Log($"Received new {nameof(ScriptRange)} value {value}");
                 }
-                else CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as float");
+                else logger.Log($"Error parsing {args[0]} as float");
 
             }), false);
 
@@ -177,16 +172,16 @@ namespace HandlingEditor.Client
             {
                 if (args.Count < 1)
                 {
-                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Missing bool argument");
+                    logger.Log("Missing bool argument");
                     return;
                 }
 
                 if (bool.TryParse(args[0], out bool value))
                 {
                     Debug = value;
-                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Received new {nameof(Debug)} value {value}");
+                    logger.Log($"Received new {nameof(Debug)} value {value}");
                 }
-                else CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as bool");
+                else logger.Log($"Error parsing {args[0]} as bool");
 
             }), false);
 
@@ -198,7 +193,7 @@ namespace HandlingEditor.Client
                 {
                     if (int.TryParse(args[0], out int value))
                         PrintDecorators(value);
-                    else CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing {args[0]} as int");
+                    else logger.Log($"Error parsing {args[0]} as int");
                 }
 
             }), false);
@@ -211,17 +206,17 @@ namespace HandlingEditor.Client
             RegisterCommand("handling_preset", new Action<int, dynamic>((source, args) =>
             {
                 if (CurrentPreset != null)
-                    CitizenFX.Core.Debug.WriteLine(CurrentPreset.ToString());
+                    logger.Log(CurrentPreset.ToString());
                 else
-                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
+                    logger.Log("Current preset doesn't exist");
             }), false);
 
             RegisterCommand("handling_xml", new Action<int, dynamic>((source, args) =>
             {
                 if (CurrentPreset != null)
-                    CitizenFX.Core.Debug.WriteLine(GetXmlFromPreset(CurrentPreset).OuterXml);
+                    logger.Log(CurrentPreset.ToXml());
                 else
-                    CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Current preset doesn't exist");
+                    logger.Log("Current preset doesn't exist");
             }), false);
 
             #endregion
@@ -316,23 +311,23 @@ namespace HandlingEditor.Client
 
         private async void GUI_MenuSavePersonalPresetButtonPressed(object sender, string presetName)
         {
-            if (SavePresetAsKVP(presetName, CurrentPreset))
+            if (localPresets.Save(presetName, CurrentPreset))
             {
                 await Delay(200);
                 PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
-                Screen.ShowNotification($"{ScriptName}: Personal preset ~g~{presetName}~w~ saved");
+                notifier.Notify($"Personal preset ~g~{presetName}~w~ saved");
             }
             else
-                Screen.ShowNotification($"{ScriptName}: The name {presetName} is invalid or already used.");
+                notifier.Notify($"~r~ERROR~w~ The name {presetName} is invalid or already used.");
         }
 
         private async void GUI_MenuDeletePersonalPresetButtonPressed(object sender, string presetName)
         {
-            if (DeletePresetKVP(presetName))
+            if (localPresets.Delete(presetName))
             {
                 await Delay(200);
                 PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
-                Screen.ShowNotification($"{ScriptName}: Personal preset ~r~{presetName}~w~ deleted");
+                notifier.Notify($"Personal preset ~r~{presetName}~w~ deleted");
             }
         }
 
@@ -340,43 +335,29 @@ namespace HandlingEditor.Client
         {
             if (ServerPresets.TryGetValue(presetName, out HandlingPreset preset))
             {
-                var presetFields = preset.Fields;
-                foreach (var field in presetFields.Keys)
-                {
-                    // TODO: Add a flag to decide if a field should be added to the preset anyway
-                    if (CurrentPreset.Fields.ContainsKey(field))
-                    {
-                        CurrentPreset.Fields[field] = presetFields[field];
-                    }
-                    else CitizenFX.Core.Debug.Write($"Missing {field} field in currentPreset");
-                }
+                CurrentPreset.FromPreset(preset);
 
                 PresetChanged?.Invoke(this, EventArgs.Empty);
-                Screen.ShowNotification($"{ScriptName}: Server preset ~b~{presetName}~w~ applied");
+                notifier.Notify($"Server preset ~b~{presetName}~w~ applied");
             }
             else
-                Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Server preset ~b~{presetName}~w~ corrupted");
+                notifier.Notify($"~r~ERROR~w~ Server preset ~b~{presetName}~w~ corrupted");
 
             await Delay(200);
         }
 
         private async void GUI_MenuApplyPersonalPresetButtonPressed(object sender, string presetName)
         {
-            string key = $"{KvpPrefix}{presetName}";
-            string value = GetResourceKvpString(key);
-            if (value != null)
+            var loaded = localPresets.Load(presetName);
+            if(loaded != null)
             {
-                value = Helpers.RemoveByteOrderMarks(value);
-                XmlDocument doc = new XmlDocument();
-                doc.LoadXml(value);
-                var handling = doc["Item"];
-                GetPresetFromXml(handling, CurrentPreset);
-
+                // TODO:
+                CurrentPreset.FromPreset(loaded);
                 PresetChanged?.Invoke(this, EventArgs.Empty);
-                Screen.ShowNotification($"{ScriptName}: Personal preset ~b~{presetName}~w~ applied");
+                notifier.Notify($"Personal preset ~b~{presetName}~w~ applied");
             }
             else
-                Screen.ShowNotification($"{ScriptName}: ~r~ERROR~w~ Personal preset ~b~{presetName}~w~ corrupted");
+                notifier.Notify($"~r~ERROR~w~ Personal preset ~b~{presetName}~w~ corrupted");
 
             await Delay(200);
         }
@@ -403,7 +384,7 @@ namespace HandlingEditor.Client
                     if (vehicle != CurrentVehicle)
                     {
                         CurrentVehicle = vehicle;
-                        CurrentPreset = CreateHandlingPreset(CurrentVehicle);
+                        CurrentPreset.FromHandle(CurrentVehicle);
                         PresetChanged?.Invoke(this, EventArgs.Empty);
                     }
                 }
@@ -502,7 +483,7 @@ namespace HandlingEditor.Client
                 if (!fieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 {
                     if (Debug)
-                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: No fieldInfo definition found for {fieldName}");
+                        logger.Log($"No fieldInfo definition found for {fieldName}");
                     continue;
                 }
 
@@ -517,7 +498,7 @@ namespace HandlingEditor.Client
                         SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
 
                         if (Debug)
-                            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
+                            logger.Log($"{fieldName} updated from {value} to {fieldValue}");
                     }
                 }
 
@@ -529,7 +510,7 @@ namespace HandlingEditor.Client
                         SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
 
                         if (Debug)
-                            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
+                            logger.Log($"{fieldName} updated from {value} to {fieldValue}");
                     }
                 }
 
@@ -541,7 +522,7 @@ namespace HandlingEditor.Client
                         SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
 
                         if (Debug)
-                            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {fieldValue}");
+                            logger.Log($"{fieldName} updated from {value} to {fieldValue}");
                     }
                 }
             }
@@ -590,7 +571,7 @@ namespace HandlingEditor.Client
                             SetVehicleHandlingFloat(vehicle, className, fieldName, decorValue);
 
                             if (Debug)
-                                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                                logger.Log($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                         }
                     }
                 }
@@ -605,7 +586,7 @@ namespace HandlingEditor.Client
                             SetVehicleHandlingInt(vehicle, className, fieldName, decorValue);
 
                             if (Debug)
-                                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                                logger.Log($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                         }
                     }
                 }
@@ -632,7 +613,7 @@ namespace HandlingEditor.Client
                         SetVehicleHandlingVector(vehicle, className, fieldName, decorValue);
 
                         if (Debug)
-                            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: {fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                            logger.Log($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                     }
                 }
             }
@@ -739,7 +720,7 @@ namespace HandlingEditor.Client
 
             if(Debug)
             {
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Removed all decorators on vehicle {vehicle}");
+                logger.Log($"Removed all decorators on vehicle {vehicle}");
             }
         }
 
@@ -760,7 +741,7 @@ namespace HandlingEditor.Client
                 {
                     DecorSetFloat(vehicle, name, currentValue);
                     if (Debug)
-                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
+                        logger.Log($"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
                 }
             }
             else // Decorator doesn't exist, create it if required
@@ -769,7 +750,7 @@ namespace HandlingEditor.Client
                 {
                     DecorSetFloat(vehicle, name, currentValue);
                     if (Debug)
-                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Added decorator {name} with value {currentValue} to vehicle {vehicle}");
+                        logger.Log($"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
         }
@@ -791,7 +772,7 @@ namespace HandlingEditor.Client
                 {
                     DecorSetInt(vehicle, name, currentValue);
                     if (Debug)
-                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
+                        logger.Log($"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
                 }
             }
             else // Decorator doesn't exist, create it if required
@@ -800,7 +781,7 @@ namespace HandlingEditor.Client
                 {
                     DecorSetInt(vehicle, name, currentValue);
                     if (Debug)
-                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Added decorator {name} with value {currentValue} to vehicle {vehicle}");
+                        logger.Log($"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
         }
@@ -857,68 +838,6 @@ namespace HandlingEditor.Client
             }
         }
 
-        /// <summary>
-        /// Creates a preset for the <paramref name="vehicle"/> to edit it locally
-        /// </summary>
-        /// <param name="vehicle"></param>
-        /// <returns></returns>
-        private HandlingPreset CreateHandlingPreset(int vehicle)
-        {
-            HandlingPreset preset = new HandlingPreset();
-            
-            foreach (var item in HandlingInfo.FieldsInfo)
-            {
-                string fieldName = item.Key;
-                string className = item.Value.ClassName;
-                Type fieldType = item.Value.Type;
-                string defDecorName = $"{fieldName}_def";
-
-                if (fieldType == FieldType.FloatType)
-                {
-                    var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetFloat(vehicle, defDecorName) : GetVehicleHandlingFloat(vehicle, className, fieldName);
-                    preset.DefaultFields[fieldName] = defaultValue;
-                    preset.Fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetFloat(vehicle, fieldName) : defaultValue;
-                }/*
-                else if (fieldType == FieldType.IntType)
-                {
-                    var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetInt(vehicle, defDecorName) : GetVehicleHandlingInt(vehicle, className, fieldName);
-                    preset.DefaultFields[fieldName] = defaultValue;
-                    preset.Fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetInt(vehicle, fieldName) : defaultValue;
-                }*/
-                else if (fieldType == FieldType.Vector3Type)
-                {
-                    Vector3 vec = GetVehicleHandlingVector(vehicle, className, fieldName);
-
-                    string decorX = $"{fieldName}_x";
-                    string decorY = $"{fieldName}_y";
-                    string decorZ = $"{fieldName}_z";
-
-                    string defDecorNameX = $"{decorX}_def";
-                    string defDecorNameY = $"{decorY}_def";
-                    string defDecorNameZ = $"{decorZ}_def";
-
-                    if (DecorExistOn(vehicle, defDecorNameX))
-                        vec.X = DecorGetFloat(vehicle, defDecorNameX);
-                    if (DecorExistOn(vehicle, defDecorNameY))
-                        vec.Y = DecorGetFloat(vehicle, defDecorNameY);
-                    if (DecorExistOn(vehicle, defDecorNameZ))
-                        vec.Z = DecorGetFloat(vehicle, defDecorNameZ);
-
-                    preset.DefaultFields[fieldName] = vec;
-
-                    if (DecorExistOn(vehicle, decorX))
-                        vec.X = DecorGetFloat(vehicle, decorX);
-                    if (DecorExistOn(vehicle, decorY))
-                        vec.Y = DecorGetFloat(vehicle, decorY);
-                    if (DecorExistOn(vehicle, decorZ))
-                        vec.Z = DecorGetFloat(vehicle, decorZ);
-
-                    preset.Fields[fieldName] = vec;
-                }
-            }
-
-            return preset;
-        }
 
         /// <summary>
         /// Prints the values of the decorators used on the <paramref name="vehicle"/>
@@ -927,13 +846,13 @@ namespace HandlingEditor.Client
         {
             if (!DoesEntityExist(vehicle))
             {
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Can't find vehicle with handle {vehicle}");
+                logger.Log($"Can't find vehicle with handle {vehicle}");
                 return;
             }
 
             int netID = NetworkGetNetworkIdFromEntity(vehicle);
             StringBuilder s = new StringBuilder();
-            s.AppendLine($"{ScriptName}: Vehicle:{vehicle} netID:{netID}");
+            s.AppendLine($"Vehicle:{vehicle} netID:{netID}");
             s.AppendLine("Decorators List:");
 
             foreach (var item in HandlingInfo.FieldsInfo)
@@ -1004,7 +923,7 @@ namespace HandlingEditor.Client
         {
             IEnumerable<int> entities = vehiclesList.Where(entity => HasDecorators(entity));
 
-            CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Vehicles with decorators: {entities.Count()}");
+            logger.Log($"Vehicles with decorators: {entities.Count()}");
 
             StringBuilder s = new StringBuilder();
             foreach (var vehicle in entities)
@@ -1015,154 +934,21 @@ namespace HandlingEditor.Client
             CitizenFX.Core.Debug.WriteLine(s.ToString());
         }
 
-        private XmlDocument GetXmlFromPreset(HandlingPreset preset)
-        {
-            XmlDocument doc = new XmlDocument();
-            XmlElement handlingItem = doc.CreateElement("Item");
-            handlingItem.SetAttribute("type", "CHandlingData");
-
-            foreach (var item in preset.Fields)
-            {
-                string fieldName = item.Key;
-                dynamic fieldValue = item.Value;
-                XmlElement field = doc.CreateElement(fieldName);
-
-                Type fieldType = HandlingInfo.FieldsInfo[fieldName].Type;
-                if(fieldType == FieldType.FloatType)
-                {
-                    var value = (float)fieldValue;
-                    field.SetAttribute("value", value.ToString());
-                }
-                else if (fieldType == FieldType.IntType)
-                {
-                    var value = (int)fieldValue;
-                    field.SetAttribute("value", value.ToString());
-                }
-                else if (fieldType == FieldType.Vector3Type)
-                {
-                    var value = (Vector3)(fieldValue);
-                    field.SetAttribute("x", value.X.ToString());
-                    field.SetAttribute("y", value.Y.ToString());
-                    field.SetAttribute("z", value.Z.ToString());
-                }
-                else if (fieldType == FieldType.StringType)
-                {
-                    field.InnerText = fieldValue;
-                }
-                else
-                {
-
-                }
-                handlingItem.AppendChild(field);
-            }
-            doc.AppendChild(handlingItem);
-
-            return doc;
-        }
-
-        private bool SavePresetAsKVP(string name, HandlingPreset preset)
-        {
-            if (string.IsNullOrEmpty(name) || preset == null)
-                return false;
-
-            string kvpName = $"{KvpPrefix}{name}";
-
-            //Key already used
-            if(GetResourceKvpString(kvpName) != null)
-                return false;
-
-            var xml = GetXmlFromPreset(preset);
-            xml["Item"].SetAttribute("presetName", name);
-            SetResourceKvp(kvpName, xml.OuterXml);
-            return true;
-        }
-
-        private bool DeletePresetKVP(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-                return false;
-
-            string key = $"{KvpPrefix}{name}";
-
-            //Nothing to delete
-            if (GetResourceKvpString(key) == null)
-                return false;
-
-            DeleteResourceKvp(key);
-            return true;
-        }
-
-        private void GetPresetFromXml(XmlNode node, HandlingPreset preset)
-        {
-            // Iterate Xml nodes
-            foreach (XmlNode item in node.ChildNodes)
-            {
-                if (item.NodeType != XmlNodeType.Element)
-                    continue;
-
-                // Get the field name
-                string fieldName = item.Name;
-
-                // Get the field type
-                Type fieldType = FieldType.GetFieldType(fieldName);
-
-                // Get the item as element to access attributes
-                XmlElement elem = (XmlElement)item;
-
-                // If it's a float field
-                if (fieldType == FieldType.FloatType)
-                {
-                    if (!float.TryParse(elem.GetAttribute("value"), out float result))
-                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute value in {fieldName} as float.");
-
-                    preset.Fields[fieldName] = result;
-                }
-                // If it's a int field
-                /*
-                else if (fieldType == FieldType.IntType)
-                {
-                    if (!int.TryParse(elem.GetAttribute("value"), out int result))
-                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute value in {fieldName} from preset.");
-
-                    preset.Fields[fieldName] = result;
-                }*/
-                // If it's a Vector3 field
-                else if (fieldType == FieldType.Vector3Type)
-                {
-                    if (!float.TryParse(elem.GetAttribute("x"), out float x))
-                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute x in {fieldName} from preset.");
-                    if (!float.TryParse(elem.GetAttribute("y"), out float y))
-                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute y in {fieldName} from preset."); 
-                    if (!float.TryParse(elem.GetAttribute("z"), out float z))
-                        CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute z in {fieldName} from preset.");
-                    preset.Fields[fieldName] = new Vector3(x, y, z);
-                }/*
-                else if (fieldType == FieldType.StringType)
-                {
-                    preset.Fields[fieldName] = elem.InnerText;
-                }*/
-                else
-                {
-                    // Unexpected
-                }
-            }
-        }
-
         private void ReadFieldInfo(string filename = "HandlingInfo.xml")
         {
             string strings = null;
             try
             {
-                strings = LoadResourceFile(ResourceName, filename);
+                strings = LoadResourceFile(Globals.ResourceName, filename);
                 HandlingInfo.ParseXml(strings);
                 var editableFields = HandlingInfo.FieldsInfo.Where(a => a.Value.Editable);
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {HandlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
+                logger.Log($"Loaded {filename}, found {HandlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
             }
             catch (Exception e)
             {
-                CitizenFX.Core.Debug.WriteLine(e.Message);
-                CitizenFX.Core.Debug.WriteLine(e.StackTrace);
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error loading {filename}");
+                logger.Log(e.Message);
+                logger.Log(e.StackTrace);
+                logger.Log($"Error loading {filename}");
             }
         }
 
@@ -1171,25 +957,24 @@ namespace HandlingEditor.Client
             string strings = null;
             try
             {
-                strings = LoadResourceFile(ResourceName, filename);
+                strings = LoadResourceFile(Globals.ResourceName, filename);
                 VehiclesPermissions.ParseXml(strings);
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {VehiclesPermissions.Classes.Count} class rules and {VehiclesPermissions.Vehicles.Count} vehicle rules");
+                logger.Log($"Loaded {filename}, found {VehiclesPermissions.Classes.Count} class rules and {VehiclesPermissions.Vehicles.Count} vehicle rules");
             }
             catch (Exception e)
             {
-                CitizenFX.Core.Debug.WriteLine(e.Message);
-                CitizenFX.Core.Debug.WriteLine(e.StackTrace);
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error loading {filename}");
+                logger.Log(e.Message);
+                logger.Log(e.StackTrace);
+                logger.Log($"Error loading {filename}");
             }
         }
 
         private void ReadServerPresets(string filename = "HandlingPresets.xml")
         {
-            string strings = null;
             try
             {
-                strings = LoadResourceFile(ResourceName, filename);
-                strings = Helpers.RemoveByteOrderMarks(strings);
+                string strings = LoadResourceFile(Globals.ResourceName, filename);
+                Helpers.RemoveByteOrderMarks(ref strings);
                 XmlDocument doc = new XmlDocument();
                 doc.LoadXml(strings);
 
@@ -1203,17 +988,17 @@ namespace HandlingEditor.Client
                         string name = node.GetAttribute("presetName");
                         HandlingPreset preset = new HandlingPreset();
 
-                        GetPresetFromXml(node, preset);
+                        preset.FromXml(node.OuterXml);
                         ServerPresets[name] = preset;
                     }
                 }
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Loaded {filename}, found {ServerPresets.Count} server presets.");
+                logger.Log($"Loaded {filename}, found {ServerPresets.Count} server presets.");
             }
             catch (Exception e)
             {
-                CitizenFX.Core.Debug.WriteLine(e.Message);
-                CitizenFX.Core.Debug.WriteLine(e.StackTrace);
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error loading {filename}");
+                logger.Log(e.Message);
+                logger.Log(e.StackTrace);
+                logger.Log($"Error loading {filename}");
             }
         }
 
@@ -1222,14 +1007,14 @@ namespace HandlingEditor.Client
             string strings = null;
             try
             {
-                strings = LoadResourceFile(ResourceName, filename);
+                strings = LoadResourceFile(Globals.ResourceName, filename);
 
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Loaded settings from {filename}");
+                logger.Log($"Loaded settings from {filename}");
             }
             catch (Exception e)
             {
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Impossible to load {filename}");
-                CitizenFX.Core.Debug.WriteLine(e.StackTrace);
+                logger.Log($"Impossible to load {filename}");
+                logger.Log(e.StackTrace);
             }
             finally
             {
@@ -1241,7 +1026,7 @@ namespace HandlingEditor.Client
                 Timer = config.GetLongValue("timer", Timer);
                 Debug = config.GetBoolValue("debug", Debug);
 
-                CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Settings {nameof(Timer)}={Timer} {nameof(Debug)}={Debug} {nameof(ScriptRange)}={ScriptRange}");
+                logger.Log($"Settings {nameof(Timer)}={Timer} {nameof(Debug)}={Debug} {nameof(ScriptRange)}={ScriptRange}");
             }
         }
 

@@ -60,7 +60,7 @@ namespace HandlingEditor.Client
         public static void ParseXml(string xml)
         {
             // Remove BOM if present
-            xml = Helpers.RemoveByteOrderMarks(xml);
+            Helpers.RemoveByteOrderMarks(ref xml);
 
             // Load the Xml document
             XmlDocument doc = new XmlDocument();  
