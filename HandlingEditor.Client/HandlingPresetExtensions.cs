@@ -152,8 +152,8 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         public static void FromHandle(this HandlingPreset preset, int vehicle)
         {
-            // TODO: This is a temp reset to be sure of creating a fresh preset
-            preset = new HandlingPreset();
+            if (preset == null)
+                return;
 
             foreach (var item in HandlingInfo.FieldsInfo)
             {

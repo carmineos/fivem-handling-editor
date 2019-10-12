@@ -1,6 +1,6 @@
 ﻿namespace HandlingEditor.Client
 {
-    public class ScreenNotificationHandler : INotificationHandler
+    public class FeedNotificationHandler : INotificationHandler
     {
         public void Notify(string message)
         {

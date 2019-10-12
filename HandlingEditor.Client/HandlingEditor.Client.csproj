@@ -58,9 +58,11 @@
     <Compile Include="HandlingPreset.cs" />
     <Compile Include="HandlingPresetExtensions.cs" />
     <Compile Include="Helpers.cs" />
+    <Compile Include="Logging\CfxLoggerConfiguration.cs" />
     <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Logging\LogLevel.cs" />
     <Compile Include="Notification\INotificationHandler.cs" />
-    <Compile Include="Notification\ScreenNotificationHandler.cs" />
+    <Compile Include="Notification\FeedNotificationHandler.cs" />
     <Compile Include="PresetManager\IPresetManager.cs" />
     <Compile Include="PresetManager\KvpPresetManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -15,8 +15,8 @@
             //Container.Register<ILogger, CfxLogger>(Lifestyle.Singleton);
             //Container.Register<INotificationHandler, ScreenNotificationHandler>(Lifestyle.Singleton);
 
-            Logger = new CfxLogger();
-            Notifier = new ScreenNotificationHandler();
+            Logger = new CfxLogger(new CfxLoggerConfiguration() { LogLevel = LogLevel.Debug });
+            Notifier = new FeedNotificationHandler();
         }
     }
 }

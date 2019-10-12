@@ -131,7 +131,7 @@ namespace HandlingEditor.Client
             // If the resource name is not the expected one ...
             if (GetCurrentResourceName() != Globals.ResourceName)
             {
-                logger.Log($"Invalid resource name, be sure the resource name is {Globals.ResourceName}");
+                logger.Log(LogLevel.Error, $"Invalid resource name, be sure the resource name is {Globals.ResourceName}");
                 return;
             }
 
@@ -155,16 +155,16 @@ namespace HandlingEditor.Client
             {
                 if (args.Count < 1)
                 {
-                    logger.Log("Missing float argument");
+                    logger.Log(LogLevel.Error, "Missing float argument");
                     return;
                 }
 
                 if (float.TryParse(args[0], out float value))
                 {
                     ScriptRange = value;
-                    logger.Log($"Received new {nameof(ScriptRange)} value {value}");
+                    logger.Log(LogLevel.Information, $"Received new {nameof(ScriptRange)} value {value}");
                 }
-                else logger.Log($"Error parsing {args[0]} as float");
+                else logger.Log(LogLevel.Error, $"Can't parse {args[0]} as float");
 
             }), false);
 
@@ -172,16 +172,16 @@ namespace HandlingEditor.Client
             {
                 if (args.Count < 1)
                 {
-                    logger.Log("Missing bool argument");
+                    logger.Log(LogLevel.Error, "Missing bool argument");
                     return;
                 }
 
                 if (bool.TryParse(args[0], out bool value))
                 {
                     Debug = value;
-                    logger.Log($"Received new {nameof(Debug)} value {value}");
+                    logger.Log(LogLevel.Information, $"Received new {nameof(Debug)} value {value}");
                 }
-                else logger.Log($"Error parsing {args[0]} as bool");
+                else logger.Log(LogLevel.Error, $"Can't parse {args[0]} as bool");
 
             }), false);
 
@@ -193,7 +193,7 @@ namespace HandlingEditor.Client
                 {
                     if (int.TryParse(args[0], out int value))
                         PrintDecorators(value);
-                    else logger.Log($"Error parsing {args[0]} as int");
+                    else logger.Log(LogLevel.Error, $"Can't parse {args[0]} as int");
                 }
 
             }), false);
@@ -206,17 +206,17 @@ namespace HandlingEditor.Client
             RegisterCommand("handling_preset", new Action<int, dynamic>((source, args) =>
             {
                 if (CurrentPreset != null)
-                    logger.Log(CurrentPreset.ToString());
+                    CitizenFX.Core.Debug.WriteLine(CurrentPreset.ToString());
                 else
-                    logger.Log("Current preset doesn't exist");
+                    logger.Log(LogLevel.Error, "Current preset is not valid");
             }), false);
 
             RegisterCommand("handling_xml", new Action<int, dynamic>((source, args) =>
             {
                 if (CurrentPreset != null)
-                    logger.Log(CurrentPreset.ToXml());
+                    CitizenFX.Core.Debug.WriteLine(CurrentPreset.ToXml());
                 else
-                    logger.Log("Current preset doesn't exist");
+                    logger.Log(LogLevel.Error, "Current preset is not valid");
             }), false);
 
             #endregion
@@ -384,6 +384,10 @@ namespace HandlingEditor.Client
                     if (vehicle != CurrentVehicle)
                     {
                         CurrentVehicle = vehicle;
+                        logger.Log(LogLevel.Debug, $"New vehicle handle: {CurrentVehicle}");
+
+
+                        CurrentPreset = new HandlingPreset();
                         CurrentPreset.FromHandle(CurrentVehicle);
                         PresetChanged?.Invoke(this, EventArgs.Empty);
                     }
@@ -482,8 +486,7 @@ namespace HandlingEditor.Client
                 var fieldsInfo = HandlingInfo.FieldsInfo;
                 if (!fieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 {
-                    if (Debug)
-                        logger.Log($"No fieldInfo definition found for {fieldName}");
+                    logger.Log(LogLevel.Debug, $"No fieldInfo definition found for {fieldName}");
                     continue;
                 }
 
@@ -497,8 +500,7 @@ namespace HandlingEditor.Client
                     {
                         SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
 
-                        if (Debug)
-                            logger.Log($"{fieldName} updated from {value} to {fieldValue}");
+                        logger.Log(LogLevel.Debug, $"{fieldName} updated from {value} to {fieldValue}");
                     }
                 }
 
@@ -509,8 +511,7 @@ namespace HandlingEditor.Client
                     {
                         SetVehicleHandlingInt(vehicle, className, fieldName, fieldValue);
 
-                        if (Debug)
-                            logger.Log($"{fieldName} updated from {value} to {fieldValue}");
+                        logger.Log(LogLevel.Debug, $"{fieldName} updated from {value} to {fieldValue}");
                     }
                 }
 
@@ -521,8 +522,7 @@ namespace HandlingEditor.Client
                     {
                         SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
 
-                        if (Debug)
-                            logger.Log($"{fieldName} updated from {value} to {fieldValue}");
+                        logger.Log(LogLevel.Debug, $"{fieldName} updated from {value} to {fieldValue}");
                     }
                 }
             }
@@ -570,8 +570,7 @@ namespace HandlingEditor.Client
                         {
                             SetVehicleHandlingFloat(vehicle, className, fieldName, decorValue);
 
-                            if (Debug)
-                                logger.Log($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                            logger.Log(LogLevel.Debug, $"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                         }
                     }
                 }
@@ -585,8 +584,7 @@ namespace HandlingEditor.Client
                         {
                             SetVehicleHandlingInt(vehicle, className, fieldName, decorValue);
 
-                            if (Debug)
-                                logger.Log($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                            logger.Log(LogLevel.Debug, $"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                         }
                     }
                 }
@@ -612,8 +610,7 @@ namespace HandlingEditor.Client
                     {
                         SetVehicleHandlingVector(vehicle, className, fieldName, decorValue);
 
-                        if (Debug)
-                            logger.Log($"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
+                        logger.Log(LogLevel.Debug, $"{fieldName} updated from {value} to {decorValue} for vehicle {vehicle}");
                     }
                 }
             }
@@ -718,10 +715,7 @@ namespace HandlingEditor.Client
                 }
             }
 
-            if(Debug)
-            {
-                logger.Log($"Removed all decorators on vehicle {vehicle}");
-            }
+            logger.Log(LogLevel.Debug, $"Removed all decorators on vehicle {vehicle}");
         }
 
         /// <summary>
@@ -740,8 +734,7 @@ namespace HandlingEditor.Client
                 if (!MathUtil.WithinEpsilon(currentValue, decorValue, Epsilon))
                 {
                     DecorSetFloat(vehicle, name, currentValue);
-                    if (Debug)
-                        logger.Log($"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
+                    logger.Log(LogLevel.Debug, $"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
                 }
             }
             else // Decorator doesn't exist, create it if required
@@ -749,8 +742,7 @@ namespace HandlingEditor.Client
                 if (!MathUtil.WithinEpsilon(currentValue, defaultValue, Epsilon))
                 {
                     DecorSetFloat(vehicle, name, currentValue);
-                    if (Debug)
-                        logger.Log($"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
+                    logger.Log(LogLevel.Debug, $"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
         }
@@ -771,8 +763,7 @@ namespace HandlingEditor.Client
                 if (currentValue != decorValue)
                 {
                     DecorSetInt(vehicle, name, currentValue);
-                    if (Debug)
-                        logger.Log($"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
+                    logger.Log(LogLevel.Debug, $"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
                 }
             }
             else // Decorator doesn't exist, create it if required
@@ -780,8 +771,7 @@ namespace HandlingEditor.Client
                 if (currentValue != defaultValue)
                 {
                     DecorSetInt(vehicle, name, currentValue);
-                    if (Debug)
-                        logger.Log($"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
+                    logger.Log(LogLevel.Debug, $"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
                 }
             }
         }
@@ -846,7 +836,7 @@ namespace HandlingEditor.Client
         {
             if (!DoesEntityExist(vehicle))
             {
-                logger.Log($"Can't find vehicle with handle {vehicle}");
+                logger.Log(LogLevel.Error, $"Can't find vehicle with handle {vehicle}");
                 return;
             }
 
@@ -923,7 +913,7 @@ namespace HandlingEditor.Client
         {
             IEnumerable<int> entities = vehiclesList.Where(entity => HasDecorators(entity));
 
-            logger.Log($"Vehicles with decorators: {entities.Count()}");
+            CitizenFX.Core.Debug.WriteLine($"Vehicles with decorators: {entities.Count()}");
 
             StringBuilder s = new StringBuilder();
             foreach (var vehicle in entities)
@@ -942,13 +932,12 @@ namespace HandlingEditor.Client
                 strings = LoadResourceFile(Globals.ResourceName, filename);
                 HandlingInfo.ParseXml(strings);
                 var editableFields = HandlingInfo.FieldsInfo.Where(a => a.Value.Editable);
-                logger.Log($"Loaded {filename}, found {HandlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
+                logger.Log(LogLevel.Information, $"Loaded {filename}, found {HandlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
             }
             catch (Exception e)
             {
-                logger.Log(e.Message);
-                logger.Log(e.StackTrace);
-                logger.Log($"Error loading {filename}");
+                logger.Log(LogLevel.Error, $"Error loading {filename}");
+                logger.Log(LogLevel.Error, e.Message);
             }
         }
 
@@ -959,13 +948,12 @@ namespace HandlingEditor.Client
             {
                 strings = LoadResourceFile(Globals.ResourceName, filename);
                 VehiclesPermissions.ParseXml(strings);
-                logger.Log($"Loaded {filename}, found {VehiclesPermissions.Classes.Count} class rules and {VehiclesPermissions.Vehicles.Count} vehicle rules");
+                logger.Log(LogLevel.Information, $"Loaded {filename}, found {VehiclesPermissions.Classes.Count} class rules and {VehiclesPermissions.Vehicles.Count} vehicle rules");
             }
             catch (Exception e)
             {
-                logger.Log(e.Message);
-                logger.Log(e.StackTrace);
-                logger.Log($"Error loading {filename}");
+                logger.Log(LogLevel.Error, $"Error loading {filename}");
+                logger.Log(LogLevel.Error, e.Message);
             }
         }
 
@@ -992,13 +980,12 @@ namespace HandlingEditor.Client
                         ServerPresets[name] = preset;
                     }
                 }
-                logger.Log($"Loaded {filename}, found {ServerPresets.Count} server presets.");
+                logger.Log(LogLevel.Information, $"Loaded {filename}, found {ServerPresets.Count} server presets.");
             }
             catch (Exception e)
             {
-                logger.Log(e.Message);
-                logger.Log(e.StackTrace);
-                logger.Log($"Error loading {filename}");
+                logger.Log(LogLevel.Error, $"Error loading {filename}");
+                logger.Log(LogLevel.Error, e.Message);
             }
         }
 
@@ -1009,12 +996,12 @@ namespace HandlingEditor.Client
             {
                 strings = LoadResourceFile(Globals.ResourceName, filename);
 
-                logger.Log($"Loaded settings from {filename}");
+                logger.Log(LogLevel.Information, $"Loaded settings from {filename}");
             }
             catch (Exception e)
             {
-                logger.Log($"Impossible to load {filename}");
-                logger.Log(e.StackTrace);
+                logger.Log(LogLevel.Error, $"Error loading {filename}");
+                logger.Log(LogLevel.Error, e.Message);
             }
             finally
             {
@@ -1026,7 +1013,7 @@ namespace HandlingEditor.Client
                 Timer = config.GetLongValue("timer", Timer);
                 Debug = config.GetBoolValue("debug", Debug);
 
-                logger.Log($"Settings {nameof(Timer)}={Timer} {nameof(Debug)}={Debug} {nameof(ScriptRange)}={ScriptRange}");
+                logger.Log(LogLevel.Information, $"Settings {nameof(Timer)}={Timer} {nameof(Debug)}={Debug} {nameof(ScriptRange)}={ScriptRange}");
             }
         }
 
