@@ -8,6 +8,8 @@
         public static ILogger Logger { get; set; } //=> Container.GetInstance<ILogger>();
         public static INotificationHandler Notifier { get; set; } //Notifier => Container.GetInstance<INotificationHandler>();
 
+        public static HandlingInfo HandlingInfo { get; set; }
+
         public static void Build()
         {
             //Container = new Container();
@@ -17,6 +19,7 @@
 
             Logger = new CfxLogger(new CfxLoggerConfiguration() { LogLevel = LogLevel.Debug });
             Notifier = new FeedNotificationHandler();
+            HandlingInfo = new HandlingInfo(Logger);
         }
     }
 }

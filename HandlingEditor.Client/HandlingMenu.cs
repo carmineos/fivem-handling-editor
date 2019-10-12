@@ -19,6 +19,8 @@ namespace HandlingEditor.Client
         /// </summary>
         private HandlingEditor _handlingEditor;
 
+        private HandlingInfo _handlingInfo;
+
         /// <summary>
         /// The <see cref="MenuAPI"/> controller
         /// </summary>
@@ -60,6 +62,7 @@ namespace HandlingEditor.Client
         public bool CurrentPresetIsValid => _handlingEditor.CurrentPresetIsValid;
         public HandlingPreset CurrentPreset => _handlingEditor.CurrentPreset;
         public Dictionary<string, HandlingPreset> ServerPresets => _handlingEditor.ServerPresets;
+        public HandlingInfo HandlingInfo => _handlingEditor.handlingInfo;
 
         #endregion
 
@@ -88,14 +91,15 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Constructor with the <see cref="HandlingEditor"/> script
         /// </summary>
-        internal HandlingMenu(HandlingEditor handlingEditor)
+        internal HandlingMenu(HandlingEditor handlingEditor, HandlingInfo handlingInfo)
         {
             notifier = Framework.Notifier;
 
-            if (handlingEditor == null)
+            if (handlingEditor == null || handlingInfo == null)
                 return;
 
             _handlingEditor = handlingEditor;
+            _handlingInfo = handlingInfo;
 
             // Used for the on screen keyboard
             AddTextEntry("HANDLING_EDITOR_ENTER_VALUE", "Enter value (without spaces)");
@@ -467,7 +471,7 @@ namespace HandlingEditor.Client
                 return;
 
             // Add all the controllers
-            foreach (var item in HandlingInfo.FieldsInfo)
+            foreach (var item in _handlingInfo.FieldsInfo)
             {
                 var fieldInfo = item.Value;
 

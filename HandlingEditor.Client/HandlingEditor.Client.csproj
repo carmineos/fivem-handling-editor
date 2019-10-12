@@ -49,14 +49,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Framework.cs" />
+    <Compile Include="HandlingInfo\FieldInfo.cs" />
+    <Compile Include="HandlingInfo\FieldType.cs" />
     <Compile Include="Logging\CfxLogger.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Globals.cs" />
-    <Compile Include="HandlingInfo.cs" />
+    <Compile Include="HandlingInfo\HandlingInfo.cs" />
     <Compile Include="HandlingEditor.cs" />
     <Compile Include="HandlingMenu.cs" />
-    <Compile Include="HandlingPreset.cs" />
-    <Compile Include="HandlingPresetExtensions.cs" />
+    <Compile Include="HandlingPreset\HandlingPreset.cs" />
+    <Compile Include="HandlingPreset\HandlingPresetExtensions.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Logging\CfxLoggerConfiguration.cs" />
     <Compile Include="Logging\ILogger.cs" />

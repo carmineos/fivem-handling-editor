@@ -105,6 +105,8 @@ namespace HandlingEditor.Client
         /// </summary>
         private IEnumerable<int> Vehicles;
 
+        public HandlingInfo handlingInfo;
+
         #endregion
 
         #region Public Properties
@@ -135,6 +137,7 @@ namespace HandlingEditor.Client
                 return;
             }
 
+            handlingInfo = Framework.HandlingInfo;
             localPresets = new KvpPresetManager(Globals.KvpPrefix);
 
             LastTime = GetGameTimer();
@@ -222,7 +225,7 @@ namespace HandlingEditor.Client
             #endregion
 
             // Create the script for the menu
-            _handlingMenu = new HandlingMenu(this);
+            _handlingMenu = new HandlingMenu(this, handlingInfo);
 
             if (_handlingMenu != null)
                 RegisterScript(_handlingMenu);
@@ -257,7 +260,7 @@ namespace HandlingEditor.Client
         {
             // Be sure the field is supported
 
-            if (!HandlingInfo.FieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
+            if (!handlingInfo.FieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 return;
 
             // Get the field type
@@ -483,7 +486,7 @@ namespace HandlingEditor.Client
                 string fieldName = item.Key;
                 dynamic fieldValue = item.Value;
 
-                var fieldsInfo = HandlingInfo.FieldsInfo;
+                var fieldsInfo = handlingInfo.FieldsInfo;
                 if (!fieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 {
                     logger.Log(LogLevel.Debug, $"No fieldInfo definition found for {fieldName}");
@@ -554,7 +557,7 @@ namespace HandlingEditor.Client
         /// <param name="vehicle"></param>
         private void RefreshVehicleUsingDecorators(int vehicle)
         {
-            foreach (var item in HandlingInfo.FieldsInfo.Where(a => a.Value.Editable))
+            foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable))
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -623,7 +626,7 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         private bool HasDecorators(int vehicle)
         {
-            foreach (var item in HandlingInfo.FieldsInfo)
+            foreach (var item in handlingInfo.FieldsInfo)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -644,7 +647,7 @@ namespace HandlingEditor.Client
         /// </summary>
         private void RegisterDecorators()
         {
-            foreach (var item in HandlingInfo.FieldsInfo)
+            foreach (var item in handlingInfo.FieldsInfo)
             {
                 string fieldName = item.Key;
                 Type type = item.Value.Type;
@@ -682,7 +685,7 @@ namespace HandlingEditor.Client
         /// <param name="vehicle"></param>
         private void RemoveDecorators(int vehicle)
         {
-            foreach (var item in HandlingInfo.FieldsInfo)
+            foreach (var item in handlingInfo.FieldsInfo)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -788,7 +791,7 @@ namespace HandlingEditor.Client
             foreach (var item in preset.Fields)
             {
                 string fieldName = item.Key;
-                Type fieldType = HandlingInfo.FieldsInfo[fieldName].Type;
+                Type fieldType = handlingInfo.FieldsInfo[fieldName].Type;
                 dynamic fieldValue = item.Value;
 
                 string defDecorName = $"{fieldName}_def";
@@ -845,7 +848,7 @@ namespace HandlingEditor.Client
             s.AppendLine($"Vehicle:{vehicle} netID:{netID}");
             s.AppendLine("Decorators List:");
 
-            foreach (var item in HandlingInfo.FieldsInfo)
+            foreach (var item in handlingInfo.FieldsInfo)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -930,9 +933,9 @@ namespace HandlingEditor.Client
             try
             {
                 strings = LoadResourceFile(Globals.ResourceName, filename);
-                HandlingInfo.ParseXml(strings);
-                var editableFields = HandlingInfo.FieldsInfo.Where(a => a.Value.Editable);
-                logger.Log(LogLevel.Information, $"Loaded {filename}, found {HandlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
+                handlingInfo.ParseXml(strings);
+                var editableFields = handlingInfo.FieldsInfo.Where(a => a.Value.Editable);
+                logger.Log(LogLevel.Information, $"Loaded {filename}, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
             }
             catch (Exception e)
             {

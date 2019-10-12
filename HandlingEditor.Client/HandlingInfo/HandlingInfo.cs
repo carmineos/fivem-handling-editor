@@ -6,58 +6,19 @@ using System.Xml;
 
 namespace HandlingEditor.Client
 {
-    public static class FieldType
+    public class HandlingInfo
     {
-        public static Type FloatType = typeof(float);
-        public static Type IntType = typeof(int);
-        public static Type Vector3Type = typeof(Vector3);
-        public static Type StringType = typeof(string);
+        private readonly ILogger logger;
 
-        public static Type GetFieldType(string name)
+        public Dictionary<string, BaseFieldInfo> FieldsInfo;
+
+        public HandlingInfo(ILogger log)
         {
-            if (name.StartsWith("f")) return FieldType.FloatType;
-            else if (name.StartsWith("n")) return FieldType.IntType;
-            else if (name.StartsWith("str")) return FieldType.StringType;
-            else if (name.StartsWith("vec")) return FieldType.Vector3Type;
-            else return FieldType.StringType;
+            logger = log;
+            FieldsInfo = new Dictionary<string, BaseFieldInfo>();
         }
-    }
 
-    public class BaseFieldInfo
-    {
-        public string Name;
-        public string ClassName;
-        public Type Type;
-        public bool Editable;
-        public string Description;
-
-        public BaseFieldInfo(string name, string className, string description, bool editable)
-        {
-            Name = name;
-            ClassName = className;
-            Type = FieldType.GetFieldType(name);
-            Description = description;
-            Editable = editable;
-        } 
-    }
-
-    public class FieldInfo<T> : BaseFieldInfo
-    {
-        public T Min;
-        public T Max;
-
-        public FieldInfo(string name, string className, string description, bool editable, T min, T max) : base(name, className, description, editable)
-        {
-            Min = min;
-            Max = max;
-        }
-    }
-
-    public static class HandlingInfo
-    {
-        public static Dictionary<string, BaseFieldInfo> FieldsInfo = new Dictionary<string, BaseFieldInfo>();
-
-        public static void ParseXml(string xml)
+        public  void ParseXml(string xml)
         {
             // Remove BOM if present
             Helpers.RemoveByteOrderMarks(ref xml);
@@ -88,7 +49,7 @@ namespace HandlingEditor.Client
                     Type type = FieldType.GetFieldType(fieldName);
 
                     if(!bool.TryParse(item.Attributes["Editable"].Value, out bool editable))
-                        CitizenFX.Core.Debug.WriteLine($"Error parsing Editable attribute in {fieldName}.");
+                        logger.Log(LogLevel.Error, $"Unable to parse Editable attribute in {fieldName}.");
 
                     string description = item["Description"].InnerText;
 
@@ -99,9 +60,9 @@ namespace HandlingEditor.Client
                     if (type == FieldType.FloatType)
                     {
                         if (!float.TryParse(minNode.Attributes["value"].Value, out float min))
-                            CitizenFX.Core.Debug.WriteLine($"Error parsing Min attribute in {fieldName}.");
+                            logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
                         if (!float.TryParse(maxNode.Attributes["value"].Value, out float max))
-                            CitizenFX.Core.Debug.WriteLine($"Error parsing Max attribute in {fieldName}.");
+                            logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
 
                         FieldInfo<float> fieldInfo = new FieldInfo<float>(fieldName, className, description, editable, min, max);
                         FieldsInfo[fieldName] = fieldInfo;
@@ -111,9 +72,9 @@ namespace HandlingEditor.Client
                     else if (type == FieldType.IntType)
                     {
                         if (!int.TryParse(minNode.Attributes["value"].Value, out int min))
-                            CitizenFX.Core.Debug.WriteLine($"Error parsing Min attribute in {fieldName}.");
+                            logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
                         if (!int.TryParse(maxNode.Attributes["value"].Value, out int max))
-                            CitizenFX.Core.Debug.WriteLine($"Error parsing Max attribute in {fieldName}.");
+                            logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
 
                         FieldInfo<int> fieldInfo = new FieldInfo<int>(fieldName, className, description, editable, min, max);
                         FieldsInfo[fieldName] = fieldInfo;
@@ -122,14 +83,14 @@ namespace HandlingEditor.Client
                     // If it's a Vector3 field
                     else if (type == FieldType.Vector3Type)
                     {
-                        if(!float.TryParse(minNode.Attributes["x"].Value, out float minX)) CitizenFX.Core.Debug.WriteLine($"Error parsing Min attribute in {fieldName}.");
-                        if(!float.TryParse(minNode.Attributes["y"].Value, out float minY)) CitizenFX.Core.Debug.WriteLine($"Error parsing Min attribute in {fieldName}.");
-                        if(!float.TryParse(minNode.Attributes["z"].Value, out float minZ)) CitizenFX.Core.Debug.WriteLine($"Error parsing Min attribute in {fieldName}.");
+                        if(!float.TryParse(minNode.Attributes["x"].Value, out float minX)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
+                        if(!float.TryParse(minNode.Attributes["y"].Value, out float minY)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
+                        if(!float.TryParse(minNode.Attributes["z"].Value, out float minZ)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
                         Vector3 min = new Vector3(minX, minY, minZ);
 
-                        if (!float.TryParse(maxNode.Attributes["x"].Value, out float maxX)) CitizenFX.Core.Debug.WriteLine($"Error parsing Max attribute in {fieldName}.");
-                        if (!float.TryParse(maxNode.Attributes["y"].Value, out float maxY)) CitizenFX.Core.Debug.WriteLine($"Error parsing Max attribute in {fieldName}.");
-                        if (!float.TryParse(maxNode.Attributes["z"].Value, out float maxZ)) CitizenFX.Core.Debug.WriteLine($"Error parsing Max attribute in {fieldName}.");
+                        if (!float.TryParse(maxNode.Attributes["x"].Value, out float maxX)) logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
+                        if (!float.TryParse(maxNode.Attributes["y"].Value, out float maxY)) logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
+                        if (!float.TryParse(maxNode.Attributes["z"].Value, out float maxZ)) logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
                         Vector3 max = new Vector3(maxX, maxY, maxZ);
 
                         FieldInfo<Vector3> fieldInfo = new FieldInfo<Vector3>(fieldName, className, description, editable, min, max);
