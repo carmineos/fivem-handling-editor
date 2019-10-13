@@ -35,7 +35,7 @@ namespace HandlingEditor.Client
                 dynamic fieldValue = item.Value;
                 XmlElement field = doc.CreateElement(fieldName);
 
-                if (!HandlingInfo.FieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
+                if (!Framework.HandlingInfo.Fields.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 {
                     // TODO:
                     continue;
@@ -155,7 +155,7 @@ namespace HandlingEditor.Client
             if (preset == null)
                 return;
 
-            foreach (var item in HandlingInfo.FieldsInfo)
+            foreach (var item in Framework.HandlingInfo.Fields)
             {
                 string fieldName = item.Key;
                 string className = item.Value.ClassName;

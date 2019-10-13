@@ -260,7 +260,7 @@ namespace HandlingEditor.Client
         {
             // Be sure the field is supported
 
-            if (!handlingInfo.FieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
+            if (!handlingInfo.Fields.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 return;
 
             // Get the field type
@@ -486,7 +486,7 @@ namespace HandlingEditor.Client
                 string fieldName = item.Key;
                 dynamic fieldValue = item.Value;
 
-                var fieldsInfo = handlingInfo.FieldsInfo;
+                var fieldsInfo = handlingInfo.Fields;
                 if (!fieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 {
                     logger.Log(LogLevel.Debug, $"No fieldInfo definition found for {fieldName}");
@@ -557,7 +557,7 @@ namespace HandlingEditor.Client
         /// <param name="vehicle"></param>
         private void RefreshVehicleUsingDecorators(int vehicle)
         {
-            foreach (var item in handlingInfo.FieldsInfo.Where(a => a.Value.Editable))
+            foreach (var item in handlingInfo.Fields.Where(a => a.Value.Editable))
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -626,7 +626,7 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         private bool HasDecorators(int vehicle)
         {
-            foreach (var item in handlingInfo.FieldsInfo)
+            foreach (var item in handlingInfo.Fields)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -647,7 +647,7 @@ namespace HandlingEditor.Client
         /// </summary>
         private void RegisterDecorators()
         {
-            foreach (var item in handlingInfo.FieldsInfo)
+            foreach (var item in handlingInfo.Fields)
             {
                 string fieldName = item.Key;
                 Type type = item.Value.Type;
@@ -685,7 +685,7 @@ namespace HandlingEditor.Client
         /// <param name="vehicle"></param>
         private void RemoveDecorators(int vehicle)
         {
-            foreach (var item in handlingInfo.FieldsInfo)
+            foreach (var item in handlingInfo.Fields)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -791,7 +791,7 @@ namespace HandlingEditor.Client
             foreach (var item in preset.Fields)
             {
                 string fieldName = item.Key;
-                Type fieldType = handlingInfo.FieldsInfo[fieldName].Type;
+                Type fieldType = handlingInfo.Fields[fieldName].Type;
                 dynamic fieldValue = item.Value;
 
                 string defDecorName = $"{fieldName}_def";
@@ -848,7 +848,7 @@ namespace HandlingEditor.Client
             s.AppendLine($"Vehicle:{vehicle} netID:{netID}");
             s.AppendLine("Decorators List:");
 
-            foreach (var item in handlingInfo.FieldsInfo)
+            foreach (var item in handlingInfo.Fields)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -934,8 +934,8 @@ namespace HandlingEditor.Client
             {
                 strings = LoadResourceFile(Globals.ResourceName, filename);
                 handlingInfo.ParseXml(strings);
-                var editableFields = handlingInfo.FieldsInfo.Where(a => a.Value.Editable);
-                logger.Log(LogLevel.Information, $"Loaded {filename}, found {handlingInfo.FieldsInfo.Count} fields info, {editableFields.Count()} editable.");
+                var editableFields = handlingInfo.Fields.Where(a => a.Value.Editable);
+                logger.Log(LogLevel.Information, $"Loaded {filename}, found {handlingInfo.Fields.Count} fields info, {editableFields.Count()} editable.");
             }
             catch (Exception e)
             {

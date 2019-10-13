@@ -23,7 +23,7 @@ namespace HandlingEditor.Client
             var classNodes = rootNode["Classes"]?.ChildNodes;
             foreach (XmlNode item in classNodes)
             {
-                if (item.NodeType == XmlNodeType.Comment)
+                if (item.NodeType != XmlNodeType.Element)
                     continue;
 
                 if (item.Name != "class")
@@ -45,7 +45,7 @@ namespace HandlingEditor.Client
             var modelNodes = rootNode["Models"]?.ChildNodes;
             foreach (XmlNode item in modelNodes)
             {
-                if (item.NodeType == XmlNodeType.Comment)
+                if (item.NodeType != XmlNodeType.Element)
                     continue;
 
                 if (item.Name != "model")

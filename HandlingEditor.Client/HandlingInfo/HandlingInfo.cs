@@ -10,12 +10,12 @@ namespace HandlingEditor.Client
     {
         private readonly ILogger logger;
 
-        public Dictionary<string, BaseFieldInfo> FieldsInfo;
+        public Dictionary<string, BaseFieldInfo> Fields;
 
         public HandlingInfo(ILogger log)
         {
             logger = log;
-            FieldsInfo = new Dictionary<string, BaseFieldInfo>();
+            Fields = new Dictionary<string, BaseFieldInfo>();
         }
 
         public  void ParseXml(string xml)
@@ -30,7 +30,7 @@ namespace HandlingEditor.Client
             // Iterate all the nodes
             foreach (XmlNode classNode in doc.ChildNodes)
             {
-                if (classNode.NodeType == XmlNodeType.Comment)
+                if (classNode.NodeType != XmlNodeType.Element)
                     continue;
 
                 // Root nodes are class names
@@ -39,7 +39,7 @@ namespace HandlingEditor.Client
                 // Iterate fields of each class
                 foreach (XmlNode item in classNode.ChildNodes)
                 {
-                    if (item.NodeType == XmlNodeType.Comment)
+                    if (item.NodeType != XmlNodeType.Element)
                         continue;
 
                     // Get the field name
@@ -65,7 +65,7 @@ namespace HandlingEditor.Client
                             logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
 
                         FieldInfo<float> fieldInfo = new FieldInfo<float>(fieldName, className, description, editable, min, max);
-                        FieldsInfo[fieldName] = fieldInfo;
+                        Fields[fieldName] = fieldInfo;
                     }
 
                     // If it's a int field
@@ -77,7 +77,7 @@ namespace HandlingEditor.Client
                             logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
 
                         FieldInfo<int> fieldInfo = new FieldInfo<int>(fieldName, className, description, editable, min, max);
-                        FieldsInfo[fieldName] = fieldInfo;
+                        Fields[fieldName] = fieldInfo;
                     }
 
                     // If it's a Vector3 field
@@ -94,19 +94,19 @@ namespace HandlingEditor.Client
                         Vector3 max = new Vector3(maxX, maxY, maxZ);
 
                         FieldInfo<Vector3> fieldInfo = new FieldInfo<Vector3>(fieldName, className, description, editable, min, max);
-                        FieldsInfo[fieldName] = fieldInfo;
+                        Fields[fieldName] = fieldInfo;
                     }
 
                     else if (type == FieldType.StringType)
                     {
                         BaseFieldInfo fieldInfo = new BaseFieldInfo(fieldName, className, description, editable);
-                        FieldsInfo[fieldName] = fieldInfo;
+                        Fields[fieldName] = fieldInfo;
                     }
 
                     else
                     {
                         BaseFieldInfo fieldInfo = new BaseFieldInfo(fieldName, className, description, editable);
-                        FieldsInfo[fieldName] = fieldInfo;
+                        Fields[fieldName] = fieldInfo;
                     }
                 }
             }

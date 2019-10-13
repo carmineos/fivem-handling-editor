@@ -471,7 +471,7 @@ namespace HandlingEditor.Client
                 return;
 
             // Add all the controllers
-            foreach (var item in _handlingInfo.FieldsInfo)
+            foreach (var item in _handlingInfo.Fields)
             {
                 var fieldInfo = item.Value;
 
