@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using CitizenFX.Core;
-using CitizenFX.Core.UI;
 using static CitizenFX.Core.Native.API;
 using MenuAPI;
 
 namespace HandlingEditor.Client
 {
-    internal class HandlingMenu : BaseScript
+    internal class HandlingMenu
     {
         private readonly INotificationHandler notifier;
 
@@ -105,7 +104,6 @@ namespace HandlingEditor.Client
             AddTextEntry("HANDLING_EDITOR_ENTER_VALUE", "Enter value (without spaces)");
             InitializeMenu();
 
-            Tick += OnTick;
             _handlingEditor.PresetChanged += new EventHandler((sender, args) => UpdateEditorMenu());
             _handlingEditor.PersonalPresetsListChanged += new EventHandler((sender, args) => UpdatePersonalPresetsMenu());
             _handlingEditor.ServerPresetsListChanged += new EventHandler((sender, args) => UpdateServerPresetsMenu());
@@ -113,26 +111,13 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region Tasks
-        
-        /// <summary>
-        /// The task that checks if the menu can be open
-        /// </summary>
-        /// <returns></returns>
-        private async Task OnTick()
-        {
-            if (!CurrentPresetIsValid)
-            {
-                if (MenuController.IsAnyMenuOpen())
-                    MenuController.CloseAllMenus();
-            }
-
-            await Task.FromResult(0);
-        }
-        
-        #endregion
-
         #region Private Methods
+
+        public void HideUI()
+        {
+            if (MenuController.IsAnyMenuOpen())
+                MenuController.CloseAllMenus();
+        }
 
         /// <summary>
         /// Setup the Menu to be used with the script
@@ -549,7 +534,7 @@ namespace HandlingEditor.Client
             //DisableAllControlActions(1);
    
             DisplayOnscreenKeyboard(1, "HANDLING_EDITOR_ENTER_VALUE", "", defaultText, "", "", "", 128);
-            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await Delay(100);
+            while (UpdateOnscreenKeyboard() != 1 && UpdateOnscreenKeyboard() != 2) await BaseScript.Delay(100);
 
             //EnableAllControlActions(1);
 

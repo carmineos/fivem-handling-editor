@@ -224,11 +224,8 @@ namespace HandlingEditor.Client
 
             #endregion
 
-            // Create the script for the menu
+            // Create the menu
             _handlingMenu = new HandlingMenu(this, handlingInfo);
-
-            if (_handlingMenu != null)
-                RegisterScript(_handlingMenu);
 
             #region GUI Events Handling
 
@@ -243,10 +240,20 @@ namespace HandlingEditor.Client
 
             Tick += GetCurrentVehicle;
             Tick += ScriptTask;
+            Tick += HideUITask;
 
         }
 
         #endregion
+
+        private async Task HideUITask()
+        {
+            if (!CurrentPresetIsValid && _handlingMenu != null)
+                _handlingMenu.HideUI();
+
+            await Task.FromResult(0);
+        }
+
 
         #region GUI Event Handlers
 
