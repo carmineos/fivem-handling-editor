@@ -1,0 +1,33 @@
+{
+  "classes": [
+    { "name": "Compacts", 		"id": "0",	"allowed": "true" },
+    { "name": "Sedans", 		"id": "1",	"allowed": "true" },
+    { "name": "SUVs", 			"id": "2",	"allowed": "true" },
+    { "name": "Coupes", 		"id": "3",	"allowed": "true" },
+    { "name": "Muscle", 		"id": "4",	"allowed": "true" },
+    { "name": "SportsClassics",	"id": "5",	"allowed": "true" },
+    { "name": "Sports", 		"id": "6",	"allowed": "true" },
+    { "name": "Super", 			"id": "7",	"allowed": "true" },
+    { "name": "Motorcycles", 	"id": "8",	"allowed": "true" },
+    { "name": "OffRoad", 		"id": "9",	"allowed": "true" },
+    { "name": "Industrial", 	"id": "10",	"allowed": "true" },
+    { "name": "Utility", 		"id": "11",	"allowed": "true" },
+    { "name": "Vans", 			"id": "12",	"allowed": "true" },
+    { "name": "Cycles", 		"id": "13",	"allowed": "true" },
+    { "name": "Boats", 			"id": "14",	"allowed": "true" },
+    { "name": "Helicopters", 	"id": "15",	"allowed": "true" },
+    { "name": "Planes", 		"id": "16",	"allowed": "true" },
+    { "name": "Service", 		"id": "17",	"allowed": "true" },
+    { "name": "Emergency", 		"id": "18",	"allowed": "true" },
+    { "name": "Military", 		"id": "19",	"allowed": "true" },
+    { "name": "Commercial", 	"id": "20",	"allowed": "true" },
+    { "name": "Trains", 		"id": "21",	"allowed": "true" }
+  ],
+  "models": [
+    { "name": "fd",  "allowed": "true" },
+    { "name": "r35", "allowed": "true" },
+    { "name": "a80", "allowed": "true" },
+    { "name": "na1", "allowed": "true" },
+    { "name": "na6", "allowed": "true" }
+  ]
+}
