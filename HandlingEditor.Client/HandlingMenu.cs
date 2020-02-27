@@ -10,58 +10,17 @@ namespace HandlingEditor.Client
     internal class HandlingMenu
     {
         private readonly INotificationHandler notifier;
+        private readonly HandlingEditor handlingEditor;
 
         #region Private Fields
 
-        /// <summary>
-        /// The injected script dependency
-        /// </summary>
-        private HandlingEditor _handlingEditor;
-
-        private HandlingInfo _handlingInfo;
-
-        /// <summary>
-        /// The <see cref="MenuAPI"/> controller
-        /// </summary>
-        private MenuController menuController;
-
-        /// <summary>
-        /// The main menu
-        /// </summary>
-        private Menu mainMenu;
-
-        /// <summary>
-        /// The main menu which allows to edit each field
-        /// </summary>
-        private Menu editorMenu;
-
-        /// <summary>
-        /// The menu which shows the personal presets
-        /// </summary>
-        private Menu personalPresetsMenu;
-
-        /// <summary>
-        /// The menu which shows the server presets
-        /// </summary>
-        private Menu serverPresetsMenu;
-
-        /// <summary>
-        /// The menu which shows the settings
-        /// </summary>
-        private Menu settingsMenu;
-
-        private bool showLockedFields = true;
-
-        #endregion
-
-        #region Public Properties
-
-        public float FloatStep => _handlingEditor.FloatStep;
-        public int ToggleMenu => _handlingEditor.ToggleMenu;
-        public bool CurrentPresetIsValid => _handlingEditor.CurrentPresetIsValid;
-        public HandlingPreset CurrentPreset => _handlingEditor.CurrentPreset;
-        public Dictionary<string, HandlingPreset> ServerPresets => _handlingEditor.ServerPresets;
-        public HandlingInfo HandlingInfo => _handlingEditor.handlingInfo;
+        private MenuController m_menuController;
+        private Menu m_mainMenu;
+        private Menu m_editorMenu;
+        private Menu m_personalPresetsMenu;
+        private Menu m_serverPresetsMenu;
+        private Menu m_settingsMenu;
+        private bool m_showLockedFields = true;
 
         #endregion
 
@@ -90,23 +49,22 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Constructor with the <see cref="HandlingEditor"/> script
         /// </summary>
-        internal HandlingMenu(HandlingEditor handlingEditor, HandlingInfo handlingInfo)
+        internal HandlingMenu(HandlingEditor script)
         {
             notifier = Framework.Notifier;
 
-            if (handlingEditor == null || handlingInfo == null)
+            if (script == null)
                 return;
 
-            _handlingEditor = handlingEditor;
-            _handlingInfo = handlingInfo;
+            handlingEditor = script;
 
             // Used for the on screen keyboard
             AddTextEntry("HANDLING_EDITOR_ENTER_VALUE", "Enter value (without spaces)");
             InitializeMenu();
 
-            _handlingEditor.PresetChanged += new EventHandler((sender, args) => UpdateEditorMenu());
-            _handlingEditor.PersonalPresetsListChanged += new EventHandler((sender, args) => UpdatePersonalPresetsMenu());
-            _handlingEditor.ServerPresetsListChanged += new EventHandler((sender, args) => UpdateServerPresetsMenu());
+            handlingEditor.PresetChanged += new EventHandler((sender, args) => UpdateEditorMenu());
+            handlingEditor.PersonalPresetsListChanged += new EventHandler((sender, args) => UpdatePersonalPresetsMenu());
+            handlingEditor.ServerPresetsListChanged += new EventHandler((sender, args) => UpdateServerPresetsMenu());
         }
 
         #endregion
@@ -124,61 +82,61 @@ namespace HandlingEditor.Client
         /// </summary>
         private void InitializeMenu()
         {
-            if(mainMenu == null)
+            if(m_mainMenu == null)
             {
-                mainMenu = new Menu(Globals.ScriptName, "Main Menu");
+                m_mainMenu = new Menu(Globals.ScriptName, "Main Menu");
             }
 
-            if (editorMenu == null)
+            if (m_editorMenu == null)
             {
-                editorMenu = new Menu(Globals.ScriptName, "Editor Menu");
+                m_editorMenu = new Menu(Globals.ScriptName, "Editor Menu");
 
-                editorMenu.OnItemSelect += EditorMenu_OnItemSelect;
-                editorMenu.OnDynamicListItemSelect += EditorMenu_OnDynamicListItemSelect;
-                editorMenu.OnDynamicListItemCurrentItemChange += EditorMenu_OnDynamicListItemCurrentItemChange;
+                m_editorMenu.OnItemSelect += EditorMenu_OnItemSelect;
+                m_editorMenu.OnDynamicListItemSelect += EditorMenu_OnDynamicListItemSelect;
+                m_editorMenu.OnDynamicListItemCurrentItemChange += EditorMenu_OnDynamicListItemCurrentItemChange;
             }
             
-            if (personalPresetsMenu == null)
+            if (m_personalPresetsMenu == null)
             {
-                personalPresetsMenu = new Menu(Globals.ScriptName, "Personal Presets Menu");
+                m_personalPresetsMenu = new Menu(Globals.ScriptName, "Personal Presets Menu");
 
-                personalPresetsMenu.OnItemSelect += PersonalPresetsMenu_OnItemSelect;
+                m_personalPresetsMenu.OnItemSelect += PersonalPresetsMenu_OnItemSelect;
 
                 #region Save/Delete Handler
 
-                personalPresetsMenu.InstructionalButtons.Add(Control.PhoneExtraOption, GetLabelText("ITEM_SAVE"));
-                personalPresetsMenu.InstructionalButtons.Add(Control.PhoneOption, GetLabelText("ITEM_DEL"));
+                m_personalPresetsMenu.InstructionalButtons.Add(Control.PhoneExtraOption, GetLabelText("ITEM_SAVE"));
+                m_personalPresetsMenu.InstructionalButtons.Add(Control.PhoneOption, GetLabelText("ITEM_DEL"));
 
                 // Disable Controls binded on the same key
-                personalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.SelectWeapon, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) => { }), true));
-                personalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.VehicleExit, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) => { }), true));
+                m_personalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.SelectWeapon, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) => { }), true));
+                m_personalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.VehicleExit, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) => { }), true));
 
-                personalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneExtraOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>(async (sender, control) =>
+                m_personalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneExtraOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>(async (sender, control) =>
                 {
                     string kvpName = await GetOnScreenString("");
-                    MenuSavePersonalPresetButtonPressed?.Invoke(personalPresetsMenu, kvpName);
+                    MenuSavePersonalPresetButtonPressed?.Invoke(m_personalPresetsMenu, kvpName);
                 }), true));
-                personalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) =>
+                m_personalPresetsMenu.ButtonPressHandlers.Add(new Menu.ButtonPressHandler(Control.PhoneOption, Menu.ControlPressCheckType.JUST_PRESSED, new Action<Menu, Control>((sender, control) =>
                 {
-                    if (personalPresetsMenu.GetMenuItems().Count > 0)
+                    if (m_personalPresetsMenu.GetMenuItems().Count > 0)
                     {
-                        string kvpName = personalPresetsMenu.GetMenuItems()[personalPresetsMenu.CurrentIndex].Text;
-                        MenuDeletePersonalPresetButtonPressed?.Invoke(personalPresetsMenu, kvpName);
+                        string kvpName = m_personalPresetsMenu.GetMenuItems()[m_personalPresetsMenu.CurrentIndex].Text;
+                        MenuDeletePersonalPresetButtonPressed?.Invoke(m_personalPresetsMenu, kvpName);
                     }
                 }), true));
 
                 #endregion
             }
-            if (serverPresetsMenu == null)
+            if (m_serverPresetsMenu == null)
             {
-                serverPresetsMenu = new Menu(Globals.ScriptName, "Server Presets Menu");
+                m_serverPresetsMenu = new Menu(Globals.ScriptName, "Server Presets Menu");
 
-                serverPresetsMenu.OnItemSelect += ServerPresetsMenu_OnItemSelect;
+                m_serverPresetsMenu.OnItemSelect += ServerPresetsMenu_OnItemSelect;
             }
 
-            if(settingsMenu == null)
+            if(m_settingsMenu == null)
             {
-                settingsMenu = new Menu(Globals.ScriptName, "Settings Menu");
+                m_settingsMenu = new Menu(Globals.ScriptName, "Settings Menu");
             }
 
             UpdateSettingsMenu();
@@ -191,45 +149,45 @@ namespace HandlingEditor.Client
             {
                 Label = "→→→"
             };
-            mainMenu.AddMenuItem(editorMenuItem);
-            MenuController.BindMenuItem(mainMenu, editorMenu, editorMenuItem);
+            m_mainMenu.AddMenuItem(editorMenuItem);
+            MenuController.BindMenuItem(m_mainMenu, m_editorMenu, editorMenuItem);
 
             // Create Personal Presets sub menu and bind item to a button
             var PersonalPresetsItem = new MenuItem("Personal Presets", "The menu containing the handling presets saved by you.")
             {
                 Label = "→→→"
             };
-            mainMenu.AddMenuItem(PersonalPresetsItem);
-            MenuController.BindMenuItem(mainMenu, personalPresetsMenu, PersonalPresetsItem);
+            m_mainMenu.AddMenuItem(PersonalPresetsItem);
+            MenuController.BindMenuItem(m_mainMenu, m_personalPresetsMenu, PersonalPresetsItem);
 
             // Create Server Presets sub menu and bind item to a button
             var ServerPresetsItem = new MenuItem("Server Presets", "The menu containing the handling presets loaded from the server.")
             {
                 Label = "→→→"
             };
-            mainMenu.AddMenuItem(ServerPresetsItem);
-            MenuController.BindMenuItem(mainMenu, serverPresetsMenu, ServerPresetsItem);
+            m_mainMenu.AddMenuItem(ServerPresetsItem);
+            MenuController.BindMenuItem(m_mainMenu, m_serverPresetsMenu, ServerPresetsItem);
 
             // Create Settings sub menu and bind item to a button
             var settingsMenuItem = new MenuItem("Settings", "The menu containing the handling editor settings.")
             {
                 Label = "→→→"
             };
-            mainMenu.AddMenuItem(settingsMenuItem);
-            MenuController.BindMenuItem(mainMenu, settingsMenu, settingsMenuItem);
+            m_mainMenu.AddMenuItem(settingsMenuItem);
+            MenuController.BindMenuItem(m_mainMenu, m_settingsMenu, settingsMenuItem);
 
-            if (menuController == null)
+            if (m_menuController == null)
             {
-                menuController = new MenuController();
-                MenuController.AddMenu(mainMenu);
-                MenuController.AddMenu(editorMenu);
-                MenuController.AddMenu(personalPresetsMenu);
-                MenuController.AddMenu(serverPresetsMenu);
-                MenuController.AddMenu(settingsMenu);
+                m_menuController = new MenuController();
+                MenuController.AddMenu(m_mainMenu);
+                MenuController.AddMenu(m_editorMenu);
+                MenuController.AddMenu(m_personalPresetsMenu);
+                MenuController.AddMenu(m_serverPresetsMenu);
+                MenuController.AddMenu(m_settingsMenu);
                 MenuController.MenuAlignment = MenuController.MenuAlignmentOption.Right;
-                MenuController.MenuToggleKey = (Control)ToggleMenu;
+                MenuController.MenuToggleKey = (Control)handlingEditor.Config.ToggleMenuControl;
                 MenuController.EnableMenuToggleKeyOnController = false;
-                MenuController.MainMenu = mainMenu;
+                MenuController.MainMenu = m_mainMenu;
             }
         }
 
@@ -258,7 +216,7 @@ namespace HandlingEditor.Client
         private void EditorMenu_OnItemSelect(Menu menu, MenuItem menuItem, int itemIndex)
         {
             // If the sender isn't the main editor menu...
-            if (menu != editorMenu)
+            if (menu != m_editorMenu)
                 return;
 
             if ((menuItem.ItemData as string) == "handling_reset")
@@ -399,7 +357,7 @@ namespace HandlingEditor.Client
         private void EditorMenu_OnDynamicListItemCurrentItemChange(Menu menu, MenuDynamicListItem dynamicListItem, string oldValue, string newValue)
         {
             // If the sender isn't the main editor menu...
-            if (menu != editorMenu)
+            if (menu != m_editorMenu)
                 return;
 
             // If item data is not the expected one...
@@ -415,29 +373,29 @@ namespace HandlingEditor.Client
 
         private void UpdateSettingsMenu()
         {
-            if (settingsMenu == null)
+            if (m_settingsMenu == null)
                 return;
 
-            settingsMenu.ClearMenuItems();
+            m_settingsMenu.ClearMenuItems();
 
-            var showLockedFieldsCheckboxItem = new MenuCheckboxItem("Show Locked Fields", "Whether the editor menu should show or not the fields you can't edit.", showLockedFields)
+            var showLockedFieldsCheckboxItem = new MenuCheckboxItem("Show Locked Fields", "Whether the editor menu should show or not the fields you can't edit.", m_showLockedFields)
             {
                 ItemData = "handling_settings_show_locked_fields"
             };
-            settingsMenu.AddMenuItem(showLockedFieldsCheckboxItem);
+            m_settingsMenu.AddMenuItem(showLockedFieldsCheckboxItem);
 
-            settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
+            m_settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
         }
 
         private void SettingsMenu_OnCheckboxChange(Menu menu, MenuCheckboxItem menuItem, int itemIndex, bool newCheckedState)
         {
             // If the sender isn't the settings menu...
-            if (menu != settingsMenu)
+            if (menu != m_settingsMenu)
                 return;
 
             if ((menuItem.ItemData as string) == "handling_settings_show_locked_fields")
             {
-                showLockedFields = newCheckedState;
+                m_showLockedFields = newCheckedState;
                 UpdateEditorMenu();
             }
         }
@@ -447,16 +405,16 @@ namespace HandlingEditor.Client
         /// </summary>
         private void UpdateEditorMenu()
         {
-            if (editorMenu == null)
+            if (m_editorMenu == null)
                 return;
 
-            editorMenu.ClearMenuItems();
+            m_editorMenu.ClearMenuItems();
 
-            if (!CurrentPresetIsValid)
+            if (!handlingEditor.CurrentPresetIsValid)
                 return;
 
             // Add all the controllers
-            foreach (var item in _handlingInfo.Fields)
+            foreach (var item in handlingEditor.HandlingInfo.Fields)
             {
                 var fieldInfo = item.Value;
 
@@ -468,16 +426,16 @@ namespace HandlingEditor.Client
                     Type fieldType = fieldInfo.Type;
 
                     if (fieldType == FieldType.FloatType)
-                        AddDynamicFloatList(editorMenu, (FieldInfo<float>)item.Value);
+                        AddDynamicFloatList(m_editorMenu, (FieldInfo<float>)item.Value);
                     else if (fieldType == FieldType.IntType)
-                        AddDynamicIntList(editorMenu, (FieldInfo<int>)item.Value);
+                        AddDynamicIntList(m_editorMenu, (FieldInfo<int>)item.Value);
                     else if (fieldType == FieldType.Vector3Type)
-                        AddDynamicVector3List(editorMenu, (FieldInfo<Vector3>)item.Value);
+                        AddDynamicVector3List(m_editorMenu, (FieldInfo<Vector3>)item.Value);
                 }
                 else
                 {
-                    if(showLockedFields)
-                        AddLockedItem(editorMenu, item.Value);
+                    if(m_showLockedFields)
+                        AddLockedItem(m_editorMenu, item.Value);
                 }
             }
 
@@ -485,7 +443,7 @@ namespace HandlingEditor.Client
             {
                 ItemData = "handling_reset",
             };
-            editorMenu.AddMenuItem(resetItem);
+            m_editorMenu.AddMenuItem(resetItem);
         }
 
         /// <summary>
@@ -493,16 +451,16 @@ namespace HandlingEditor.Client
         /// </summary>
         private void UpdatePersonalPresetsMenu()
         {
-            if (personalPresetsMenu == null)
+            if (m_personalPresetsMenu == null)
                 return;
 
-            personalPresetsMenu.ClearMenuItems();
+            m_personalPresetsMenu.ClearMenuItems();
 
             KvpEnumerable kvpList = new KvpEnumerable(Globals.KvpPrefix);
             foreach (var key in kvpList)
             {
                 string value = GetResourceKvpString(key);
-                personalPresetsMenu.AddMenuItem(new MenuItem(key.Remove(0, Globals.KvpPrefix.Length)) { ItemData = key });
+                m_personalPresetsMenu.AddMenuItem(new MenuItem(key.Remove(0, Globals.KvpPrefix.Length)) { ItemData = key });
             }
         }
 
@@ -511,13 +469,13 @@ namespace HandlingEditor.Client
         /// </summary>
         private void UpdateServerPresetsMenu()
         {
-            if (serverPresetsMenu == null)
+            if (m_serverPresetsMenu == null)
                 return;
 
-            serverPresetsMenu.ClearMenuItems();
+            m_serverPresetsMenu.ClearMenuItems();
 
-            foreach (var preset in ServerPresets)
-                serverPresetsMenu.AddMenuItem(new MenuItem(preset.Key) { ItemData = preset.Key });
+            foreach (var preset in handlingEditor.ServerPresets)
+                m_serverPresetsMenu.AddMenuItem(new MenuItem(preset.Key) { ItemData = preset.Key });
         }
 
         /// <summary>
@@ -597,7 +555,7 @@ namespace HandlingEditor.Client
 
                 if (left)
                 {
-                    var newvalue = value - FloatStep;
+                    var newvalue = value - handlingEditor.Config.FloatStep;
                     if (newvalue < min)
                         notifier.Notify($"Min value allowed for ~b~{fieldName}~w~ is {min}");
                     else
@@ -607,7 +565,7 @@ namespace HandlingEditor.Client
                 }
                 else
                 {
-                    var newvalue = value + FloatStep;
+                    var newvalue = value + handlingEditor.Config.FloatStep;
                     if (newvalue > max)
                         notifier.Notify($"Max value allowed for ~b~{fieldName}~w~ is {max}");
                     else
@@ -634,7 +592,7 @@ namespace HandlingEditor.Client
                 {
                     if (left)
                     {
-                        var newvalue = value - FloatStep;
+                        var newvalue = value - handlingEditor.Config.FloatStep;
                         if (newvalue < minValueX)
                             notifier.Notify($"Min value allowed for ~b~{itemText}~w~ is {minValueX}");
                         else
@@ -644,7 +602,7 @@ namespace HandlingEditor.Client
                     }
                     else
                     {
-                        var newvalue = value + FloatStep;
+                        var newvalue = value + handlingEditor.Config.FloatStep;
                         if (newvalue > maxValueX)
                             notifier.Notify($"Max value allowed for ~b~{itemText}~w~ is {maxValueX}");
                         else
@@ -658,7 +616,7 @@ namespace HandlingEditor.Client
                 {
                     if (left)
                     {
-                        var newvalue = value - FloatStep;
+                        var newvalue = value - handlingEditor.Config.FloatStep;
                         if (newvalue < minValueY)
                             notifier.Notify($"Min value allowed for ~b~{itemText}~w~ is {minValueY}");
                         else
@@ -668,7 +626,7 @@ namespace HandlingEditor.Client
                     }
                     else
                     {
-                        var newvalue = value + FloatStep;
+                        var newvalue = value + handlingEditor.Config.FloatStep;
                         if (newvalue > maxValueY)
                             notifier.Notify($"Max value allowed for ~b~{itemText}~w~ is {maxValueY}");
                         else
@@ -682,7 +640,7 @@ namespace HandlingEditor.Client
                 {
                     if (left)
                     {
-                        var newvalue = value - FloatStep;
+                        var newvalue = value - handlingEditor.Config.FloatStep;
                         if (newvalue < minValueZ)
                             notifier.Notify($"Min value allowed for ~b~{itemText}~w~ is {minValueZ}");
                         else
@@ -692,7 +650,7 @@ namespace HandlingEditor.Client
                     }
                     else
                     {
-                        var newvalue = value + FloatStep;
+                        var newvalue = value + handlingEditor.Config.FloatStep;
                         if (newvalue > maxValueZ)
                             notifier.Notify($"Max value allowed for ~b~{itemText}~w~ is {maxValueZ}");
                         else
@@ -712,7 +670,7 @@ namespace HandlingEditor.Client
             string fieldName = fieldInfo.Name;
             string description = fieldInfo.Description;
 
-            if (!CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
+            if (!handlingEditor.CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
                 return null;
 
             var value = (float)tmp;
@@ -730,7 +688,7 @@ namespace HandlingEditor.Client
             string fieldName = fieldInfo.Name;
             string description = fieldInfo.Description;
 
-            if (!CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
+            if (!handlingEditor.CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
                 return null;
 
             var value = (int)tmp;
@@ -747,7 +705,7 @@ namespace HandlingEditor.Client
         {
             string fieldName = fieldInfo.Name;
 
-            if (!CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
+            if (!handlingEditor.CurrentPreset.Fields.TryGetValue(fieldName, out dynamic tmp))
                 return null;
 
             var value = (Vector3)tmp;

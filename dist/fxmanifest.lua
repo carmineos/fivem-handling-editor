@@ -1,5 +1,5 @@
-resource_manifest_version '44febabe-d386-4d18-afbe-5e627f4af937'
-
+fx_version 'adamant'
+games { 'gta5' }
 --dependency 'MenuAPI'
 
 files {
@@ -8,9 +8,12 @@ files {
 	'HandlingInfo.xml',
 	'HandlingPresets.xml',
 	'VehiclesPermissions.xml',
-	'config.ini'
+	'Newtonsoft.Json.dll',
+	'config.json'
 }
 client_script {
 	'System.Xml.Mono.net.dll',
 	'HandlingEditor.Client.net.dll'
 }
+
+

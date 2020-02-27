@@ -10,7 +10,7 @@
         /// <summary>
         /// The level of log that should be processed
         /// </summary>
-        public LogLevel LogLevel { get; set; } = LogLevel.Trace;
+        public LogLevel LogLevel { get; set; } = LogLevel.Information;
 
         /// <summary>
         /// Whether to log the time as part of the message

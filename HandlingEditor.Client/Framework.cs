@@ -10,14 +10,18 @@
 
         public static HandlingInfo HandlingInfo { get; set; }
 
-        public static void Build()
+        public static void Build(HandlingConfig config)
         {
             //Container = new Container();
 
             //Container.Register<ILogger, CfxLogger>(Lifestyle.Singleton);
             //Container.Register<INotificationHandler, ScreenNotificationHandler>(Lifestyle.Singleton);
 
-            Logger = new CfxLogger(new CfxLoggerConfiguration() { LogLevel = LogLevel.Debug });
+            Logger = new CfxLogger(new CfxLoggerConfiguration() 
+            {
+                LogLevel = config != null ? config.LogLevel : LogLevel.Debug,
+            });
+
             Notifier = new FeedNotificationHandler();
             HandlingInfo = new HandlingInfo(Logger);
         }

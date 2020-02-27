@@ -1,0 +1,7 @@
+{
+  "LogLevel": 2,
+  "FloatStep": 0.01,
+  "ScriptRange": 150.0,
+  "Timer": 1000,
+  "ToggleMenuControl": 168
+}

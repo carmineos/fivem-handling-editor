@@ -93,4 +93,17 @@ namespace HandlingEditor.Client
             return false;
         }
     }
+    /*
+    public class ClassPermission
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public bool Allowed { get; set; }
+    }
+
+    public class ModelPermission
+    {
+        public string Name { get; set; }
+        public bool Allowed { get; set; }
+    }*/
 }

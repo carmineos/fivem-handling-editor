@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using CitizenFX.Core;
+using Newtonsoft.Json;
 using static CitizenFX.Core.Native.API;
 
 namespace HandlingEditor.Client
@@ -34,88 +35,24 @@ namespace HandlingEditor.Client
 
         #endregion
 
-        #region Public Fields
+        #region Private Fields
 
-        #region Config
-
-        /// <summary>
-        /// The minimum difference to determine if two floats are equal
-        /// </summary>
-        public float Epsilon = 0.001f;
-
-        /// <summary>
-        /// The amount used to change a float when left/right arrows are pressed in the menu
-        /// </summary>
-        public float FloatStep = 0.01f;
-
-        /// <summary>
-        /// The max distance within which the script will refresh the vehicles
-        /// </summary>
-        public float ScriptRange = 150.0f;
-
-        /// <summary>
-        /// The timer used to determine when the script should do some tasks
-        /// </summary>
-        public long Timer = 1000;
-
-        /// <summary>
-        /// Wheter debug should be enabled
-        /// </summary>
-        public bool Debug = false;
-
-        /// <summary>
-        /// The <see cref="Control"/> used to open the menu
-        /// </summary>
-        public int ToggleMenu = 168;
-
-        #endregion
-
-        /// <summary>
-        /// The script which controls the menu
-        /// </summary>
-        private HandlingMenu _handlingMenu;
-
-        /// <summary>
-        /// The server presets
-        /// </summary>
-        public Dictionary<string, HandlingPreset> ServerPresets;
-
-        /// <summary>
-        /// The last game time the <see cref="ScriptTask"/> was executed
-        /// </summary>
-        private long LastTime;
-
-        /// <summary>
-        /// The ped of the player
-        /// </summary>
-        private int PlayerPed;
-
-        /// <summary>
-        /// The current vehicle the player is driving (-1 otherwise)
-        /// </summary>
-        private int CurrentVehicle;
-
-        /// <summary>
-        /// The handling preset for the <see cref="CurrentVehicle"/> 
-        /// </summary>
-        public HandlingPreset CurrentPreset;
-
-        /// <summary>
-        /// All the world vehicles
-        /// </summary>
-        private IEnumerable<int> Vehicles;
-
-        public HandlingInfo handlingInfo;
+        private readonly float m_epsilon = 0.001f;
+        private HandlingMenu m_handlingMenu;
+        private long m_lastTime;
+        private int m_playerPed;
+        private int m_currentVehicle;
+        private IEnumerable<int> m_worldVehicles;
 
         #endregion
 
         #region Public Properties
 
-        /// <summary>
-        /// Wheter <see cref="CurrentVehicle"/> and <see cref="CurrentPreset"/> are valid
-        /// </summary>
-        public bool CurrentPresetIsValid => CurrentVehicle != -1 && CurrentPreset != null;
-
+        public bool CurrentPresetIsValid => m_currentVehicle != -1 && CurrentPreset != null;
+        public HandlingPreset CurrentPreset { get; private set; }
+        public HandlingInfo HandlingInfo { get; private set; }
+        public HandlingConfig Config { get; private set; }
+        public Dictionary<string, HandlingPreset> ServerPresets { get; private set; }
         #endregion
 
         #region Constructor
@@ -125,8 +62,9 @@ namespace HandlingEditor.Client
         /// </summary>
         public HandlingEditor()
         {
-            Framework.Build();
+            Config = LoadConfig();
 
+            Framework.Build(Config);
             logger = Framework.Logger;
             notifier = Framework.Notifier;
 
@@ -137,16 +75,16 @@ namespace HandlingEditor.Client
                 return;
             }
 
-            handlingInfo = Framework.HandlingInfo;
+            HandlingInfo = Framework.HandlingInfo;
             localPresets = new KvpPresetManager(Globals.KvpPrefix);
 
-            LastTime = GetGameTimer();
+            m_lastTime = GetGameTimer();
+            m_worldVehicles = Enumerable.Empty<int>();
+            m_currentVehicle = -1;
+            
             CurrentPreset = null;
-            CurrentVehicle = -1;
-            Vehicles = Enumerable.Empty<int>();
             ServerPresets = new Dictionary<string, HandlingPreset>();
 
-            LoadConfig();
             ReadFieldInfo();
             ReadServerPresets();
             RegisterDecorators();
@@ -164,14 +102,15 @@ namespace HandlingEditor.Client
 
                 if (float.TryParse(args[0], out float value))
                 {
-                    ScriptRange = value;
-                    logger.Log(LogLevel.Information, $"Received new {nameof(ScriptRange)} value {value}");
+                    Config.ScriptRange = value;
+                    logger.Log(LogLevel.Information, $"Received new {nameof(Config.ScriptRange)} value {value}");
                 }
                 else logger.Log(LogLevel.Error, $"Can't parse {args[0]} as float");
 
             }), false);
-
-            RegisterCommand("handling_debug", new Action<int, dynamic>((source, args) =>
+            
+            /*
+            RegisterCommand("handling_loglevel", new Action<int, dynamic>((source, args) =>
             {
                 if (args.Count < 1)
                 {
@@ -179,19 +118,20 @@ namespace HandlingEditor.Client
                     return;
                 }
 
-                if (bool.TryParse(args[0], out bool value))
+                if (int.TryParse(args[0], out int value))
                 {
-                    Debug = value;
-                    logger.Log(LogLevel.Information, $"Received new {nameof(Debug)} value {value}");
+                    Config.LogLevel = (LogLevel)value;
+                    logger.Log(LogLevel.Information, $"Received new {nameof(Config.LogLevel)} value {value}");
                 }
                 else logger.Log(LogLevel.Error, $"Can't parse {args[0]} as bool");
 
             }), false);
+            */
 
             RegisterCommand("handling_decorators", new Action<int, dynamic>((source, args) =>
             {
                 if (args.Count < 1)
-                    PrintDecorators(CurrentVehicle);
+                    PrintDecorators(m_currentVehicle);
                 else
                 {
                     if (int.TryParse(args[0], out int value))
@@ -203,7 +143,7 @@ namespace HandlingEditor.Client
 
             RegisterCommand("handling_print", new Action<int, dynamic>((source, args) =>
             {
-                PrintVehiclesWithDecorators(Vehicles);
+                PrintVehiclesWithDecorators(m_worldVehicles);
             }), false);
 
             RegisterCommand("handling_preset", new Action<int, dynamic>((source, args) =>
@@ -225,16 +165,16 @@ namespace HandlingEditor.Client
             #endregion
 
             // Create the menu
-            _handlingMenu = new HandlingMenu(this, handlingInfo);
+            m_handlingMenu = new HandlingMenu(this);
 
             #region GUI Events Handling
 
-            _handlingMenu.MenuApplyPersonalPresetButtonPressed += GUI_MenuApplyPersonalPresetButtonPressed;
-            _handlingMenu.MenuApplyServerPresetButtonPressed += GUI_MenuApplyServerPresetButtonPressed;
-            _handlingMenu.MenuSavePersonalPresetButtonPressed += GUI_MenuSavePersonalPresetButtonPressed;
-            _handlingMenu.MenuDeletePersonalPresetButtonPressed += GUI_MenuDeletePersonalPresetButtonPressed;
-            _handlingMenu.MenuResetPresetButtonPressed += GUI_MenuResetPresetButtonPressed;
-            _handlingMenu.MenuPresetValueChanged += GUI_MenuPresetValueChanged;
+            m_handlingMenu.MenuApplyPersonalPresetButtonPressed += GUI_MenuApplyPersonalPresetButtonPressed;
+            m_handlingMenu.MenuApplyServerPresetButtonPressed += GUI_MenuApplyServerPresetButtonPressed;
+            m_handlingMenu.MenuSavePersonalPresetButtonPressed += GUI_MenuSavePersonalPresetButtonPressed;
+            m_handlingMenu.MenuDeletePersonalPresetButtonPressed += GUI_MenuDeletePersonalPresetButtonPressed;
+            m_handlingMenu.MenuResetPresetButtonPressed += GUI_MenuResetPresetButtonPressed;
+            m_handlingMenu.MenuPresetValueChanged += GUI_MenuPresetValueChanged;
 
             #endregion
 
@@ -245,15 +185,6 @@ namespace HandlingEditor.Client
         }
 
         #endregion
-
-        private async Task HideUITask()
-        {
-            if (!CurrentPresetIsValid && _handlingMenu != null)
-                _handlingMenu.HideUI();
-
-            await Task.FromResult(0);
-        }
-
 
         #region GUI Event Handlers
 
@@ -267,7 +198,7 @@ namespace HandlingEditor.Client
         {
             // Be sure the field is supported
 
-            if (!handlingInfo.Fields.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
+            if (!HandlingInfo.Fields.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 return;
 
             // Get the field type
@@ -312,8 +243,8 @@ namespace HandlingEditor.Client
         private async void GUI_MenuResetPresetButtonPressed(object sender, EventArgs e)
         {
             CurrentPreset.Reset();
-            RemoveDecorators(CurrentVehicle);
-            RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
+            RemoveDecorators(m_currentVehicle);
+            RefreshVehicleUsingPreset(m_currentVehicle, CurrentPreset);
 
             await Delay(200);
             PresetChanged?.Invoke(this, EventArgs.Empty);
@@ -377,42 +308,42 @@ namespace HandlingEditor.Client
         #region Tasks
 
         /// <summary>
-        /// Updates the <see cref="CurrentVehicle"/> and the <see cref="CurrentPreset"/>
+        /// Updates the <see cref="m_currentVehicle"/> and the <see cref="CurrentPreset"/>
         /// </summary>
         /// <returns></returns>
         private async Task GetCurrentVehicle()
         {
-            PlayerPed = PlayerPedId();
+            m_playerPed = PlayerPedId();
 
-            if (IsPedInAnyVehicle(PlayerPed, false))
+            if (IsPedInAnyVehicle(m_playerPed, false))
             {
-                int vehicle = GetVehiclePedIsIn(PlayerPed, false);
+                int vehicle = GetVehiclePedIsIn(m_playerPed, false);
 
-                if (VehiclesPermissions.IsVehicleAllowed(vehicle) && GetPedInVehicleSeat(vehicle, -1) == PlayerPed && !IsEntityDead(vehicle))
+                if (VehiclesPermissions.IsVehicleAllowed(vehicle) && GetPedInVehicleSeat(vehicle, -1) == m_playerPed && !IsEntityDead(vehicle))
                 {
                     // Update current vehicle and get its preset
-                    if (vehicle != CurrentVehicle)
+                    if (vehicle != m_currentVehicle)
                     {
-                        CurrentVehicle = vehicle;
-                        logger.Log(LogLevel.Debug, $"New vehicle handle: {CurrentVehicle}");
+                        m_currentVehicle = vehicle;
+                        logger.Log(LogLevel.Debug, $"New vehicle handle: {m_currentVehicle}");
 
 
                         CurrentPreset = new HandlingPreset();
-                        CurrentPreset.FromHandle(CurrentVehicle);
+                        CurrentPreset.FromHandle(m_currentVehicle);
                         PresetChanged?.Invoke(this, EventArgs.Empty);
                     }
                 }
                 else
                 {
                     // If current vehicle isn't a car or player isn't driving current vehicle or vehicle is dead
-                    CurrentVehicle = -1;
+                    m_currentVehicle = -1;
                     CurrentPreset = null;
                 }
             }
             else
             {
                 // If player isn't in any vehicle
-                CurrentVehicle = -1;
+                m_currentVehicle = -1;
                 CurrentPreset = null;
             }
 
@@ -425,29 +356,37 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         private async Task ScriptTask()
         {
-            var CurrentTime = (GetGameTimer() - LastTime);
+            var CurrentTime = (GetGameTimer() - m_lastTime);
 
             // Check if decorators needs to be updated
-            if (CurrentTime > Timer)
+            if (CurrentTime > Config.Timer)
             {
                 // Current vehicle could be updated each tick to show the edited fields live
                 // Check if current vehicle needs to be refreshed
                 if (CurrentPresetIsValid)
                 {
                     if (CurrentPreset.IsEdited)
-                        RefreshVehicleUsingPreset(CurrentVehicle, CurrentPreset);
+                        RefreshVehicleUsingPreset(m_currentVehicle, CurrentPreset);
 
-                    UpdateVehicleDecorators(CurrentVehicle, CurrentPreset);
+                    UpdateVehicleDecorators(m_currentVehicle, CurrentPreset);
                 }
                     
 
-                Vehicles = new VehicleEnumerable();
+                m_worldVehicles = new VehicleEnumerable();
 
                 // Refreshes the iterated vehicles
-                RefreshVehicles(Vehicles.Except(new List<int> { CurrentVehicle }));
+                RefreshVehicles(m_worldVehicles.Except(new List<int> { m_currentVehicle }));
 
-                LastTime = GetGameTimer();
+                m_lastTime = GetGameTimer();
             }
+
+            await Task.FromResult(0);
+        }
+
+        private async Task HideUITask()
+        {
+            if (!CurrentPresetIsValid && m_handlingMenu != null)
+                m_handlingMenu.HideUI();
 
             await Task.FromResult(0);
         }
@@ -493,7 +432,7 @@ namespace HandlingEditor.Client
                 string fieldName = item.Key;
                 dynamic fieldValue = item.Value;
 
-                var fieldsInfo = handlingInfo.Fields;
+                var fieldsInfo = HandlingInfo.Fields;
                 if (!fieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
                 {
                     logger.Log(LogLevel.Debug, $"No fieldInfo definition found for {fieldName}");
@@ -506,7 +445,7 @@ namespace HandlingEditor.Client
                 if (fieldType == FieldType.FloatType)
                 {
                     var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                    if (!MathUtil.WithinEpsilon(value, fieldValue, Epsilon))
+                    if (!MathUtil.WithinEpsilon(value, fieldValue, m_epsilon))
                     {
                         SetVehicleHandlingFloat(vehicle, className, fieldName, fieldValue);
 
@@ -544,7 +483,7 @@ namespace HandlingEditor.Client
         /// <param name="vehiclesList"></param>
         private void RefreshVehicles(IEnumerable<int> vehiclesList)
         {
-            Vector3 currentCoords = GetEntityCoords(PlayerPed, true);
+            Vector3 currentCoords = GetEntityCoords(m_playerPed, true);
 
             foreach (int entity in vehiclesList)
             {
@@ -552,7 +491,7 @@ namespace HandlingEditor.Client
                 {
                     Vector3 coords = GetEntityCoords(entity, true);
 
-                    if (Vector3.Distance(currentCoords, coords) <= ScriptRange)
+                    if (Vector3.Distance(currentCoords, coords) <= Config.ScriptRange)
                         RefreshVehicleUsingDecorators(entity);
                 }
             }
@@ -564,7 +503,7 @@ namespace HandlingEditor.Client
         /// <param name="vehicle"></param>
         private void RefreshVehicleUsingDecorators(int vehicle)
         {
-            foreach (var item in handlingInfo.Fields.Where(a => a.Value.Editable))
+            foreach (var item in HandlingInfo.Fields.Where(a => a.Value.Editable))
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -576,7 +515,7 @@ namespace HandlingEditor.Client
                     {
                         var decorValue = DecorGetFloat(vehicle, fieldName);
                         var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
-                        if (!MathUtil.WithinEpsilon(value, decorValue, Epsilon))
+                        if (!MathUtil.WithinEpsilon(value, decorValue, m_epsilon))
                         {
                             SetVehicleHandlingFloat(vehicle, className, fieldName, decorValue);
 
@@ -633,7 +572,7 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         private bool HasDecorators(int vehicle)
         {
-            foreach (var item in handlingInfo.Fields)
+            foreach (var item in HandlingInfo.Fields)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -654,7 +593,7 @@ namespace HandlingEditor.Client
         /// </summary>
         private void RegisterDecorators()
         {
-            foreach (var item in handlingInfo.Fields)
+            foreach (var item in HandlingInfo.Fields)
             {
                 string fieldName = item.Key;
                 Type type = item.Value.Type;
@@ -692,7 +631,7 @@ namespace HandlingEditor.Client
         /// <param name="vehicle"></param>
         private void RemoveDecorators(int vehicle)
         {
-            foreach (var item in handlingInfo.Fields)
+            foreach (var item in HandlingInfo.Fields)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -741,7 +680,7 @@ namespace HandlingEditor.Client
             if (DecorExistOn(vehicle, name))
             {
                 float decorValue = DecorGetFloat(vehicle, name);
-                if (!MathUtil.WithinEpsilon(currentValue, decorValue, Epsilon))
+                if (!MathUtil.WithinEpsilon(currentValue, decorValue, m_epsilon))
                 {
                     DecorSetFloat(vehicle, name, currentValue);
                     logger.Log(LogLevel.Debug, $"Updated decorator {name} updated from {decorValue} to {currentValue} for vehicle {vehicle}");
@@ -749,7 +688,7 @@ namespace HandlingEditor.Client
             }
             else // Decorator doesn't exist, create it if required
             {
-                if (!MathUtil.WithinEpsilon(currentValue, defaultValue, Epsilon))
+                if (!MathUtil.WithinEpsilon(currentValue, defaultValue, m_epsilon))
                 {
                     DecorSetFloat(vehicle, name, currentValue);
                     logger.Log(LogLevel.Debug, $"Added decorator {name} with value {currentValue} to vehicle {vehicle}");
@@ -798,7 +737,7 @@ namespace HandlingEditor.Client
             foreach (var item in preset.Fields)
             {
                 string fieldName = item.Key;
-                Type fieldType = handlingInfo.Fields[fieldName].Type;
+                Type fieldType = HandlingInfo.Fields[fieldName].Type;
                 dynamic fieldValue = item.Value;
 
                 string defDecorName = $"{fieldName}_def";
@@ -855,7 +794,7 @@ namespace HandlingEditor.Client
             s.AppendLine($"Vehicle:{vehicle} netID:{netID}");
             s.AppendLine("Decorators List:");
 
-            foreach (var item in handlingInfo.Fields)
+            foreach (var item in HandlingInfo.Fields)
             {
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
@@ -940,9 +879,9 @@ namespace HandlingEditor.Client
             try
             {
                 strings = LoadResourceFile(Globals.ResourceName, filename);
-                handlingInfo.ParseXml(strings);
-                var editableFields = handlingInfo.Fields.Where(a => a.Value.Editable);
-                logger.Log(LogLevel.Information, $"Loaded {filename}, found {handlingInfo.Fields.Count} fields info, {editableFields.Count()} editable.");
+                HandlingInfo.ParseXml(strings);
+                var editableFields = HandlingInfo.Fields.Where(a => a.Value.Editable);
+                logger.Log(LogLevel.Information, $"Loaded {filename}, found {HandlingInfo.Fields.Count} fields info, {editableFields.Count()} editable.");
             }
             catch (Exception e)
             {
@@ -999,32 +938,24 @@ namespace HandlingEditor.Client
             }
         }
 
-        private void LoadConfig(string filename = "config.ini")
+        private HandlingConfig LoadConfig(string filename = "config.json")
         {
-            string strings = null;
+            HandlingConfig config;
             try
             {
-                strings = LoadResourceFile(Globals.ResourceName, filename);
+                string strings = LoadResourceFile(Globals.ResourceName, filename);
+                config = JsonConvert.DeserializeObject<HandlingConfig>(strings);
 
-                logger.Log(LogLevel.Information, $"Loaded settings from {filename}");
+                //logger.Log(LogLevel.Information, $"Loaded config from {filename}");
             }
             catch (Exception e)
             {
-                logger.Log(LogLevel.Error, $"Error loading {filename}");
-                logger.Log(LogLevel.Error, e.Message);
+                //logger.Log(LogLevel.Error, $"Impossible to load {filename}");
+                //logger.Log(LogLevel.Error, e.Message);
+                config = new HandlingConfig();
             }
-            finally
-            {
-                Config config = new Config(strings);
 
-                ToggleMenu = config.GetIntValue("toggleMenu", ToggleMenu);
-                FloatStep = config.GetFloatValue("FloatStep", FloatStep);
-                ScriptRange = config.GetFloatValue("ScriptRange", ScriptRange);
-                Timer = config.GetLongValue("timer", Timer);
-                Debug = config.GetBoolValue("debug", Debug);
-
-                logger.Log(LogLevel.Information, $"Settings {nameof(Timer)}={Timer} {nameof(Debug)}={Debug} {nameof(ScriptRange)}={ScriptRange}");
-            }
+            return config;
         }
 
         #endregion
