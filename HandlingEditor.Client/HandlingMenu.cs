@@ -456,10 +456,8 @@ namespace HandlingEditor.Client
 
             m_personalPresetsMenu.ClearMenuItems();
 
-            KvpEnumerable kvpList = new KvpEnumerable(Globals.KvpPrefix);
-            foreach (var key in kvpList)
+            foreach (var key in handlingEditor.LocalPresetsManager.GetKeys())
             {
-                string value = GetResourceKvpString(key);
                 m_personalPresetsMenu.AddMenuItem(new MenuItem(key.Remove(0, Globals.KvpPrefix.Length)) { ItemData = key });
             }
         }

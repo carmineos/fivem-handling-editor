@@ -14,7 +14,7 @@ namespace HandlingEditor.Client
     {
         private readonly ILogger logger;
         private readonly INotificationHandler notifier;
-        private readonly IPresetManager localPresets;
+        public IPresetManager<string, HandlingPreset> LocalPresetsManager { get; private set; }
 
         #region Public Events
 
@@ -76,7 +76,7 @@ namespace HandlingEditor.Client
             }
 
             HandlingInfo = Framework.HandlingInfo;
-            localPresets = new KvpPresetManager(Globals.KvpPrefix);
+            LocalPresetsManager = new KvpPresetManager(Globals.KvpPrefix);
 
             m_lastTime = GetGameTimer();
             m_worldVehicles = Enumerable.Empty<int>();
@@ -252,7 +252,7 @@ namespace HandlingEditor.Client
 
         private async void GUI_MenuSavePersonalPresetButtonPressed(object sender, string presetName)
         {
-            if (localPresets.Save(presetName, CurrentPreset))
+            if (LocalPresetsManager.Save(presetName, CurrentPreset))
             {
                 await Delay(200);
                 PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
@@ -264,7 +264,7 @@ namespace HandlingEditor.Client
 
         private async void GUI_MenuDeletePersonalPresetButtonPressed(object sender, string presetName)
         {
-            if (localPresets.Delete(presetName))
+            if (LocalPresetsManager.Delete(presetName))
             {
                 await Delay(200);
                 PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
@@ -289,7 +289,7 @@ namespace HandlingEditor.Client
 
         private async void GUI_MenuApplyPersonalPresetButtonPressed(object sender, string presetName)
         {
-            var loaded = localPresets.Load(presetName);
+            var loaded = LocalPresetsManager.Load(presetName);
             if(loaded != null)
             {
                 // TODO:

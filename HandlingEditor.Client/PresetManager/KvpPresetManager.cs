@@ -1,27 +1,31 @@
-﻿using static CitizenFX.Core.Native.API;
+﻿using System;
+using System.Collections.Generic;
+using static CitizenFX.Core.Native.API;
 
 namespace HandlingEditor.Client
 {
     /// <summary>
     /// The handling preset manager which saves the presets as key-value pairs built-in FiveM
     /// </summary>
-    public class KvpPresetManager : IPresetManager
+    public class KvpPresetManager : IPresetManager<string, HandlingPreset>
     {
         private string mKvpPrefix;
+
+        public event EventHandler PresetsListChanged;
 
         public KvpPresetManager(string prefix)
         {
             mKvpPrefix = prefix;
         }
 
-        public bool Delete(string id)
+        public bool Delete(string name)
         {
             // Check if the preset ID is valid
-            if (string.IsNullOrEmpty(id))
+            if (string.IsNullOrEmpty(name))
                 return false;
 
             // Get the KVP key
-            string key = $"{mKvpPrefix}{id}";
+            string key = string.Concat(mKvpPrefix, name);
 
             // Check if a KVP with the given key exists
             if (GetResourceKvpString(key) == null)
@@ -33,36 +37,36 @@ namespace HandlingEditor.Client
             return true;
         }
 
-        public bool Save(string ID, HandlingPreset preset)
+        public bool Save(string name, HandlingPreset preset)
         {
             // Check if the preset and the ID are valid
-            if (string.IsNullOrEmpty(ID) || preset == null)
+            if (string.IsNullOrEmpty(name) || preset == null)
                 return false;
 
             // Get the KVP key
-            string kvpName = $"{mKvpPrefix}{ID}";
+            string key = string.Concat(mKvpPrefix, name);
 
             // Be sure the key isn't already used
-            if (GetResourceKvpString(kvpName) != null)
+            if (GetResourceKvpString(key) != null)
                 return false;
 
             // Get the XML
-            var xml = preset.ToXml(ID);
+            var xml = preset.ToXml(name);
 
             // Save the KVP
-            SetResourceKvp(kvpName, xml);
+            SetResourceKvp(key, xml);
 
             return true;
         }
 
-        public HandlingPreset Load(string id)
+        public HandlingPreset Load(string name)
         {
             // Check if the preset ID is valid
-            if (string.IsNullOrEmpty(id))
+            if (string.IsNullOrEmpty(name))
                 return null;
 
             // Get the KVP key
-            string key = $"{mKvpPrefix}{id}";
+            string key = string.Concat(mKvpPrefix, name);
 
             // Get the KVP value
             string value = GetResourceKvpString(key);
@@ -81,6 +85,11 @@ namespace HandlingEditor.Client
             preset.FromXml(value);
 
             return preset;
+        }
+
+        public IEnumerable<string> GetKeys()
+        {
+            return new KvpEnumerable(mKvpPrefix);
         }
     }
 }

@@ -1,27 +1,41 @@
-﻿namespace HandlingEditor.Client
+﻿using System;
+using System.Collections.Generic;
+
+namespace HandlingEditor.Client
 {
-    public interface IPresetManager
+    public interface IPresetManager<TKey, TValue>
     {
+        /// <summary>
+        /// Invoked when an element is saved or deleted
+        /// </summary>
+        event EventHandler PresetsListChanged;
+
         /// <summary>
         /// Saves the <paramref name="preset"/> using the <paramref name="name"/> as preset name
         /// </summary>
         /// <param name="name"></param>
         /// <param name="preset"></param>
         /// <returns></returns>
-        bool Save(string name, HandlingPreset preset);
+        bool Save(TKey name, TValue preset);
 
         /// <summary>
         /// Deletes the preset with the <paramref name="name"/> as preset name
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        bool Delete(string name);
+        bool Delete(TKey name);
 
         /// <summary>
-        /// Loads and the returns the <see cref="HandlingPreset"/> named <paramref name="name"/>
+        /// Loads and the returns the <see cref="TValue"/> named <paramref name="name"/>
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        HandlingPreset Load(string name);
+        TValue Load(TKey name);
+
+        /// <summary>
+        /// Returns the list of all the saved keys
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<TKey> GetKeys();
     }
 }
