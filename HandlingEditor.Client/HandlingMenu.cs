@@ -472,8 +472,8 @@ namespace HandlingEditor.Client
 
             m_serverPresetsMenu.ClearMenuItems();
 
-            foreach (var preset in handlingEditor.ServerPresets)
-                m_serverPresetsMenu.AddMenuItem(new MenuItem(preset.Key) { ItemData = preset.Key });
+            foreach (var key in handlingEditor.ServerPresetsManager.GetKeys())
+                m_serverPresetsMenu.AddMenuItem(new MenuItem(key) { ItemData = key });
         }
 
         /// <summary>

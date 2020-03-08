@@ -14,7 +14,6 @@ namespace HandlingEditor.Client
     {
         private readonly ILogger logger;
         private readonly INotificationHandler notifier;
-        public IPresetManager<string, HandlingPreset> LocalPresetsManager { get; private set; }
 
         #region Public Events
 
@@ -52,7 +51,9 @@ namespace HandlingEditor.Client
         public HandlingPreset CurrentPreset { get; private set; }
         public HandlingInfo HandlingInfo { get; private set; }
         public HandlingConfig Config { get; private set; }
-        public Dictionary<string, HandlingPreset> ServerPresets { get; private set; }
+
+        public IPresetManager<string, HandlingPreset> LocalPresetsManager { get; private set; }
+        public IPresetManager<string, HandlingPreset> ServerPresetsManager { get; private set; }
         #endregion
 
         #region Constructor
@@ -83,7 +84,7 @@ namespace HandlingEditor.Client
             m_currentVehicle = -1;
             
             CurrentPreset = null;
-            ServerPresets = new Dictionary<string, HandlingPreset>();
+            ServerPresetsManager = new MemoryPresetManager();
 
             ReadFieldInfo();
             ReadServerPresets();
@@ -274,9 +275,10 @@ namespace HandlingEditor.Client
 
         private async void GUI_MenuApplyServerPresetButtonPressed(object sender, string presetName)
         {
-            if (ServerPresets.TryGetValue(presetName, out HandlingPreset preset))
+            var loaded = ServerPresetsManager.Load(presetName);
+            if (loaded != null)
             {
-                CurrentPreset.FromPreset(preset);
+                CurrentPreset.FromPreset(loaded);
 
                 PresetChanged?.Invoke(this, EventArgs.Empty);
                 notifier.Notify($"Server preset ~b~{presetName}~w~ applied");
@@ -926,10 +928,10 @@ namespace HandlingEditor.Client
                         HandlingPreset preset = new HandlingPreset();
 
                         preset.FromXml(node.OuterXml);
-                        ServerPresets[name] = preset;
+                        ServerPresetsManager.Save(name, preset);
                     }
                 }
-                logger.Log(LogLevel.Information, $"Loaded {filename}, found {ServerPresets.Count} server presets.");
+                logger.Log(LogLevel.Information, $"Loaded {filename}.");
             }
             catch (Exception e)
             {
