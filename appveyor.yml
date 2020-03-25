@@ -4,7 +4,7 @@ install:
 - ps: if ($env:APPVEYOR_REPO_TAG -ne $True){ $env:TAG_NUMBER = $env:TAG_NUMBER + "." +$env:APPVEYOR_BUILD_NUMBER } else { $env:TAG_NUMBER = $env:TAG_NUMBER + "." + 0 }
 
 version: 1.0.{build}
-image: Visual Studio 2017
+image: Visual Studio 2019
 configuration: Release
 
 assembly_info:
@@ -20,14 +20,14 @@ build:
   project: fivem-handling-editor.sln
   
 before_build:
-- cmd: git submodule update --init --recursive
 - nuget restore
   
 after_build:
 - cmd: md %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
 - cmd: move /Y %APPVEYOR_BUILD_FOLDER%\dist\*.* %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
-- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\HandlingEditor.Client.net.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
-- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\MenuAPI.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
+- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\net452\HandlingEditor.Client.net.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
+- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\net452\MenuAPI.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
+- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\net452\Newtonsoft.Json.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
 #- cmd: move /Y %APPVEYOR_BUILD_FOLDER%\HandlingEditor.Client\bin\%CONFIGURATION%\System.Xml.Mono.dll %APPVEYOR_BUILD_FOLDER%\dist\handling-editor
 - 7z a handling-editor-v%TAG_NUMBER%.zip %APPVEYOR_BUILD_FOLDER%\dist\*
 
