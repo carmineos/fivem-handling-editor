@@ -10,6 +10,7 @@ using static CitizenFX.Core.Native.API;
 
 namespace HandlingEditor.Client
 {
+    // TODO: Rework events subscriptions, split UI, editor and preset events
     public class HandlingEditor : BaseScript
     {
         private readonly ILogger logger;
@@ -222,21 +223,34 @@ namespace HandlingEditor.Client
             // If it's a Vector3 field
             else if (fieldType == HandlingFieldTypes.Vector3Type)
             {
+                var value = (Vector3)CurrentPreset.Fields[fieldName];
+
+                //Debug.WriteLine($"Current Value is:{value} received (value: {fieldValue}, id: {fieldId}");
+                
                 // Update the correct Vector3 component
-                if (fieldId.EndsWith("_x"))
+                if (fieldId.EndsWith(".x"))
                 {
                     if (float.TryParse(fieldValue, out float result))
-                        CurrentPreset.Fields[fieldName].X = result;
+                    {
+                        value.X = result;
+                        CurrentPreset.Fields[fieldName] = value;
+                    }
                 }
-                else if (fieldId.EndsWith("_y"))
+                else if (fieldId.EndsWith(".y"))
                 {
                     if (float.TryParse(fieldValue, out float result))
-                        CurrentPreset.Fields[fieldName].Y = result;
+                    {
+                        value.Y = result;
+                        CurrentPreset.Fields[fieldName] = value;
+                    }
                 }
-                else if (fieldId.EndsWith("_z"))
+                else if (fieldId.EndsWith(".z"))
                 {
                     if (float.TryParse(fieldValue, out float result))
-                        CurrentPreset.Fields[fieldName].Z = result;
+                    {
+                        value.Z = result;
+                        CurrentPreset.Fields[fieldName] = value;
+                    }
                 }
             }
         }
@@ -432,7 +446,6 @@ namespace HandlingEditor.Client
             foreach (var item in preset.Fields)
             {
                 string fieldName = item.Key;
-                dynamic fieldValue = item.Value;
 
                 var fieldsInfo = HandlingInfo.Fields;
                 if (!fieldsInfo.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
@@ -446,6 +459,8 @@ namespace HandlingEditor.Client
 
                 if (fieldType == HandlingFieldTypes.FloatType)
                 {
+                    var fieldValue = (float)item.Value;
+
                     var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
                     if (!MathUtil.WithinEpsilon(value, fieldValue, m_epsilon))
                     {
@@ -457,6 +472,8 @@ namespace HandlingEditor.Client
 
                 else if (fieldType == HandlingFieldTypes.IntType)
                 {
+                    var fieldValue = (int)item.Value;
+
                     var value = GetVehicleHandlingInt(vehicle, className, fieldName);
                     if (value != fieldValue)
                     {
@@ -468,12 +485,14 @@ namespace HandlingEditor.Client
 
                 else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
+                    var fieldValue = (Vector3)item.Value;
+
                     var value = GetVehicleHandlingVector(vehicle, className, fieldName);
-                    if (value != fieldValue) // TODO: Check why this is bugged
+                    if (!value.Equals(fieldValue)) // TODO: Check why this is bugged, seems like y-z are swapped
                     {
                         SetVehicleHandlingVector(vehicle, className, fieldName, fieldValue);
 
-                        logger.Log(LogLevel.Debug, $"{fieldName} updated from {value} to {fieldValue}");
+                        logger.Log(LogLevel.Debug, $"HELLO {fieldName} updated from {value} to {fieldValue}");
                     }
                 }
             }
@@ -541,9 +560,9 @@ namespace HandlingEditor.Client
                 }
                 else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
-                    string decorX = $"{fieldName}_x";
-                    string decorY = $"{fieldName}_y";
-                    string decorZ = $"{fieldName}_z";
+                    string decorX = $"{fieldName}.x";
+                    string decorY = $"{fieldName}.y";
+                    string decorZ = $"{fieldName}.z";
 
                     Vector3 value = GetVehicleHandlingVector(vehicle, className, fieldName);
                     Vector3 decorValue = new Vector3(value.X, value.Y, value.Z);
@@ -581,7 +600,7 @@ namespace HandlingEditor.Client
 
                 if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
-                    if (DecorExistOn(vehicle, $"{fieldName}_x") || DecorExistOn(vehicle, $"{fieldName}_y") || DecorExistOn(vehicle, $"{fieldName}_z"))
+                    if (DecorExistOn(vehicle, $"{fieldName}.x") || DecorExistOn(vehicle, $"{fieldName}.y") || DecorExistOn(vehicle, $"{fieldName}.z"))
                         return true;
                 }
                 else if (DecorExistOn(vehicle, fieldName))
@@ -612,9 +631,9 @@ namespace HandlingEditor.Client
                 }
                 else if (type == HandlingFieldTypes.Vector3Type)
                 {
-                    string decorX = $"{fieldName}_x";
-                    string decorY = $"{fieldName}_y";
-                    string decorZ = $"{fieldName}_z";
+                    string decorX = $"{fieldName}.x";
+                    string decorY = $"{fieldName}.y";
+                    string decorZ = $"{fieldName}.z";
 
                     DecorRegister(decorX, 1);
                     DecorRegister(decorY, 1);
@@ -649,9 +668,9 @@ namespace HandlingEditor.Client
                 }
                 else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
-                    string decorX = $"{fieldName}_x";
-                    string decorY = $"{fieldName}_y";
-                    string decorZ = $"{fieldName}_z";
+                    string decorX = $"{fieldName}.x";
+                    string decorY = $"{fieldName}.y";
+                    string decorZ = $"{fieldName}.z";
                     string defDecorX = $"{decorX}_def";
                     string defDecorY = $"{decorY}_def";
                     string defDecorZ = $"{decorZ}_def";
@@ -760,11 +779,11 @@ namespace HandlingEditor.Client
                     fieldValue = (Vector3)fieldValue;
                     defaultValue = (Vector3)defaultValue;
 
-                    string decorX = $"{fieldName}_x";
+                    string decorX = $"{fieldName}.x";
                     string defDecorNameX = $"{decorX}_def";
-                    string decorY = $"{fieldName}_y";
+                    string decorY = $"{fieldName}.y";
                     string defDecorNameY = $"{decorY}_def";
-                    string decorZ = $"{fieldName}_z";
+                    string decorZ = $"{fieldName}.z";
                     string defDecorNameZ = $"{decorZ}_def";
 
                     UpdateFloatDecorator(vehicle, decorX, fieldValue.X, defaultValue.X);
@@ -824,7 +843,7 @@ namespace HandlingEditor.Client
                 }
                 else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
-                    string decorX = $"{fieldName}_x";
+                    string decorX = $"{fieldName}.x";
                     if (DecorExistOn(vehicle, decorX))
                     {
                         string defDecorNameX = $"{decorX}_def";
@@ -833,7 +852,7 @@ namespace HandlingEditor.Client
                         s.AppendLine($"{decorX}: {x}({defX})");
                     }
 
-                    string decorY = $"{fieldName}_y";
+                    string decorY = $"{fieldName}.y";
                     if (DecorExistOn(vehicle, decorY))
                     {
                         string defDecorNameY = $"{decorY}_def";
@@ -842,7 +861,7 @@ namespace HandlingEditor.Client
                         s.AppendLine($"{decorY}: {y}({defY})");
                     }
 
-                    string decorZ = $"{fieldName}_z";
+                    string decorZ = $"{fieldName}.z";
                     if (DecorExistOn(vehicle, decorZ))
                     {
                         string defDecorNameZ = $"{decorZ}_def";

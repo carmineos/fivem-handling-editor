@@ -296,7 +296,7 @@ namespace HandlingEditor.Client
                 var maxValueY = max.Y;
                 var maxValueZ = max.Z;
 
-                if (itemText.EndsWith("_x"))
+                if (itemText.EndsWith(".x"))
                 {
                     if (float.TryParse(text, out float newvalue))
                     {
@@ -312,7 +312,7 @@ namespace HandlingEditor.Client
                     else
                         notifier.Notify($"Invalid value for ~b~{itemText}~w~");
                 }
-                else if (itemText.EndsWith("_y"))
+                else if (itemText.EndsWith(".y"))
                 {
                     if (float.TryParse(text, out float newvalue))
                     {
@@ -328,7 +328,7 @@ namespace HandlingEditor.Client
                     else
                         notifier.Notify($"Invalid value for ~b~{itemText}~w~");
                 }
-                else if (itemText.EndsWith("_z"))
+                else if (itemText.EndsWith(".z"))
                 {
                     if (float.TryParse(text, out float newvalue))
                     {
@@ -586,7 +586,7 @@ namespace HandlingEditor.Client
                 var maxValueY = max.Y;
                 var maxValueZ = max.Z;
 
-                if (itemText.EndsWith("_x"))
+                if (itemText.EndsWith(".x"))
                 {
                     if (left)
                     {
@@ -610,7 +610,7 @@ namespace HandlingEditor.Client
                     }
                     return value.ToString("F3");
                 }
-                else if (itemText.EndsWith("_y"))
+                else if (itemText.EndsWith(".y"))
                 {
                     if (left)
                     {
@@ -634,7 +634,7 @@ namespace HandlingEditor.Client
                     }
                     return value.ToString("F3");
                 }
-                else if (itemText.EndsWith("_z"))
+                else if (itemText.EndsWith(".z"))
                 {
                     if (left)
                     {
@@ -710,9 +710,9 @@ namespace HandlingEditor.Client
 
             string fieldDescription = fieldInfo.Description;
 
-            string fieldNameX = $"{fieldName}_x";
-            string fieldNameY = $"{fieldName}_y";
-            string fieldNameZ = $"{fieldName}_z";
+            string fieldNameX = $"{fieldName}.x";
+            string fieldNameY = $"{fieldName}.y";
+            string fieldNameZ = $"{fieldName}.z";
 
             var newitemX = new MenuDynamicListItem(fieldNameX, value.X.ToString("F3"), DynamicListChangeCallback, fieldDescription)
             {

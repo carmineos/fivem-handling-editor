@@ -192,9 +192,9 @@ namespace HandlingEditor.Client
                 {
                     Vector3 vec = GetVehicleHandlingVector(vehicle, className, fieldName);
 
-                    string decorX = $"{fieldName}_x";
-                    string decorY = $"{fieldName}_y";
-                    string decorZ = $"{fieldName}_z";
+                    string decorX = $"{fieldName}.x";
+                    string decorY = $"{fieldName}.y";
+                    string decorZ = $"{fieldName}.z";
 
                     string defDecorNameX = $"{decorX}_def";
                     string defDecorNameY = $"{decorY}_def";

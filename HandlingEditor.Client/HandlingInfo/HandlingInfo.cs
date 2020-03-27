@@ -136,9 +136,9 @@ namespace HandlingEditor.Client
             {
                 FieldInfo<Vector3> fieldInfo = (FieldInfo<Vector3>)baseFieldInfo;
 
-                if (name == $"{fieldInfo.Name}_x") return (value <= fieldInfo.Max.X && value >= fieldInfo.Min.X);
-                else if (name == $"{fieldInfo.Name}_y") return (value <= fieldInfo.Max.Y && value >= fieldInfo.Min.Y);
-                else if (name == $"{fieldInfo.Name}_z") return (value <= fieldInfo.Max.Z && value >= fieldInfo.Min.Z);
+                if (name == $"{fieldInfo.Name}.x") return (value <= fieldInfo.Max.X && value >= fieldInfo.Min.X);
+                else if (name == $"{fieldInfo.Name}.y") return (value <= fieldInfo.Max.Y && value >= fieldInfo.Min.Y);
+                else if (name == $"{fieldInfo.Name}.z") return (value <= fieldInfo.Max.Z && value >= fieldInfo.Min.Z);
                 else return false;
             }
             else
