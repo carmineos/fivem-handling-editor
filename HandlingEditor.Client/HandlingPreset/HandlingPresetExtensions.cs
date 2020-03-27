@@ -35,7 +35,7 @@ namespace HandlingEditor.Client
                 dynamic fieldValue = item.Value;
                 XmlElement field = doc.CreateElement(fieldName);
 
-                if (!Framework.HandlingInfo.Fields.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
+                if (!Framework.HandlingInfo.Fields.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
                 {
                     // TODO:
                     continue;
@@ -43,24 +43,24 @@ namespace HandlingEditor.Client
 
                 Type fieldType = fieldInfo.Type;
 
-                if (fieldType == FieldType.FloatType)
+                if (fieldType == HandlingFieldTypes.FloatType)
                 {
                     var value = (float)fieldValue;
                     field.SetAttribute("value", value.ToString());
                 }
-                else if (fieldType == FieldType.IntType)
+                else if (fieldType == HandlingFieldTypes.IntType)
                 {
                     var value = (int)fieldValue;
                     field.SetAttribute("value", value.ToString());
                 }
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     var value = (Vector3)(fieldValue);
                     field.SetAttribute("x", value.X.ToString());
                     field.SetAttribute("y", value.Y.ToString());
                     field.SetAttribute("z", value.Z.ToString());
                 }
-                else if (fieldType == FieldType.StringType)
+                else if (fieldType == HandlingFieldTypes.StringType)
                 {
                     field.InnerText = fieldValue;
                 }
@@ -91,16 +91,18 @@ namespace HandlingEditor.Client
                 string fieldName = item.Name;
 
                 // Get the field type
-                Type fieldType = FieldType.GetFieldType(fieldName);
+                Type fieldType = HandlingFieldTypes.GetHandlingFieldTypeByName(fieldName);
 
                 // Get the item as element to access attributes
                 XmlElement elem = (XmlElement)item;
 
                 // If it's a float field
-                if (fieldType == FieldType.FloatType)
+                if (fieldType == HandlingFieldTypes.FloatType)
                 {
                     if (!float.TryParse(elem.GetAttribute("value"), out float result))
-                        ;// CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute value in {fieldName} as float.");
+                    {
+                        // CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute value in {fieldName} as float.");
+                    }
 
                     preset.Fields[fieldName] = result;
                 }
@@ -114,14 +116,20 @@ namespace HandlingEditor.Client
                     preset.Fields[fieldName] = result;
                 }*/
                 // If it's a Vector3 field
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     if (!float.TryParse(elem.GetAttribute("x"), out float x))
-                        ;// CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute x in {fieldName} from preset.");
+                    {
+                        // CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute x in {fieldName} from preset.");
+                    }
                     if (!float.TryParse(elem.GetAttribute("y"), out float y))
-                        ;// CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute y in {fieldName} from preset.");
+                    {
+                        // CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute y in {fieldName} from preset.");
+                    }
                     if (!float.TryParse(elem.GetAttribute("z"), out float z))
-                        ;// CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute z in {fieldName} from preset.");
+                    {
+                        // CitizenFX.Core.Debug.WriteLine($"{ScriptName}: Error parsing attribute z in {fieldName} from preset.");
+                    }
                     preset.Fields[fieldName] = new Vector3(x, y, z);
                 }/*
                 else if (fieldType == FieldType.StringType)
@@ -135,13 +143,19 @@ namespace HandlingEditor.Client
             }
         }
 
-        public static void FromPreset(this HandlingPreset preset, HandlingPreset other)
+        public static void FromPreset(this HandlingPreset preset, HandlingPreset other, bool onlySharedFields = true)
         {
             foreach (var item in other.Fields)
             {
-                if (preset.Fields.ContainsKey(item.Key))
+                if(onlySharedFields)
+                {
+                    if (preset.Fields.ContainsKey(item.Key))
+                        preset.Fields[item.Key] = item.Value;
+                }
+                else
+                {
                     preset.Fields[item.Key] = item.Value;
-                //else CitizenFX.Core.Debug.Write($"Missing {item.Key} field in currentPreset");
+                }
             }
         }
 
@@ -162,7 +176,7 @@ namespace HandlingEditor.Client
                 Type fieldType = item.Value.Type;
                 string defDecorName = $"{fieldName}_def";
 
-                if (fieldType == FieldType.FloatType)
+                if (fieldType == HandlingFieldTypes.FloatType)
                 {
                     var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetFloat(vehicle, defDecorName) : GetVehicleHandlingFloat(vehicle, className, fieldName);
                     preset.DefaultFields[fieldName] = defaultValue;
@@ -174,7 +188,7 @@ namespace HandlingEditor.Client
                     preset.DefaultFields[fieldName] = defaultValue;
                     preset.Fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetInt(vehicle, fieldName) : defaultValue;
                 }*/
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     Vector3 vec = GetVehicleHandlingVector(vehicle, className, fieldName);
 

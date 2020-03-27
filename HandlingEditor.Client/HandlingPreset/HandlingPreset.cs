@@ -29,17 +29,17 @@ namespace HandlingEditor.Client
 
                     Type fieldType = value.GetType();
 
-                    if (fieldType == FieldType.FloatType)
+                    if (fieldType == HandlingFieldTypes.IntType)
                     {
                         if (defaultValue != value)
                             return true;
                     }
-                    else if(fieldType == FieldType.IntType)
+                    else if(fieldType == HandlingFieldTypes.FloatType)
                     {
                         if (!MathUtil.WithinEpsilon(value, defaultValue, Epsilon))
                             return true;
                     }
-                    else if (fieldType == FieldType.Vector3Type)
+                    else if (fieldType == HandlingFieldTypes.Vector3Type)
                     {
                         if (!((Vector3)value).Equals((Vector3)defaultValue))
                             return true;
@@ -57,10 +57,10 @@ namespace HandlingEditor.Client
                 var value = item.Value;
                 Type fieldType = value.GetType();
 
-                if (fieldType == FieldType.FloatType || fieldType == FieldType.IntType)
+                if (fieldType == HandlingFieldTypes.FloatType || fieldType == HandlingFieldTypes.IntType)
                     Fields[name] = value;
 
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     Vector3 vec = (Vector3)value;
                     Fields[name] = new Vector3(vec.X, vec.Y, vec.Z);
@@ -84,17 +84,17 @@ namespace HandlingEditor.Client
 
                 Type fieldType = value.GetType();
 
-                if (fieldType == FieldType.IntType)
+                if (fieldType == HandlingFieldTypes.IntType)
                 {
                     if (value != otherValue)
                         return false;
                 }
-                else if(fieldType == FieldType.FloatType)
+                else if(fieldType == HandlingFieldTypes.FloatType)
                 {
                     if (!MathUtil.WithinEpsilon(value, otherValue, Epsilon))
                         return false;
                 }
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     if (!((Vector3)value).Equals((Vector3)otherValue))
                         return false;

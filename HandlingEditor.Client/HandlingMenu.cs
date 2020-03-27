@@ -234,7 +234,7 @@ namespace HandlingEditor.Client
         private async void EditorMenu_OnDynamicListItemSelect(Menu menu, MenuDynamicListItem dynamicListItem, string currentItem)
         {
             // If the item doesn't control any preset field...
-            if (!(dynamicListItem.ItemData is BaseFieldInfo fieldInfo))
+            if (!(dynamicListItem.ItemData is HandlingFieldInfo fieldInfo))
                 return;
 
             //var currentItem = dynamicListItem.CurrentItem;
@@ -246,10 +246,10 @@ namespace HandlingEditor.Client
             string text = await GetOnScreenString(currentItem);
 
             // Check if the value can be accepted
-            if (fieldType == FieldType.FloatType)
+            if (fieldType == HandlingFieldTypes.FloatType)
             {
-                var min = (fieldInfo as FieldInfo<float>).Min;
-                var max = (fieldInfo as FieldInfo<float>).Max;
+                var min = (fieldInfo as HandlingFieldInfo<float>).Min;
+                var max = (fieldInfo as HandlingFieldInfo<float>).Max;
 
                 if (float.TryParse(text, out float newvalue))
                 {
@@ -265,10 +265,10 @@ namespace HandlingEditor.Client
                 else
                     notifier.Notify($"Invalid value for ~b~{fieldName}~w~");
             }
-            else if (fieldType == FieldType.IntType)
+            else if (fieldType == HandlingFieldTypes.IntType)
             {
-                var min = (fieldInfo as FieldInfo<int>).Min;
-                var max = (fieldInfo as FieldInfo<int>).Max;
+                var min = (fieldInfo as HandlingFieldInfo<int>).Min;
+                var max = (fieldInfo as HandlingFieldInfo<int>).Max;
 
                 if (int.TryParse(text, out int newvalue))
                 {
@@ -284,10 +284,10 @@ namespace HandlingEditor.Client
                 else
                     notifier.Notify($"Invalid value for ~b~{fieldName}~w~");
             }
-            else if (fieldType == FieldType.Vector3Type)
+            else if (fieldType == HandlingFieldTypes.Vector3Type)
             {
-                var min = (fieldInfo as FieldInfo<Vector3>).Min;
-                var max = (fieldInfo as FieldInfo<Vector3>).Max;
+                var min = (fieldInfo as HandlingFieldInfo<Vector3>).Min;
+                var max = (fieldInfo as HandlingFieldInfo<Vector3>).Max;
 
                 var minValueX = min.X;
                 var minValueY = min.Y;
@@ -361,7 +361,7 @@ namespace HandlingEditor.Client
                 return;
 
             // If item data is not the expected one...
-            if (!(dynamicListItem.ItemData is BaseFieldInfo fieldInfo))
+            if (!(dynamicListItem.ItemData is HandlingFieldInfo fieldInfo))
                 return;
 
             // Get field name which is controlled by this dynamic list item
@@ -425,12 +425,12 @@ namespace HandlingEditor.Client
                     //string fieldDescription = fieldInfo.Description;
                     Type fieldType = fieldInfo.Type;
 
-                    if (fieldType == FieldType.FloatType)
-                        AddDynamicFloatList(m_editorMenu, (FieldInfo<float>)item.Value);
-                    else if (fieldType == FieldType.IntType)
-                        AddDynamicIntList(m_editorMenu, (FieldInfo<int>)item.Value);
-                    else if (fieldType == FieldType.Vector3Type)
-                        AddDynamicVector3List(m_editorMenu, (FieldInfo<Vector3>)item.Value);
+                    if (fieldType == HandlingFieldTypes.FloatType)
+                        AddDynamicFloatList(m_editorMenu, (HandlingFieldInfo<float>)item.Value);
+                    else if (fieldType == HandlingFieldTypes.IntType)
+                        AddDynamicIntList(m_editorMenu, (HandlingFieldInfo<int>)item.Value);
+                    else if (fieldType == HandlingFieldTypes.Vector3Type)
+                        AddDynamicVector3List(m_editorMenu, (HandlingFieldInfo<Vector3>)item.Value);
                 }
                 else
                 {
@@ -510,18 +510,18 @@ namespace HandlingEditor.Client
         {
             var currentItem = item.CurrentItem;
 
-            if (!(item.ItemData is BaseFieldInfo fieldInfo))
+            if (!(item.ItemData is HandlingFieldInfo fieldInfo))
                 return currentItem;
 
             var itemText = item.Text;
             var fieldName = fieldInfo.Name;
             var fieldType = fieldInfo.Type;
 
-            if (fieldType == FieldType.IntType)
+            if (fieldType == HandlingFieldTypes.IntType)
             {
                 int.TryParse(currentItem, out int value);
-                var min = (fieldInfo as FieldInfo<int>).Min;
-                var max = (fieldInfo as FieldInfo<int>).Max;
+                var min = (fieldInfo as HandlingFieldInfo<int>).Min;
+                var max = (fieldInfo as HandlingFieldInfo<int>).Max;
 
                 if (left)
                 {
@@ -545,11 +545,11 @@ namespace HandlingEditor.Client
                 }
                 return value.ToString();
             }
-            else if (fieldType == FieldType.FloatType)
+            else if (fieldType == HandlingFieldTypes.FloatType)
             {
                 float.TryParse(currentItem, out float value);
-                var min = (fieldInfo as FieldInfo<float>).Min;
-                var max = (fieldInfo as FieldInfo<float>).Max;
+                var min = (fieldInfo as HandlingFieldInfo<float>).Min;
+                var max = (fieldInfo as HandlingFieldInfo<float>).Max;
 
                 if (left)
                 {
@@ -573,11 +573,11 @@ namespace HandlingEditor.Client
                 }
                 return value.ToString("F3");
             }
-            else if (fieldType == FieldType.Vector3Type)
+            else if (fieldType == HandlingFieldTypes.Vector3Type)
             {
                 float.TryParse(currentItem, out float value);
-                var min = (fieldInfo as FieldInfo<Vector3>).Min;
-                var max = (fieldInfo as FieldInfo<Vector3>).Max;
+                var min = (fieldInfo as HandlingFieldInfo<Vector3>).Min;
+                var max = (fieldInfo as HandlingFieldInfo<Vector3>).Max;
 
                 var minValueX = min.X;
                 var minValueY = min.Y;
@@ -663,7 +663,7 @@ namespace HandlingEditor.Client
             return currentItem;
         }
 
-        private MenuDynamicListItem AddDynamicFloatList(Menu menu, FieldInfo<float> fieldInfo)
+        private MenuDynamicListItem AddDynamicFloatList(Menu menu, HandlingFieldInfo<float> fieldInfo)
         {
             string fieldName = fieldInfo.Name;
             string description = fieldInfo.Description;
@@ -681,7 +681,7 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private MenuDynamicListItem AddDynamicIntList(Menu menu, FieldInfo<int> fieldInfo)
+        private MenuDynamicListItem AddDynamicIntList(Menu menu, HandlingFieldInfo<int> fieldInfo)
         {
             string fieldName = fieldInfo.Name;
             string description = fieldInfo.Description;
@@ -699,7 +699,7 @@ namespace HandlingEditor.Client
             return newitem;
         }
 
-        private MenuDynamicListItem[] AddDynamicVector3List(Menu menu, FieldInfo<Vector3> fieldInfo)
+        private MenuDynamicListItem[] AddDynamicVector3List(Menu menu, HandlingFieldInfo<Vector3> fieldInfo)
         {
             string fieldName = fieldInfo.Name;
 
@@ -735,7 +735,7 @@ namespace HandlingEditor.Client
             return new MenuDynamicListItem[3] { newitemX, newitemY, newitemZ };
         }
 
-        private MenuItem AddLockedItem(Menu menu, BaseFieldInfo fieldInfo)
+        private MenuItem AddLockedItem(Menu menu, HandlingFieldInfo fieldInfo)
         {
             var newitem = new MenuItem(fieldInfo.Name, fieldInfo.Description)
             {

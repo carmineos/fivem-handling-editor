@@ -199,28 +199,28 @@ namespace HandlingEditor.Client
         {
             // Be sure the field is supported
 
-            if (!HandlingInfo.Fields.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
+            if (!HandlingInfo.Fields.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
                 return;
 
             // Get the field type
             var fieldType = fieldInfo.Type;
 
             // If it's a float field
-            if (fieldType == FieldType.FloatType)
+            if (fieldType == HandlingFieldTypes.FloatType)
             {
                 if (float.TryParse(fieldValue, out float result))
                     CurrentPreset.Fields[fieldName] = result;
             }
 
             // If it's a int field
-            else if (fieldType == FieldType.IntType)
+            else if (fieldType == HandlingFieldTypes.IntType)
             {
                 if (int.TryParse(fieldValue, out int result))
                     CurrentPreset.Fields[fieldName] = result;
             }
 
             // If it's a Vector3 field
-            else if (fieldType == FieldType.Vector3Type)
+            else if (fieldType == HandlingFieldTypes.Vector3Type)
             {
                 // Update the correct Vector3 component
                 if (fieldId.EndsWith("_x"))
@@ -435,7 +435,7 @@ namespace HandlingEditor.Client
                 dynamic fieldValue = item.Value;
 
                 var fieldsInfo = HandlingInfo.Fields;
-                if (!fieldsInfo.TryGetValue(fieldName, out BaseFieldInfo fieldInfo))
+                if (!fieldsInfo.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
                 {
                     logger.Log(LogLevel.Debug, $"No fieldInfo definition found for {fieldName}");
                     continue;
@@ -444,7 +444,7 @@ namespace HandlingEditor.Client
                 Type fieldType = fieldInfo.Type;
                 string className = fieldInfo.ClassName;
 
-                if (fieldType == FieldType.FloatType)
+                if (fieldType == HandlingFieldTypes.FloatType)
                 {
                     var value = GetVehicleHandlingFloat(vehicle, className, fieldName);
                     if (!MathUtil.WithinEpsilon(value, fieldValue, m_epsilon))
@@ -455,7 +455,7 @@ namespace HandlingEditor.Client
                     }
                 }
 
-                else if (fieldType == FieldType.IntType)
+                else if (fieldType == HandlingFieldTypes.IntType)
                 {
                     var value = GetVehicleHandlingInt(vehicle, className, fieldName);
                     if (value != fieldValue)
@@ -466,7 +466,7 @@ namespace HandlingEditor.Client
                     }
                 }
 
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     var value = GetVehicleHandlingVector(vehicle, className, fieldName);
                     if (value != fieldValue) // TODO: Check why this is bugged
@@ -511,7 +511,7 @@ namespace HandlingEditor.Client
                 Type fieldType = item.Value.Type;
                 string className = item.Value.ClassName;
 
-                if (fieldType == FieldType.FloatType)
+                if (fieldType == HandlingFieldTypes.FloatType)
                 {
                     if (DecorExistOn(vehicle, fieldName))
                     {
@@ -525,7 +525,7 @@ namespace HandlingEditor.Client
                         }
                     }
                 }
-                else if (fieldType == FieldType.IntType)
+                else if (fieldType == HandlingFieldTypes.IntType)
                 {
                     if (DecorExistOn(vehicle, fieldName))
                     {
@@ -539,7 +539,7 @@ namespace HandlingEditor.Client
                         }
                     }
                 }
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     string decorX = $"{fieldName}_x";
                     string decorY = $"{fieldName}_y";
@@ -579,7 +579,7 @@ namespace HandlingEditor.Client
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
 
-                if (fieldType == FieldType.Vector3Type)
+                if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     if (DecorExistOn(vehicle, $"{fieldName}_x") || DecorExistOn(vehicle, $"{fieldName}_y") || DecorExistOn(vehicle, $"{fieldName}_z"))
                         return true;
@@ -600,17 +600,17 @@ namespace HandlingEditor.Client
                 string fieldName = item.Key;
                 Type type = item.Value.Type;
 
-                if (type == FieldType.FloatType)
+                if (type == HandlingFieldTypes.FloatType)
                 {
                     DecorRegister(fieldName, 1);
                     DecorRegister($"{fieldName}_def", 1);
                 }
-                else if (type == FieldType.IntType)
+                else if (type == HandlingFieldTypes.IntType)
                 {
                     DecorRegister(fieldName, 3);
                     DecorRegister($"{fieldName}_def", 3);
                 }
-                else if (type == FieldType.Vector3Type)
+                else if (type == HandlingFieldTypes.Vector3Type)
                 {
                     string decorX = $"{fieldName}_x";
                     string decorY = $"{fieldName}_y";
@@ -638,7 +638,7 @@ namespace HandlingEditor.Client
                 string fieldName = item.Key;
                 Type fieldType = item.Value.Type;
 
-                if (fieldType == FieldType.IntType || fieldType == FieldType.FloatType)
+                if (fieldType == HandlingFieldTypes.IntType || fieldType == HandlingFieldTypes.FloatType)
                 {
                     string defDecorName = $"{fieldName}_def";
 
@@ -647,7 +647,7 @@ namespace HandlingEditor.Client
                     if (DecorExistOn(vehicle, defDecorName))
                         DecorRemove(vehicle, defDecorName);
                 }
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     string decorX = $"{fieldName}_x";
                     string decorY = $"{fieldName}_y";
@@ -745,17 +745,17 @@ namespace HandlingEditor.Client
                 string defDecorName = $"{fieldName}_def";
                 dynamic defaultValue = preset.DefaultFields[fieldName];
 
-                if (fieldType == FieldType.FloatType)
+                if (fieldType == HandlingFieldTypes.FloatType)
                 {
                     UpdateFloatDecorator(vehicle, fieldName, fieldValue, defaultValue);
                     UpdateFloatDecorator(vehicle, defDecorName, defaultValue, fieldValue);
                 }
-                else if(fieldType == FieldType.IntType)
+                else if(fieldType == HandlingFieldTypes.IntType)
                 {
                     UpdateIntDecorator(vehicle, fieldName, fieldValue, defaultValue);
                     UpdateIntDecorator(vehicle, defDecorName, defaultValue, fieldValue);
                 }
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     fieldValue = (Vector3)fieldValue;
                     defaultValue = (Vector3)defaultValue;
@@ -804,7 +804,7 @@ namespace HandlingEditor.Client
 
                 dynamic value = 0, defaultValue = 0;
 
-                if (fieldType == FieldType.FloatType)
+                if (fieldType == HandlingFieldTypes.FloatType)
                 {
                     if (DecorExistOn(vehicle, item.Key))
                     {
@@ -813,7 +813,7 @@ namespace HandlingEditor.Client
                         s.AppendLine($"{fieldName}: {value}({defaultValue})");
                     }
                 }
-                else if (fieldType == FieldType.IntType)
+                else if (fieldType == HandlingFieldTypes.IntType)
                 {
                     if (DecorExistOn(vehicle, item.Key))
                     {
@@ -822,7 +822,7 @@ namespace HandlingEditor.Client
                         s.AppendLine($"{fieldName}: {value}({defaultValue})");
                     }
                 }
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     string decorX = $"{fieldName}_x";
                     if (DecorExistOn(vehicle, decorX))
@@ -954,6 +954,7 @@ namespace HandlingEditor.Client
             {
                 //logger.Log(LogLevel.Error, $"Impossible to load {filename}");
                 //logger.Log(LogLevel.Error, e.Message);
+                CitizenFX.Core.Debug.WriteLine(e.Message);
                 config = new HandlingConfig();
             }
 

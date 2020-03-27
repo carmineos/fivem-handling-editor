@@ -10,12 +10,12 @@ namespace HandlingEditor.Client
     {
         private readonly ILogger logger;
 
-        public Dictionary<string, BaseFieldInfo> Fields;
+        public Dictionary<string, HandlingFieldInfo> Fields;
 
         public HandlingInfo(ILogger log)
         {
             logger = log;
-            Fields = new Dictionary<string, BaseFieldInfo>();
+            Fields = new Dictionary<string, HandlingFieldInfo>();
         }
 
         public  void ParseXml(string xml)
@@ -46,7 +46,7 @@ namespace HandlingEditor.Client
                     string fieldName = item.Name;
 
                     // Get the field type
-                    Type type = FieldType.GetFieldType(fieldName);
+                    Type type = HandlingFieldTypes.GetHandlingFieldTypeByName(fieldName);
 
                     if(!bool.TryParse(item.Attributes["Editable"].Value, out bool editable))
                         logger.Log(LogLevel.Error, $"Unable to parse Editable attribute in {fieldName}.");
@@ -57,31 +57,31 @@ namespace HandlingEditor.Client
                     var maxNode = item["Max"];
 
                     // If it's a float field
-                    if (type == FieldType.FloatType)
+                    if (type == HandlingFieldTypes.FloatType)
                     {
                         if (!float.TryParse(minNode.Attributes["value"].Value, out float min))
                             logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
                         if (!float.TryParse(maxNode.Attributes["value"].Value, out float max))
                             logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
 
-                        FieldInfo<float> fieldInfo = new FieldInfo<float>(fieldName, className, description, editable, min, max);
+                        HandlingFieldInfo<float> fieldInfo = new HandlingFieldInfo<float>(fieldName, className, description, editable, min, max);
                         Fields[fieldName] = fieldInfo;
                     }
 
                     // If it's a int field
-                    else if (type == FieldType.IntType)
+                    else if (type == HandlingFieldTypes.IntType)
                     {
                         if (!int.TryParse(minNode.Attributes["value"].Value, out int min))
                             logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
                         if (!int.TryParse(maxNode.Attributes["value"].Value, out int max))
                             logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
 
-                        FieldInfo<int> fieldInfo = new FieldInfo<int>(fieldName, className, description, editable, min, max);
+                        HandlingFieldInfo<int> fieldInfo = new HandlingFieldInfo<int>(fieldName, className, description, editable, min, max);
                         Fields[fieldName] = fieldInfo;
                     }
 
                     // If it's a Vector3 field
-                    else if (type == FieldType.Vector3Type)
+                    else if (type == HandlingFieldTypes.Vector3Type)
                     {
                         if(!float.TryParse(minNode.Attributes["x"].Value, out float minX)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
                         if(!float.TryParse(minNode.Attributes["y"].Value, out float minY)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
@@ -93,19 +93,19 @@ namespace HandlingEditor.Client
                         if (!float.TryParse(maxNode.Attributes["z"].Value, out float maxZ)) logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
                         Vector3 max = new Vector3(maxX, maxY, maxZ);
 
-                        FieldInfo<Vector3> fieldInfo = new FieldInfo<Vector3>(fieldName, className, description, editable, min, max);
+                        HandlingFieldInfo<Vector3> fieldInfo = new HandlingFieldInfo<Vector3>(fieldName, className, description, editable, min, max);
                         Fields[fieldName] = fieldInfo;
                     }
 
-                    else if (type == FieldType.StringType)
+                    else if (type == HandlingFieldTypes.StringType)
                     {
-                        BaseFieldInfo fieldInfo = new BaseFieldInfo(fieldName, className, description, editable);
+                        HandlingFieldInfo fieldInfo = new HandlingFieldInfo(fieldName, className, description, editable);
                         Fields[fieldName] = fieldInfo;
                     }
 
                     else
                     {
-                        BaseFieldInfo fieldInfo = new BaseFieldInfo(fieldName, className, description, editable);
+                        HandlingFieldInfo fieldInfo = new HandlingFieldInfo(fieldName, className, description, editable);
                         Fields[fieldName] = fieldInfo;
                     }
                 }

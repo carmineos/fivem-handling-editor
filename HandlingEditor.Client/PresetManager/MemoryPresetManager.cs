@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace HandlingEditor.Client
 {
+    // TODO: Use a concurrent dictionary
     public class MemoryPresetManager : IPresetManager<string, HandlingPreset>
     {
         private Dictionary<string, HandlingPreset> _presets;
