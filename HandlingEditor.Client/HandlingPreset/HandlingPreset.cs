@@ -7,7 +7,9 @@ namespace HandlingEditor.Client
 {
     public class HandlingPreset : IEquatable<HandlingPreset>
     {
-        public static float Epsilon { get; private set; } = 0.001f;
+        public const float Epsilon = 0.001f;
+
+        public event EventHandler<string> HandlingFieldEdited;
 
         public Dictionary<string, dynamic> DefaultFields { get; private set; }
         public Dictionary<string, dynamic> Fields { get; set; }

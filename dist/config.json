@@ -1,5 +1,5 @@
 {
-  "LogLevel": 2,
+  "LogLevel": 1,
   "FloatStep": 0.01,
   "ScriptRange": 150.0,
   "Timer": 1000,
