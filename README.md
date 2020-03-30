@@ -72,12 +72,6 @@ The value in milliseconds used by each client to check if its preset requires to
 `debug=false`
 Enables the debug mode, which prints some logs in the console
 
-### WIP
-* Once FiveM API will include a GET_HANDLING_* to get the global values for each model I could avoid storing default values with decorators.
-* Support for all the handling classes (once FiveM adds the support to their Natives)
-* Blacklist/Whitelist for vehicle classes and/or individual vehicle models
-
-
 [Source](https://github.com/carmineos/fivem-handling-editor)
 [Download](https://github.com/carmineos/fivem-handling-editor/releases)
 I am open to any kind of feedback. Report suggestions and bugs you find.
@@ -89,4 +83,70 @@ Open the `postbuild.bat` and edit the path of the resource folder. If in Debug c
 * FiveM by CitizenFX: https://github.com/citizenfx/fivem
 * MenuAPI by Vespura: https://github.com/TomGrobbe/MenuAPI
 * GTADrifting members: https://gtad.club/
+* ikt's Handling Editor: https://github.com/E66666666/GTAVHandlingEditor
 * All the testers
+
+### TODO
+
+#### Update handling-loader-five component to use RageParser from gta:core:five
+* https://github.com/citizenfx/fivem/blob/master/code/components/handling-loader-five/
+* https://github.com/citizenfx/fivem/blob/master/code/components/gta-core-five/include/RageParser.h
+
+#### Fix wrong parMemberType for nInitialDriveGears
+* https://github.com/citizenfx/fivem/blob/master/code/components/handling-loader-five/src/HandlingLoader.cpp#L72
+
+#### Add an extra native to get the handling by modelHash
+references: 
+* https://github.com/citizenfx/fivem/blob/871e449a8eecc3a9b4d5fc48d2cfc2e1823552fb/code/components/extra-natives-five/src/RuntimeAssetNatives.cpp#L886
+* https://github.com/E66666666/GTAVHandlingEditor/blob/master/ProjectName/Memory/NativeMemory.cpp#L27
+* https://github.com/E66666666/GTAVAddonLoader/blob/master/GTAVAddonLoader/NativeMemory.hpp#L163
+```c
+CHandlingData* GetHandlingDataByModelHash(uint32_t modelHash)
+{
+    CVehicleModelInfo* modelInfo = (CVehicleModelInfo*)GetModelInfo(modelHash);
+    if (modelInfo && modelInfo->IsVehicle())
+    {
+        return GetHandlingDataByIndex(modelInfo->m_handlingIndex);
+    }
+
+    return nullptr;
+}
+
+// usage
+CHandlingData* handlingData = GetHandlingDataByModelHash(joaat("adder"));
+uint32_t handlingHash = handlingData->m_handlingNameHash;
+```
+
+#### Add GET_HANDLING_* extra natives (by using the GetHandlingDataByModelHash mentioned above)
+#### Update SET_HANDLING_* to use GetHandlingDataByModelHash instead of iterating handlings
+
+#### Add an extra native to get SubHandlingData
+```c
+__int64 __fastcall CHandlingData::GetSubHandlingDataByType(__int64 this, int type)
+{
+  int _type; // ebp
+  __int64 _this; // rsi
+  unsigned int i; // edi
+  __int64 v5; // rbx
+
+  _type = type;
+  _this = this;
+  i = 0;
+  if ( *(_WORD *)(this + 0x160) <= 0u )
+    return 0i64;
+  while ( 1 )
+  {
+    v5 = *(_QWORD *)(*(_QWORD *)(_this + 0x158) + 8i64 * i);
+    if ( v5 )
+    {
+      if ( _type == (*(unsigned int (__fastcall **)(__int64))(*(_QWORD *)v5 + 0x10i64))(v5) )
+        break;
+    }
+    if ( (signed int)++i >= *(unsigned __int16 *)(_this + 0x160) )
+      return 0i64;
+  }
+  return v5;
+}
+
+//It's at 66 44 3B B1 ? ? ? ? 73 2D - 0x24
+```

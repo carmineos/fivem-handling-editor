@@ -11,7 +11,7 @@ namespace HandlingEditor.Client
 
         public static void ParseXml(string xml)
         {
-            xml = Helpers.RemoveByteOrderMarks(xml);
+            Helpers.RemoveByteOrderMarks(ref xml);
 
             Classes = new Dictionary<int, bool>();
             Vehicles = new Dictionary<uint, bool>();
@@ -23,7 +23,7 @@ namespace HandlingEditor.Client
             var classNodes = rootNode["Classes"]?.ChildNodes;
             foreach (XmlNode item in classNodes)
             {
-                if (item.NodeType == XmlNodeType.Comment)
+                if (item.NodeType != XmlNodeType.Element)
                     continue;
 
                 if (item.Name != "class")
@@ -45,7 +45,7 @@ namespace HandlingEditor.Client
             var modelNodes = rootNode["Models"]?.ChildNodes;
             foreach (XmlNode item in modelNodes)
             {
-                if (item.NodeType == XmlNodeType.Comment)
+                if (item.NodeType != XmlNodeType.Element)
                     continue;
 
                 if (item.Name != "model")
@@ -93,4 +93,17 @@ namespace HandlingEditor.Client
             return false;
         }
     }
+    /*
+    public class ClassPermission
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public bool Allowed { get; set; }
+    }
+
+    public class ModelPermission
+    {
+        public string Name { get; set; }
+        public bool Allowed { get; set; }
+    }*/
 }

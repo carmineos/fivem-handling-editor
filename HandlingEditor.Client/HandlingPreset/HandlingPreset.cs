@@ -7,7 +7,9 @@ namespace HandlingEditor.Client
 {
     public class HandlingPreset : IEquatable<HandlingPreset>
     {
-        public static float Epsilon { get; private set; } = 0.001f;
+        public const float Epsilon = 0.001f;
+
+        public event EventHandler<string> HandlingFieldEdited;
 
         public Dictionary<string, dynamic> DefaultFields { get; private set; }
         public Dictionary<string, dynamic> Fields { get; set; }
@@ -29,17 +31,17 @@ namespace HandlingEditor.Client
 
                     Type fieldType = value.GetType();
 
-                    if (fieldType == FieldType.FloatType)
+                    if (fieldType == HandlingFieldTypes.IntType)
                     {
                         if (defaultValue != value)
                             return true;
                     }
-                    else if(fieldType == FieldType.IntType)
+                    else if(fieldType == HandlingFieldTypes.FloatType)
                     {
                         if (!MathUtil.WithinEpsilon(value, defaultValue, Epsilon))
                             return true;
                     }
-                    else if (fieldType == FieldType.Vector3Type)
+                    else if (fieldType == HandlingFieldTypes.Vector3Type)
                     {
                         if (!((Vector3)value).Equals((Vector3)defaultValue))
                             return true;
@@ -57,10 +59,10 @@ namespace HandlingEditor.Client
                 var value = item.Value;
                 Type fieldType = value.GetType();
 
-                if (fieldType == FieldType.FloatType || fieldType == FieldType.IntType)
+                if (fieldType == HandlingFieldTypes.FloatType || fieldType == HandlingFieldTypes.IntType)
                     Fields[name] = value;
 
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     Vector3 vec = (Vector3)value;
                     Fields[name] = new Vector3(vec.X, vec.Y, vec.Z);
@@ -84,17 +86,17 @@ namespace HandlingEditor.Client
 
                 Type fieldType = value.GetType();
 
-                if (fieldType == FieldType.IntType)
+                if (fieldType == HandlingFieldTypes.IntType)
                 {
                     if (value != otherValue)
                         return false;
                 }
-                else if(fieldType == FieldType.FloatType)
+                else if(fieldType == HandlingFieldTypes.FloatType)
                 {
                     if (!MathUtil.WithinEpsilon(value, otherValue, Epsilon))
                         return false;
                 }
-                else if (fieldType == FieldType.Vector3Type)
+                else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     if (!((Vector3)value).Equals((Vector3)otherValue))
                         return false;
@@ -114,5 +116,22 @@ namespace HandlingEditor.Client
 
             return s.ToString();
         }
+
+        public void CopyFields(HandlingPreset other, bool onlySharedFields = true)
+        {
+            foreach (var item in other.Fields)
+            {
+                if (onlySharedFields)
+                {
+                    if (Fields.ContainsKey(item.Key))
+                        Fields[item.Key] = item.Value;
+                }
+                else
+                {
+                    Fields[item.Key] = item.Value;
+                }
+            }
+        }
+
     }
 }
