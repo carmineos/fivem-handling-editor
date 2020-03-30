@@ -20,7 +20,6 @@ namespace HandlingEditor.Client
         private Menu m_personalPresetsMenu;
         private Menu m_serverPresetsMenu;
         private Menu m_settingsMenu;
-        private bool m_showLockedFields = true;
 
         #endregion
 
@@ -378,11 +377,17 @@ namespace HandlingEditor.Client
 
             m_settingsMenu.ClearMenuItems();
 
-            var showLockedFieldsCheckboxItem = new MenuCheckboxItem("Show Locked Fields", "Whether the editor menu should show or not the fields you can't edit.", m_showLockedFields)
+            var showLockedFieldsCheckboxItem = new MenuCheckboxItem("Show Locked Fields", "Whether the editor menu should show or not the fields you can't edit.", handlingEditor.Config.ShowLockedFields)
             {
                 ItemData = "handling_settings_show_locked_fields"
             };
             m_settingsMenu.AddMenuItem(showLockedFieldsCheckboxItem);
+            
+            var copyOnlySharedFieldsCheckboxItem = new MenuCheckboxItem("Copy Only Shared Fields", "If checked, when a preset is applied it will only apply values for fields shared with the current preset.", handlingEditor.Config.CopyOnlySharedFields)
+            {
+                ItemData = "handling_settings_copy_only_shared_fields"
+            };
+            m_settingsMenu.AddMenuItem(copyOnlySharedFieldsCheckboxItem);
 
             m_settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
         }
@@ -395,8 +400,12 @@ namespace HandlingEditor.Client
 
             if ((menuItem.ItemData as string) == "handling_settings_show_locked_fields")
             {
-                m_showLockedFields = newCheckedState;
+                handlingEditor.Config.ShowLockedFields = newCheckedState;
                 UpdateEditorMenu();
+            }
+            else if ((menuItem.ItemData as string) == "handling_settings_copy_only_shared_fields")
+            {
+                handlingEditor.Config.CopyOnlySharedFields = newCheckedState;
             }
         }
 
@@ -434,7 +443,7 @@ namespace HandlingEditor.Client
                 }
                 else
                 {
-                    if(m_showLockedFields)
+                    if(handlingEditor.Config.ShowLockedFields)
                         AddLockedItem(m_editorMenu, item.Value);
                 }
             }

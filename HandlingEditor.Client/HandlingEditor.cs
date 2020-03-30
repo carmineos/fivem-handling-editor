@@ -278,7 +278,7 @@ namespace HandlingEditor.Client
             var loaded = ServerPresetsManager.Load(presetName);
             if (loaded != null)
             {
-                CurrentPreset.FromPreset(loaded);
+                CurrentPreset.CopyFields(loaded, Config.CopyOnlySharedFields);
 
                 PresetChanged?.Invoke(this, EventArgs.Empty);
                 notifier.Notify($"Server preset ~b~{presetName}~w~ applied");
@@ -295,7 +295,7 @@ namespace HandlingEditor.Client
             if(loaded != null)
             {
                 // TODO:
-                CurrentPreset.FromPreset(loaded);
+                CurrentPreset.CopyFields(loaded, Config.CopyOnlySharedFields);
                 PresetChanged?.Invoke(this, EventArgs.Empty);
                 notifier.Notify($"Personal preset ~b~{presetName}~w~ applied");
             }
@@ -312,41 +312,41 @@ namespace HandlingEditor.Client
         /// <returns></returns>
         private async Task GetPlayerVehicleTask()
         {
+            await Task.FromResult(0);
+            
             _playerPedHandle = PlayerPedId();
 
-            if (IsPedInAnyVehicle(_playerPedHandle, false))
+            // If player isn't in any vehicle
+            if (!IsPedInAnyVehicle(_playerPedHandle, false))
             {
-                int vehicle = GetVehiclePedIsIn(_playerPedHandle, false);
-
-                if (VehiclesPermissions.IsVehicleAllowed(vehicle) && GetPedInVehicleSeat(vehicle, -1) == _playerPedHandle && !IsEntityDead(vehicle))
-                {
-                    // Update current vehicle and get its preset
-                    if (vehicle != _playerVehicleHandle)
-                    {
-                        _playerVehicleHandle = vehicle;
-                        logger.Log(LogLevel.Debug, $"New vehicle handle: {_playerVehicleHandle}");
-
-
-                        CurrentPreset = new HandlingPreset();
-                        CurrentPreset.FromHandle(_playerVehicleHandle);
-                        PresetChanged?.Invoke(this, EventArgs.Empty);
-                    }
-                }
-                else
-                {
-                    // If current vehicle isn't a car or player isn't driving current vehicle or vehicle is dead
-                    _playerVehicleHandle = -1;
-                    CurrentPreset = null;
-                }
-            }
-            else
-            {
-                // If player isn't in any vehicle
                 _playerVehicleHandle = -1;
                 CurrentPreset = null;
+                return;
             }
 
-            await Task.FromResult(0);
+            // Actually this will return 0 if ped isn't in any vehicle
+            // So maybe the check above can be removed
+            int vehicle = GetVehiclePedIsIn(_playerPedHandle, false);
+
+            // If vehicle is not allowed, or vehicle is dead, or player isn't the driver
+            if (!VehiclesPermissions.IsVehicleAllowed(vehicle) || IsEntityDead(vehicle) || GetPedInVehicleSeat(vehicle, -1) != _playerPedHandle)
+            {
+                _playerVehicleHandle = -1;
+                CurrentPreset = null;
+                return;
+            }
+
+            // If the vehicle is new
+            if (vehicle != _playerVehicleHandle)
+            {
+                // Update current vehicle and get its preset
+                _playerVehicleHandle = vehicle;
+                logger.Log(LogLevel.Debug, $"New vehicle handle: {_playerVehicleHandle}");
+
+                CurrentPreset = new HandlingPreset();
+                CurrentPreset.FromHandle(_playerVehicleHandle);
+                PresetChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         /// <summary>
@@ -519,63 +519,7 @@ namespace HandlingEditor.Client
             logger.Log(LogLevel.Debug, $"Removed all decorators on vehicle {vehicle}");
         }
 
-        /// <summary>
-        /// It checks if the <paramref name="vehicle"/> has a decorator named <paramref name="name"/> and updates its value with <paramref name="currentValue"/>, otherwise if <paramref name="currentValue"/> isn't equal to <paramref name="defaultValue"/> it adds the decorator <paramref name="name"/>
-        /// </summary>
-        /// <param name="vehicle"></param>
-        /// <param name="name"></param>
-        /// <param name="currentValue"></param>
-        /// <param name="defaultValue"></param>
-        private void UpdateDecorator(int vehicle, string name, float currentValue, float defaultValue)
-        {
-            // Decorator exists but needs to be updated
-            if (DecorExistOn(vehicle, name))
-            {
-                float decorValue = DecorGetFloat(vehicle, name);
-                if (!MathUtil.WithinEpsilon(currentValue, decorValue, Epsilon))
-                {
-                    DecorSetFloat(vehicle, name, currentValue);
-                    logger.Log(LogLevel.Debug, $"Decorator {name} updated from {decorValue} to {currentValue} for entity {vehicle}");
-                }
-            }
-            else // Decorator doesn't exist, create it if required
-            {
-                if (!MathUtil.WithinEpsilon(currentValue, defaultValue, Epsilon))
-                {
-                    DecorSetFloat(vehicle, name, currentValue);
-                    logger.Log(LogLevel.Debug, $"Decorator {name} added with value {currentValue} for entity {vehicle}");
-                }
-            }
-        }
-
-        /// <summary>
-        /// It checks if the <paramref name="vehicle"/> has a decorator named <paramref name="name"/> and updates its value with <paramref name="currentValue"/>, otherwise if <paramref name="currentValue"/> isn't equal to <paramref name="defaultValue"/> it adds the decorator <paramref name="name"/>
-        /// </summary>
-        /// <param name="vehicle"></param>
-        /// <param name="name"></param>
-        /// <param name="currentValue"></param>
-        /// <param name="defaultValue"></param>
-        private void UpdateDecorator(int vehicle, string name, int currentValue, int defaultValue)
-        {
-            // Decorator exists but needs to be updated
-            if (DecorExistOn(vehicle, name))
-            {
-                int decorValue = DecorGetInt(vehicle, name);
-                if (currentValue != decorValue)
-                {
-                    DecorSetInt(vehicle, name, currentValue);
-                    logger.Log(LogLevel.Debug, $"Decorator {name} updated from {decorValue} to {currentValue} for entity {vehicle}");
-                }
-            }
-            else // Decorator doesn't exist, create it if required
-            {
-                if (currentValue != defaultValue)
-                {
-                    DecorSetInt(vehicle, name, currentValue);
-                    logger.Log(LogLevel.Debug, $"Decorator {name} added with value {currentValue} for entity {vehicle}");
-                }
-            }
-        }
+        
 
         
         /// <summary>
@@ -906,13 +850,13 @@ namespace HandlingEditor.Client
 
             foreach (int entity in vehiclesList)
             {
-                if (DoesEntityExist(entity))
-                {
-                    Vector3 coords = GetEntityCoords(entity, true);
+                if (!DoesEntityExist(entity))
+                    continue;
 
-                    if (Vector3.Distance(currentCoords, coords) <= Config.ScriptRange)
-                        UpdateVehicleHandlingUsingDecorators(entity);
-                }
+                Vector3 coords = GetEntityCoords(entity, true);
+
+                if (Vector3.Distance(currentCoords, coords) <= Config.ScriptRange)
+                    UpdateVehicleHandlingUsingDecorators(entity);
             }
         }
 
@@ -969,6 +913,68 @@ namespace HandlingEditor.Client
 
                     UpdateDecorator(vehicle, decorZ, ((Vector3)fieldValue).Z, ((Vector3)defaultValue).Z);
                     UpdateDecorator(vehicle, defDecorNameZ, ((Vector3)defaultValue).Z, ((Vector3)fieldValue).Z);
+                }
+            }
+        }
+
+        /// <summary>
+        /// It checks if the <paramref name="vehicle"/> has a decorator named <paramref name="name"/> and updates its value with <paramref name="currentValue"/>, otherwise if <paramref name="currentValue"/> isn't equal to <paramref name="defaultValue"/> it adds the decorator <paramref name="name"/>
+        /// </summary>
+        /// <param name="vehicle"></param>
+        /// <param name="name"></param>
+        /// <param name="currentValue"></param>
+        /// <param name="defaultValue"></param>
+        private void UpdateDecorator(int vehicle, string name, float currentValue, float defaultValue)
+        {
+            // Decorator exists
+            if (DecorExistOn(vehicle, name))
+            {
+                float decorValue = DecorGetFloat(vehicle, name);
+                // Check if needs to be updated
+                if (!MathUtil.WithinEpsilon(currentValue, decorValue, Epsilon))
+                {
+                    DecorSetFloat(vehicle, name, currentValue);
+                    logger.Log(LogLevel.Debug, $"Decorator {name} updated from {decorValue} to {currentValue} for entity {vehicle}");
+                }
+            }
+            else // Decorator doesn't exist
+            {
+                // Create it if required
+                if (!MathUtil.WithinEpsilon(currentValue, defaultValue, Epsilon))
+                {
+                    DecorSetFloat(vehicle, name, currentValue);
+                    logger.Log(LogLevel.Debug, $"Decorator {name} added with value {currentValue} for entity {vehicle}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// It checks if the <paramref name="vehicle"/> has a decorator named <paramref name="name"/> and updates its value with <paramref name="currentValue"/>, otherwise if <paramref name="currentValue"/> isn't equal to <paramref name="defaultValue"/> it adds the decorator <paramref name="name"/>
+        /// </summary>
+        /// <param name="vehicle"></param>
+        /// <param name="name"></param>
+        /// <param name="currentValue"></param>
+        /// <param name="defaultValue"></param>
+        private void UpdateDecorator(int vehicle, string name, int currentValue, int defaultValue)
+        {
+            // Decorator exists
+            if (DecorExistOn(vehicle, name))
+            {
+                int decorValue = DecorGetInt(vehicle, name);
+                // Check if needs to be updated
+                if (currentValue != decorValue)
+                {
+                    DecorSetInt(vehicle, name, currentValue);
+                    logger.Log(LogLevel.Debug, $"Decorator {name} updated from {decorValue} to {currentValue} for entity {vehicle}");
+                }
+            }
+            else // Decorator doesn't exist
+            {
+                // Create it if required
+                if (currentValue != defaultValue)
+                {
+                    DecorSetInt(vehicle, name, currentValue);
+                    logger.Log(LogLevel.Debug, $"Decorator {name} added with value {currentValue} for entity {vehicle}");
                 }
             }
         }

@@ -117,5 +117,21 @@ namespace HandlingEditor.Client
             return s.ToString();
         }
 
+        public void CopyFields(HandlingPreset other, bool onlySharedFields = true)
+        {
+            foreach (var item in other.Fields)
+            {
+                if (onlySharedFields)
+                {
+                    if (Fields.ContainsKey(item.Key))
+                        Fields[item.Key] = item.Value;
+                }
+                else
+                {
+                    Fields[item.Key] = item.Value;
+                }
+            }
+        }
+
     }
 }

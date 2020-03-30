@@ -9,6 +9,8 @@ namespace HandlingEditor.Client
         public float ScriptRange { get; set; }
         public long Timer { get; set; }
         public int ToggleMenuControl { get; set; }
+        public bool ShowLockedFields { get; set; }
+        public bool CopyOnlySharedFields { get; set; }
 
         public HandlingConfig()
         {
@@ -17,6 +19,8 @@ namespace HandlingEditor.Client
             ScriptRange = 150.0f;
             Timer = 1000;
             ToggleMenuControl = 168;
+            ShowLockedFields = true;
+            CopyOnlySharedFields = true;
         }
     }
 }

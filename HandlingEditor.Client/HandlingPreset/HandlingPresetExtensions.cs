@@ -143,22 +143,6 @@ namespace HandlingEditor.Client
             }
         }
 
-        public static void FromPreset(this HandlingPreset preset, HandlingPreset other, bool onlySharedFields = true)
-        {
-            foreach (var item in other.Fields)
-            {
-                if(onlySharedFields)
-                {
-                    if (preset.Fields.ContainsKey(item.Key))
-                        preset.Fields[item.Key] = item.Value;
-                }
-                else
-                {
-                    preset.Fields[item.Key] = item.Value;
-                }
-            }
-        }
-
         /// <summary>
         /// Creates a preset for the <paramref name="vehicle"/> to edit it locally
         /// </summary>
