@@ -8,7 +8,7 @@ namespace HandlingEditor.Client
     {
         private Dictionary<string, HandlingPreset> _presets;
 
-        public event EventHandler PresetsListChanged;
+        public event EventHandler PresetsCollectionChanged;
 
         public MemoryPresetManager()
         {
@@ -20,7 +20,13 @@ namespace HandlingEditor.Client
             if (string.IsNullOrEmpty(name))
                 return false;
 
-            return _presets.Remove(name);
+            if (_presets.Remove(name))
+            {
+                PresetsCollectionChanged?.Invoke(this, EventArgs.Empty);
+                return true;
+            }
+
+            return false;
         }
 
         public IEnumerable<string> GetKeys()
@@ -28,15 +34,14 @@ namespace HandlingEditor.Client
             return _presets.Keys;
         }
 
-        public HandlingPreset Load(string name)
+        public bool Load(string name, out HandlingPreset preset)
         {
+            preset = null;
+
             if (string.IsNullOrEmpty(name))
-                return null;
+                return false;
 
-            if(_presets.TryGetValue(name, out HandlingPreset preset))
-                return preset;
-
-            return null;
+            return _presets.TryGetValue(name, out preset);
         }
 
         public bool Save(string name, HandlingPreset preset)
@@ -47,6 +52,7 @@ namespace HandlingEditor.Client
             if (!_presets.ContainsKey(name))
             {
                 _presets.Add(name, preset);
+                PresetsCollectionChanged?.Invoke(this, EventArgs.Empty);
                 return true;
             }
             else

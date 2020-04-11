@@ -8,15 +8,15 @@ namespace HandlingEditor.Client
         /// <summary>
         /// Invoked when an element is saved or deleted
         /// </summary>
-        event EventHandler PresetsListChanged;
+        event EventHandler PresetsCollectionChanged;
 
         /// <summary>
-        /// Saves the <paramref name="preset"/> using the <paramref name="name"/> as preset name
+        /// Saves the <paramref name="value"/> using the <paramref name="name"/> as preset name
         /// </summary>
         /// <param name="name"></param>
-        /// <param name="preset"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        bool Save(TKey name, TValue preset);
+        bool Save(TKey name, TValue value);
 
         /// <summary>
         /// Deletes the preset with the <paramref name="name"/> as preset name
@@ -30,7 +30,7 @@ namespace HandlingEditor.Client
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        TValue Load(TKey name);
+        bool Load(TKey name, out TValue value);
 
         /// <summary>
         /// Returns the list of all the saved keys

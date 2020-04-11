@@ -23,6 +23,15 @@ namespace HandlingEditor.Client
 
         #endregion
 
+        public bool HideUI
+        {
+            get => MenuController.DontOpenAnyMenu;
+            set 
+            {
+                MenuController.DontOpenAnyMenu = value;
+            }
+        }
+
         #region Delegates
 
         public delegate void EditorMenuPresetValueChangedEvent(string id, string value, string text);
@@ -61,20 +70,18 @@ namespace HandlingEditor.Client
             AddTextEntry("HANDLING_EDITOR_ENTER_VALUE", "Enter value (without spaces)");
             InitializeMenu();
 
-            handlingEditor.PresetChanged += new EventHandler((sender, args) => UpdateEditorMenu());
-            handlingEditor.PersonalPresetsListChanged += new EventHandler((sender, args) => UpdatePersonalPresetsMenu());
-            handlingEditor.ServerPresetsListChanged += new EventHandler((sender, args) => UpdateServerPresetsMenu());
+            handlingEditor.CurrentPresetChanged += (sender, args) => UpdateEditorMenu();
+            
+            if(handlingEditor.LocalPresetsManager != null)
+                handlingEditor.LocalPresetsManager.PresetsCollectionChanged += (sender, args) => UpdatePersonalPresetsMenu();
+            
+            if (handlingEditor.ServerPresetsManager != null)
+                handlingEditor.ServerPresetsManager.PresetsCollectionChanged += (sender, args) => UpdateServerPresetsMenu();
         }
 
         #endregion
 
         #region Private Methods
-
-        public void HideUI()
-        {
-            if (MenuController.IsAnyMenuOpen())
-                MenuController.CloseAllMenus();
-        }
 
         /// <summary>
         /// Setup the Menu to be used with the script
@@ -186,6 +193,7 @@ namespace HandlingEditor.Client
                 MenuController.MenuAlignment = MenuController.MenuAlignmentOption.Right;
                 MenuController.MenuToggleKey = (Control)handlingEditor.Config.ToggleMenuControl;
                 MenuController.EnableMenuToggleKeyOnController = false;
+                MenuController.DontOpenAnyMenu = true;
                 MenuController.MainMenu = m_mainMenu;
             }
         }

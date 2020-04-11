@@ -165,13 +165,13 @@ namespace HandlingEditor.Client
                     var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetFloat(vehicle, defDecorName) : GetVehicleHandlingFloat(vehicle, className, fieldName);
                     preset.DefaultFields[fieldName] = defaultValue;
                     preset.Fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetFloat(vehicle, fieldName) : defaultValue;
-                }/*
-                else if (fieldType == FieldType.IntType)
+                }
+                else if (fieldType == HandlingFieldTypes.IntType)
                 {
                     var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetInt(vehicle, defDecorName) : GetVehicleHandlingInt(vehicle, className, fieldName);
                     preset.DefaultFields[fieldName] = defaultValue;
                     preset.Fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetInt(vehicle, fieldName) : defaultValue;
-                }*/
+                }
                 else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     Vector3 vec = GetVehicleHandlingVector(vehicle, className, fieldName);

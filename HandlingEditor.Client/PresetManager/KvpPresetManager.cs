@@ -9,9 +9,9 @@ namespace HandlingEditor.Client
     /// </summary>
     public class KvpPresetManager : IPresetManager<string, HandlingPreset>
     {
-        private string mKvpPrefix;
+        private readonly string mKvpPrefix;
 
-        public event EventHandler PresetsListChanged;
+        public event EventHandler PresetsCollectionChanged;
 
         public KvpPresetManager(string prefix)
         {
@@ -34,6 +34,7 @@ namespace HandlingEditor.Client
             // Delete the KVP
             DeleteResourceKvp(key);
 
+            PresetsCollectionChanged?.Invoke(this, EventArgs.Empty);
             return true;
         }
 
@@ -56,14 +57,17 @@ namespace HandlingEditor.Client
             // Save the KVP
             SetResourceKvp(key, xml);
 
+            PresetsCollectionChanged?.Invoke(this, EventArgs.Empty);
             return true;
         }
 
-        public HandlingPreset Load(string name)
+        public bool Load(string name, out HandlingPreset preset)
         {
+            preset = null;
+
             // Check if the preset ID is valid
             if (string.IsNullOrEmpty(name))
-                return null;
+                return false;
 
             // Get the KVP key
             string key = string.Concat(mKvpPrefix, name);
@@ -73,18 +77,18 @@ namespace HandlingEditor.Client
 
             // Check if the value is valid
             if (string.IsNullOrEmpty(value))
-                return null;
+                return false;
 
             // Remove BOM from XML string
             Helpers.RemoveByteOrderMarks(ref value);
             
             // Create a preset
-            HandlingPreset preset = new HandlingPreset();
+            preset = new HandlingPreset();
 
             // Load the values from the XML
             preset.FromXml(value);
 
-            return preset;
+            return true;
         }
 
         public IEnumerable<string> GetKeys()

@@ -31,17 +31,7 @@ namespace HandlingEditor.Client
         /// <summary>
         /// An event triggered when <see cref="CurrentPreset"/> changes
         /// </summary>
-        public event EventHandler PresetChanged;
-
-        /// <summary>
-        /// An event triggered when the list of the personal presets changes
-        /// </summary>
-        public event EventHandler PersonalPresetsListChanged;
-
-        /// <summary>
-        /// An event triggered when the list of the server presets changes
-        /// </summary>
-        public event EventHandler ServerPresetsListChanged;
+        public event EventHandler CurrentPresetChanged;
 
         public bool CurrentPresetIsValid => _playerVehicleHandle != -1 && CurrentPreset != null;
         public HandlingPreset CurrentPreset { get; private set; }
@@ -162,12 +152,12 @@ namespace HandlingEditor.Client
             // Create the menu
             _handlingMenu = new HandlingMenu(this);
 
-            _handlingMenu.MenuApplyPersonalPresetButtonPressed += GUI_MenuApplyPersonalPresetButtonPressed;
-            _handlingMenu.MenuApplyServerPresetButtonPressed += GUI_MenuApplyServerPresetButtonPressed;
-            _handlingMenu.MenuSavePersonalPresetButtonPressed += GUI_MenuSavePersonalPresetButtonPressed;
-            _handlingMenu.MenuDeletePersonalPresetButtonPressed += GUI_MenuDeletePersonalPresetButtonPressed;
-            _handlingMenu.MenuResetPresetButtonPressed += GUI_MenuResetPresetButtonPressed;
-            _handlingMenu.MenuPresetValueChanged += GUI_MenuPresetValueChanged;
+            _handlingMenu.MenuApplyPersonalPresetButtonPressed += (sender, key) => LoadPersonalPreset(key);
+            _handlingMenu.MenuApplyServerPresetButtonPressed += (sender, key) => LoadServerPreset(key);
+            _handlingMenu.MenuSavePersonalPresetButtonPressed += (sender, key) => SavePersonalPreset(key, CurrentPreset);
+            _handlingMenu.MenuDeletePersonalPresetButtonPressed += (sender, key) => DeletePersonalPreset(key);
+            _handlingMenu.MenuResetPresetButtonPressed += (senders, args) => Reset();
+            _handlingMenu.MenuPresetValueChanged += SetPresetValue;
 
             Tick += GetPlayerVehicleTask;
             Tick += ScriptTask;
@@ -181,11 +171,10 @@ namespace HandlingEditor.Client
         /// </summary>
         /// <param name="fieldName">The name of the field which needs to be updated</param>
         /// <param name="fieldValue">The new value of the field</param>
-        /// <param name="fieldId">The ID of the field</param>
-        private void GUI_MenuPresetValueChanged(string fieldName, string fieldValue, string fieldId)
+        /// <param name="fieldId">The ID of the field (used for vector3 components)</param>
+        private void SetPresetValue(string fieldName, string fieldValue, string fieldId)
         {
             // Be sure the field is supported
-
             if (!HandlingInfo.Fields.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
                 return;
 
@@ -241,66 +230,63 @@ namespace HandlingEditor.Client
             }
         }
 
-        private async void GUI_MenuResetPresetButtonPressed(object sender, EventArgs e)
+        private async void Reset()
         {
+            // Reset the preset
             CurrentPreset.Reset();
             RemoveDecorators(_playerVehicleHandle);
             UpdateVehicleHandlingUsingPreset(_playerVehicleHandle, CurrentPreset);
 
             await Delay(200);
-            PresetChanged?.Invoke(this, EventArgs.Empty);
+            CurrentPresetChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        private async void GUI_MenuSavePersonalPresetButtonPressed(object sender, string presetName)
+        private async void SavePersonalPreset(string presetName, HandlingPreset preset)
         {
-            if (LocalPresetsManager.Save(presetName, CurrentPreset))
-            {
-                await Delay(200);
-                PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
+            await Task.FromResult(0);
+
+            if (LocalPresetsManager.Save(presetName, preset))
                 notifier.Notify($"Personal preset ~g~{presetName}~w~ saved");
-            }
             else
                 notifier.Notify($"~r~ERROR~w~ The name {presetName} is invalid or already used.");
         }
 
-        private async void GUI_MenuDeletePersonalPresetButtonPressed(object sender, string presetName)
+        private async void DeletePersonalPreset(string presetName)
         {
+            await Task.FromResult(0);
+
             if (LocalPresetsManager.Delete(presetName))
-            {
-                await Delay(200);
-                PersonalPresetsListChanged?.Invoke(this, EventArgs.Empty);
                 notifier.Notify($"Personal preset ~r~{presetName}~w~ deleted");
-            }
+            else
+                notifier.Notify($"~r~ERROR~w~ The name {presetName} is invalid or not found.");
         }
 
-        private async void GUI_MenuApplyServerPresetButtonPressed(object sender, string presetName)
+        private async void LoadServerPreset(string presetName)
         {
-            var loaded = ServerPresetsManager.Load(presetName);
-            if (loaded != null)
+            if (!ServerPresetsManager.Load(presetName, out HandlingPreset preset))
+                notifier.Notify($"~r~ERROR~w~ Server preset ~b~{presetName}~w~ corrupted");
+            else
             {
-                CurrentPreset.CopyFields(loaded, Config.CopyOnlySharedFields);
+                CurrentPreset.CopyFields(preset, Config.CopyOnlySharedFields);
+                CurrentPresetChanged?.Invoke(this, EventArgs.Empty);
 
-                PresetChanged?.Invoke(this, EventArgs.Empty);
                 notifier.Notify($"Server preset ~b~{presetName}~w~ applied");
             }
-            else
-                notifier.Notify($"~r~ERROR~w~ Server preset ~b~{presetName}~w~ corrupted");
 
             await Delay(200);
         }
 
-        private async void GUI_MenuApplyPersonalPresetButtonPressed(object sender, string presetName)
+        private async void LoadPersonalPreset(string presetName)
         {
-            var loaded = LocalPresetsManager.Load(presetName);
-            if(loaded != null)
+            if(!LocalPresetsManager.Load(presetName, out HandlingPreset preset))
+                notifier.Notify($"~r~ERROR~w~ Personal preset ~b~{presetName}~w~ corrupted");
+            else
             {
-                // TODO:
-                CurrentPreset.CopyFields(loaded, Config.CopyOnlySharedFields);
-                PresetChanged?.Invoke(this, EventArgs.Empty);
+                CurrentPreset.CopyFields(preset, Config.CopyOnlySharedFields);
+                CurrentPresetChanged?.Invoke(this, EventArgs.Empty);
+
                 notifier.Notify($"Personal preset ~b~{presetName}~w~ applied");
             }
-            else
-                notifier.Notify($"~r~ERROR~w~ Personal preset ~b~{presetName}~w~ corrupted");
 
             await Delay(200);
         }
@@ -345,7 +331,7 @@ namespace HandlingEditor.Client
 
                 CurrentPreset = new HandlingPreset();
                 CurrentPreset.FromHandle(_playerVehicleHandle);
-                PresetChanged?.Invoke(this, EventArgs.Empty);
+                CurrentPresetChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -384,8 +370,8 @@ namespace HandlingEditor.Client
 
         private async Task HideUITask()
         {
-            if (!CurrentPresetIsValid && _handlingMenu != null)
-                _handlingMenu.HideUI();
+            if (_handlingMenu != null)
+                _handlingMenu.HideUI = !CurrentPresetIsValid;
 
             await Task.FromResult(0);
         }
@@ -624,8 +610,7 @@ namespace HandlingEditor.Client
             {
                 strings = LoadResourceFile(Globals.ResourceName, filename);
                 HandlingInfo.ParseXml(strings);
-                var editableFields = HandlingInfo.Fields.Where(a => a.Value.Editable);
-                logger.Log(LogLevel.Information, $"Loaded {filename}, found {HandlingInfo.Fields.Count} fields info, {editableFields.Count()} editable.");
+                logger.Log(LogLevel.Information, $"Loaded {filename}, found {HandlingInfo.Fields.Count} fields info");
             }
             catch (Exception e)
             {

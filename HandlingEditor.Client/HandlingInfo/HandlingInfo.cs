@@ -18,15 +18,15 @@ namespace HandlingEditor.Client
             Fields = new Dictionary<string, HandlingFieldInfo>();
         }
 
-        public  void ParseXml(string xml)
+        public void ParseXml(string xml)
         {
             // Remove BOM if present
             Helpers.RemoveByteOrderMarks(ref xml);
 
             // Load the Xml document
-            XmlDocument doc = new XmlDocument();  
+            XmlDocument doc = new XmlDocument();
             doc.LoadXml(xml);
-            
+
             // Iterate all the nodes
             foreach (XmlNode classNode in doc.ChildNodes)
             {
@@ -48,7 +48,7 @@ namespace HandlingEditor.Client
                     // Get the field type
                     Type type = HandlingFieldTypes.GetHandlingFieldTypeByName(fieldName);
 
-                    if(!bool.TryParse(item.Attributes["Editable"].Value, out bool editable))
+                    if (!bool.TryParse(item.Attributes["Editable"].Value, out bool editable))
                         logger.Log(LogLevel.Error, $"Unable to parse Editable attribute in {fieldName}.");
 
                     string description = item["Description"].InnerText;
@@ -83,9 +83,9 @@ namespace HandlingEditor.Client
                     // If it's a Vector3 field
                     else if (type == HandlingFieldTypes.Vector3Type)
                     {
-                        if(!float.TryParse(minNode.Attributes["x"].Value, out float minX)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
-                        if(!float.TryParse(minNode.Attributes["y"].Value, out float minY)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
-                        if(!float.TryParse(minNode.Attributes["z"].Value, out float minZ)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
+                        if (!float.TryParse(minNode.Attributes["x"].Value, out float minX)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
+                        if (!float.TryParse(minNode.Attributes["y"].Value, out float minY)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
+                        if (!float.TryParse(minNode.Attributes["z"].Value, out float minZ)) logger.Log(LogLevel.Error, $"Unable to parse Min attribute in {fieldName}.");
                         Vector3 min = new Vector3(minX, minY, minZ);
 
                         if (!float.TryParse(maxNode.Attributes["x"].Value, out float maxX)) logger.Log(LogLevel.Error, $"Unable to parse Max attribute in {fieldName}.");
@@ -112,39 +112,88 @@ namespace HandlingEditor.Client
             }
         }
 
-        /*
-        public static bool IsValueAllowed(string name, dynamic value)
+
+        public bool IsValueAllowed(string name, int value)
         {
             if (string.IsNullOrEmpty(name))
                 return false;
 
             // No field with such name exists
-            if (!FieldsInfo.TryGetValue(name, out BaseFieldInfo baseFieldInfo))
+            if (!Fields.TryGetValue(name, out HandlingFieldInfo baseFieldInfo))
                 return false;
 
-            if (baseFieldInfo is FieldInfo<int> && value is int)
-            {
-                FieldInfo<int> fieldInfo = (FieldInfo<int>)baseFieldInfo;
-                return (value <= fieldInfo.Max && value >= fieldInfo.Min);
-            }
-            else if (baseFieldInfo is FieldInfo<float> && value is float)
-            {
-                FieldInfo<float> fieldInfo = (FieldInfo<float>)baseFieldInfo;
-                return (value <= fieldInfo.Max && value >= fieldInfo.Min);
-            }
-            else if (baseFieldInfo is FieldInfo<Vector3> && value is Vector3)
-            {
-                FieldInfo<Vector3> fieldInfo = (FieldInfo<Vector3>)baseFieldInfo;
+            if (baseFieldInfo is HandlingFieldInfo<int> fieldInfo)
+                return value <= fieldInfo.Max && value >= fieldInfo.Min;
 
-                if (name == $"{fieldInfo.Name}.x") return (value <= fieldInfo.Max.X && value >= fieldInfo.Min.X);
-                else if (name == $"{fieldInfo.Name}.y") return (value <= fieldInfo.Max.Y && value >= fieldInfo.Min.Y);
-                else if (name == $"{fieldInfo.Name}.z") return (value <= fieldInfo.Max.Z && value >= fieldInfo.Min.Z);
-                else return false;
+            return false;
+        }
+
+        public bool IsValueAllowed(string name, float value)
+        {
+            if (string.IsNullOrEmpty(name))
+                return false;
+
+            // No field with such name exists
+            if (!Fields.TryGetValue(name, out HandlingFieldInfo baseFieldInfo))
+                return false;
+
+            if (baseFieldInfo is HandlingFieldInfo<float> fieldInfo)
+                return value <= fieldInfo.Max && value >= fieldInfo.Min;
+
+            return false;
+        }
+
+        public bool IsValueAllowed(string name, Vector3 value)
+        {
+            if (string.IsNullOrEmpty(name))
+                return false;
+
+            // No field with such name exists
+            if (!Fields.TryGetValue(name, out HandlingFieldInfo baseFieldInfo))
+                return false;
+
+            if (baseFieldInfo is HandlingFieldInfo<Vector3> fieldInfo)
+            {
+                return 
+                    value.X <= fieldInfo.Max.X && value.X >= fieldInfo.Min.X &&
+                    value.Y <= fieldInfo.Max.Y && value.Y >= fieldInfo.Min.Y &&
+                    value.Z <= fieldInfo.Max.Z && value.Z >= fieldInfo.Min.Z;
             }
+            return false;
+        }
+
+        public bool IsComponentValueAllowed(string componentName, float value)
+        {
+            if (string.IsNullOrEmpty(componentName))
+                return false;
+
+            string name = GetFieldNameFromComponentFieldName(componentName);
+
+            // No field with such name exists
+            if (!Fields.TryGetValue(name, out HandlingFieldInfo baseFieldInfo))
+                return false;
+
+            if (!(baseFieldInfo is HandlingFieldInfo<Vector3> fieldInfo))
+                return false;
+
+            if (componentName.EndsWith(".x"))
+                return value <= fieldInfo.Max.X && value >= fieldInfo.Min.X;
+            else if (componentName.EndsWith(".y"))
+                return value <= fieldInfo.Max.Y && value >= fieldInfo.Min.Y;
+            else if (componentName.EndsWith(".z"))
+                return value <= fieldInfo.Max.Z && value >= fieldInfo.Min.Z;
+
+            return false;
+        }
+
+        public static string GetFieldNameFromComponentFieldName(string componentFieldName)
+        {
+            if (componentFieldName.EndsWith(".x") ||
+                componentFieldName.EndsWith(".y") ||
+                componentFieldName.EndsWith(".z"))
+                return componentFieldName.Remove(componentFieldName.Length - 2, 2);
             else
-            {
-                return false;
-            }
-        }*/
+                return componentFieldName;
+        }
     }
 }
