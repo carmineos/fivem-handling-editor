@@ -160,7 +160,7 @@ namespace HandlingEditor.Client
             _handlingMenu.MenuPresetValueChanged += SetPresetValue;
 
             Tick += GetPlayerVehicleTask;
-            Tick += ScriptTask;
+            Tick += UpdateWorldVehiclesTask;
             Tick += HideUITask;
 
         }
@@ -228,6 +228,19 @@ namespace HandlingEditor.Client
                     }
                 }
             }
+
+            // TODO: This will be called as callback once HandlingPreset has been refactored to invoke HandlingFieldEdited
+            OnPresetFieldEdited(this, fieldName);
+        }
+
+        private void OnPresetFieldEdited(object sender, string fieldName)
+        {
+            if (!CurrentPresetIsValid)
+                return;
+
+            UpdateVehicleHandlingFieldUsingPreset(_playerVehicleHandle, CurrentPreset, fieldName);
+
+            UpdateVehicleDecoratorUsingPreset(_playerVehicleHandle, CurrentPreset, fieldName);
         }
 
         private async void Reset()
@@ -306,6 +319,7 @@ namespace HandlingEditor.Client
             if (!IsPedInAnyVehicle(_playerPedHandle, false))
             {
                 _playerVehicleHandle = -1;
+                //CurrentPreset.HandlingFieldEdited -= OnPresetFieldEdited;
                 CurrentPreset = null;
                 return;
             }
@@ -318,6 +332,7 @@ namespace HandlingEditor.Client
             if (!VehiclesPermissions.IsVehicleAllowed(vehicle) || IsEntityDead(vehicle) || GetPedInVehicleSeat(vehicle, -1) != _playerPedHandle)
             {
                 _playerVehicleHandle = -1;
+                //CurrentPreset.HandlingFieldEdited -= OnPresetFieldEdited;
                 CurrentPreset = null;
                 return;
             }
@@ -331,6 +346,7 @@ namespace HandlingEditor.Client
 
                 CurrentPreset = new HandlingPreset();
                 CurrentPreset.FromHandle(_playerVehicleHandle);
+                //CurrentPreset.HandlingFieldEdited += OnPresetFieldEdited;
                 CurrentPresetChanged?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -339,24 +355,13 @@ namespace HandlingEditor.Client
         /// The main task of the script
         /// </summary>
         /// <returns></returns>
-        private async Task ScriptTask()
+        private async Task UpdateWorldVehiclesTask()
         {
             var CurrentTime = (GetGameTimer() - _lastTime);
 
             // Check if decorators needs to be updated
             if (CurrentTime > Config.Timer)
             {
-                // TODO: Move this to a callback for HandlingPreset.HandlingFieldEdited event
-                // Current vehicle could be updated each tick to show the edited fields live
-                // Check if current vehicle needs to be refreshed
-                if (CurrentPresetIsValid)
-                {
-                    if (CurrentPreset.IsEdited)
-                        UpdateVehicleHandlingUsingPreset(_playerVehicleHandle, CurrentPreset);
-
-                    UpdateVehicleDecoratorsUsingPreset(_playerVehicleHandle, CurrentPreset);
-                }
-
                 _worldVehiclesHandles = new VehicleEnumerable();
 
                 // Refreshes the iterated vehicles
@@ -691,7 +696,38 @@ namespace HandlingEditor.Client
 
 
 
+        private void UpdateVehicleHandlingDecorator(int vehicle, string fieldName, Vector3 fieldValue, Vector3 defaultValue)
+        {
+            string decorX = $"{fieldName}.x";
+            string decorY = $"{fieldName}.y";
+            string decorZ = $"{fieldName}.z";
+            string defDecorNameX = $"{decorX}_def";
+            string defDecorNameY = $"{decorY}_def";
+            string defDecorNameZ = $"{decorZ}_def";
 
+            UpdateDecorator(vehicle, decorX, fieldValue.X, defaultValue.X);
+            UpdateDecorator(vehicle, defDecorNameX, defaultValue.X, fieldValue.X);
+
+            UpdateDecorator(vehicle, decorY, fieldValue.Y, defaultValue.Y);
+            UpdateDecorator(vehicle, defDecorNameY, defaultValue.Y, fieldValue.Y);
+
+            UpdateDecorator(vehicle, decorZ, fieldValue.Z, defaultValue.Z);
+            UpdateDecorator(vehicle, defDecorNameZ, defaultValue.Z, fieldValue.Z);
+        }
+
+        private void UpdateVehicleHandlingDecorator(int vehicle, string fieldName, int fieldValue, int defaultValue)
+        {
+            string defDecorName = $"{fieldName}_def";
+            UpdateDecorator(vehicle, fieldName, fieldValue, defaultValue);
+            UpdateDecorator(vehicle, defDecorName, defaultValue, fieldValue);
+        }
+
+        private void UpdateVehicleHandlingDecorator(int vehicle, string fieldName, float fieldValue, float defaultValue)
+        {
+            string defDecorName = $"{fieldName}_def";
+            UpdateDecorator(vehicle, fieldName, fieldValue, defaultValue);
+            UpdateDecorator(vehicle, defDecorName, defaultValue, fieldValue);
+        }
 
         private void UpdateVehicleHandlingField(int vehicle, string className, string fieldName, int fieldValue)
         {
@@ -867,38 +903,50 @@ namespace HandlingEditor.Client
 
                 Type fieldType = handlingFieldInfo.Type;
                 dynamic fieldValue = item.Value;
-
-                string defDecorName = $"{fieldName}_def";
                 dynamic defaultValue = preset.DefaultFields[fieldName];
 
                 if (fieldType == HandlingFieldTypes.FloatType)
                 {
-                    UpdateDecorator(vehicle, fieldName, (float)fieldValue, (float)defaultValue);
-                    UpdateDecorator(vehicle, defDecorName, (float)defaultValue, (float)fieldValue);
+                    UpdateVehicleHandlingDecorator(vehicle, fieldName, (float)fieldValue, (float)defaultValue);
                 }
                 else if (fieldType == HandlingFieldTypes.IntType)
                 {
-                    UpdateDecorator(vehicle, fieldName, (int)fieldValue, (int)defaultValue);
-                    UpdateDecorator(vehicle, defDecorName, (int)defaultValue, (int)fieldValue);
+                    UpdateVehicleHandlingDecorator(vehicle, fieldName, (int)fieldValue, (int)defaultValue);
                 }
                 else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
-                    string decorX = $"{fieldName}.x";
-                    string decorY = $"{fieldName}.y";
-                    string decorZ = $"{fieldName}.z";
-                    string defDecorNameX = $"{decorX}_def";
-                    string defDecorNameY = $"{decorY}_def";
-                    string defDecorNameZ = $"{decorZ}_def";
-
-                    UpdateDecorator(vehicle, decorX, ((Vector3)fieldValue).X, ((Vector3)defaultValue).X);
-                    UpdateDecorator(vehicle, defDecorNameX, ((Vector3)defaultValue).X, ((Vector3)fieldValue).X);
-
-                    UpdateDecorator(vehicle, decorY, ((Vector3)fieldValue).Y, ((Vector3)defaultValue).Y);
-                    UpdateDecorator(vehicle, defDecorNameY, ((Vector3)defaultValue).Y, ((Vector3)fieldValue).Y);
-
-                    UpdateDecorator(vehicle, decorZ, ((Vector3)fieldValue).Z, ((Vector3)defaultValue).Z);
-                    UpdateDecorator(vehicle, defDecorNameZ, ((Vector3)defaultValue).Z, ((Vector3)fieldValue).Z);
+                    UpdateVehicleHandlingDecorator(vehicle, fieldName, (Vector3)fieldValue, (Vector3)defaultValue);
                 }
+            }
+        }
+
+        private void UpdateVehicleDecoratorUsingPreset(int vehicle, HandlingPreset preset, string fieldName)
+        {
+            if (!DoesEntityExist(vehicle))
+                return;
+
+            // Be sure the handling info contains such field
+            if (!HandlingInfo.Fields.TryGetValue(fieldName, out HandlingFieldInfo handlingFieldInfo))
+            {
+                logger.Log(LogLevel.Error, $"HandlingInfo doesn't contain the field {fieldName}");
+                return;
+            }
+
+            Type fieldType = handlingFieldInfo.Type;
+            dynamic fieldValue = preset.Fields[fieldName];
+            dynamic defaultValue = preset.DefaultFields[fieldName];
+
+            if (fieldType == HandlingFieldTypes.FloatType)
+            {
+                UpdateVehicleHandlingDecorator(vehicle, fieldName, (float)fieldValue, (float)defaultValue);
+            }
+            else if (fieldType == HandlingFieldTypes.IntType)
+            {
+                UpdateVehicleHandlingDecorator(vehicle, fieldName, (int)fieldValue, (int)defaultValue);
+            }
+            else if (fieldType == HandlingFieldTypes.Vector3Type)
+            {
+                UpdateVehicleHandlingDecorator(vehicle, fieldName, (Vector3)fieldValue, (Vector3)defaultValue);
             }
         }
 
