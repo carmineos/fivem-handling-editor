@@ -4,15 +4,15 @@ using System.Collections.Generic;
 namespace HandlingEditor.Client
 {
     // TODO: Use a concurrent dictionary
-    public class MemoryPresetManager : IPresetManager<string, HandlingPreset>
+    public class MemoryPresetsCollection : IPresetsCollection<string, HandlingData>
     {
-        private Dictionary<string, HandlingPreset> _presets;
+        private readonly Dictionary<string, HandlingData> _presets;
 
         public event EventHandler PresetsCollectionChanged;
 
-        public MemoryPresetManager()
+        public MemoryPresetsCollection()
         {
-            _presets = new Dictionary<string, HandlingPreset>();
+            _presets = new Dictionary<string, HandlingData>();
         }
 
         public bool Delete(string name)
@@ -34,7 +34,7 @@ namespace HandlingEditor.Client
             return _presets.Keys;
         }
 
-        public bool Load(string name, out HandlingPreset preset)
+        public bool Load(string name, out HandlingData preset)
         {
             preset = null;
 
@@ -44,7 +44,7 @@ namespace HandlingEditor.Client
             return _presets.TryGetValue(name, out preset);
         }
 
-        public bool Save(string name, HandlingPreset preset)
+        public bool Save(string name, HandlingData preset)
         {
             if (string.IsNullOrEmpty(name) || preset == null)
                 return false;

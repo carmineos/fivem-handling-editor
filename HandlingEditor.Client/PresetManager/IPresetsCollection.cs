@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HandlingEditor.Client
 {
-    public interface IPresetManager<TKey, TValue>
+    public interface IPresetsCollection<TKey, TValue>
     {
         /// <summary>
         /// Invoked when an element is saved or deleted
@@ -11,12 +11,12 @@ namespace HandlingEditor.Client
         event EventHandler PresetsCollectionChanged;
 
         /// <summary>
-        /// Saves the <paramref name="value"/> using the <paramref name="name"/> as preset name
+        /// Saves the <paramref name="preset"/> using the <paramref name="name"/> as preset name
         /// </summary>
         /// <param name="name"></param>
-        /// <param name="value"></param>
+        /// <param name="preset"></param>
         /// <returns></returns>
-        bool Save(TKey name, TValue value);
+        bool Save(TKey name, TValue preset);
 
         /// <summary>
         /// Deletes the preset with the <paramref name="name"/> as preset name

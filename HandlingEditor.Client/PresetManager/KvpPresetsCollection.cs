@@ -1,19 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using static CitizenFX.Core.Native.API;
+using Newtonsoft.Json;
+using System.Linq;
 
 namespace HandlingEditor.Client
 {
     /// <summary>
-    /// The handling preset manager which saves the presets as key-value pairs built-in FiveM
+    /// The vstancer preset manager which saves the presets as key-value pairs built-in FiveM
     /// </summary>
-    public class KvpPresetManager : IPresetManager<string, HandlingPreset>
+    public class KvpPresetsCollection : IPresetsCollection<string, HandlingData>
     {
         private readonly string mKvpPrefix;
 
         public event EventHandler PresetsCollectionChanged;
 
-        public KvpPresetManager(string prefix)
+        public KvpPresetsCollection(string prefix)
         {
             mKvpPrefix = prefix;
         }
@@ -34,11 +37,13 @@ namespace HandlingEditor.Client
             // Delete the KVP
             DeleteResourceKvp(key);
 
+            // Invoke the event
             PresetsCollectionChanged?.Invoke(this, EventArgs.Empty);
+
             return true;
         }
 
-        public bool Save(string name, HandlingPreset preset)
+        public bool Save(string name, HandlingData preset)
         {
             // Check if the preset and the ID are valid
             if (string.IsNullOrEmpty(name) || preset == null)
@@ -51,17 +56,19 @@ namespace HandlingEditor.Client
             if (GetResourceKvpString(key) != null)
                 return false;
 
-            // Get the XML
-            var xml = preset.ToXml(name);
+            // Get the Json
+            var json = JsonConvert.SerializeObject(preset);
 
             // Save the KVP
-            SetResourceKvp(key, xml);
+            SetResourceKvp(key, json);
 
+            // Invoke the event
             PresetsCollectionChanged?.Invoke(this, EventArgs.Empty);
+
             return true;
         }
 
-        public bool Load(string name, out HandlingPreset preset)
+        public bool Load(string name, out HandlingData preset)
         {
             preset = null;
 
@@ -79,21 +86,14 @@ namespace HandlingEditor.Client
             if (string.IsNullOrEmpty(value))
                 return false;
 
-            // Remove BOM from XML string
-            Helpers.RemoveByteOrderMarks(ref value);
-            
             // Create a preset
-            preset = new HandlingPreset();
-
-            // Load the values from the XML
-            preset.FromXml(value);
-
+            preset = JsonConvert.DeserializeObject<HandlingData>(value);
             return true;
         }
 
         public IEnumerable<string> GetKeys()
         {
-            return new KvpEnumerable(mKvpPrefix);
+            return ScriptUtilities.GetKeyValuePairs(mKvpPrefix).Select(key => key.Remove(0, mKvpPrefix.Length));
         }
     }
 }

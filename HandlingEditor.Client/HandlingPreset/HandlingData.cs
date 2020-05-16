@@ -5,7 +5,7 @@ using CitizenFX.Core;
 
 namespace HandlingEditor.Client
 {
-    public class HandlingPreset : IEquatable<HandlingPreset>
+    public class HandlingData : IEquatable<HandlingData>
     {
         public const float Epsilon = 0.001f;
 
@@ -14,7 +14,7 @@ namespace HandlingEditor.Client
         public Dictionary<string, dynamic> DefaultFields { get; private set; }
         public Dictionary<string, dynamic> Fields { get; set; }
 
-        public HandlingPreset()
+        public HandlingData()
         {
             DefaultFields = new Dictionary<string, dynamic>();
             Fields = new Dictionary<string, dynamic>();
@@ -70,7 +70,7 @@ namespace HandlingEditor.Client
             }
         }
 
-        public bool Equals(HandlingPreset other)
+        public bool Equals(HandlingData other)
         {
             if (Fields.Count != other.Fields.Count)
                 return false;
@@ -117,7 +117,7 @@ namespace HandlingEditor.Client
             return s.ToString();
         }
 
-        public void CopyFields(HandlingPreset other, bool onlySharedFields = true)
+        public void CopyFields(HandlingData other, bool onlySharedFields = true)
         {
             foreach (var item in other.Fields)
             {

@@ -5,5 +5,9 @@
   "Timer": 1000,
   "ToggleMenuControl": 168,
   "ShowLockedFields": true,
-  "CopyOnlySharedFields": true
+  "CopyOnlySharedFields": true,
+  "EnableClientPresets":  true,
+  "EnableServerPresets":  true,
+  "EnableSettings":  true,
+  "DisableMenu":  false
 }
