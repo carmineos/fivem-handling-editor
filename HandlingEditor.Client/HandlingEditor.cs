@@ -283,6 +283,13 @@ namespace HandlingEditor.Client
                 CurrentPreset.CopyFields(preset, Config.CopyOnlySharedFields);
                 CurrentPresetChanged?.Invoke(this, EventArgs.Empty);
 
+                // TODO: This will be called as callback once HandlingPreset has been refactored to invoke HandlingFieldEdited
+                foreach (var field in preset.Fields)
+                {
+                    if(CurrentPreset.Fields.ContainsKey(field.Key))
+                        OnPresetFieldEdited(this, field.Key);
+                }
+
                 notifier.Notify($"Server preset ~b~{presetName}~w~ applied");
             }
 
@@ -297,6 +304,13 @@ namespace HandlingEditor.Client
             {
                 CurrentPreset.CopyFields(preset, Config.CopyOnlySharedFields);
                 CurrentPresetChanged?.Invoke(this, EventArgs.Empty);
+
+                // TODO: This will be called as callback once HandlingPreset has been refactored to invoke HandlingFieldEdited
+                foreach (var field in preset.Fields)
+                {
+                    if (CurrentPreset.Fields.ContainsKey(field.Key))
+                        OnPresetFieldEdited(this, field.Key);
+                }
 
                 notifier.Notify($"Personal preset ~b~{presetName}~w~ applied");
             }
