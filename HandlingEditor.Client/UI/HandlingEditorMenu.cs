@@ -32,6 +32,10 @@ namespace HandlingEditor.Client.UI
 
         private void ItemSelect(Menu menu, MenuItem menuItem, int itemIndex)
         {
+                
+            if (_script.Config.Debug)
+                Debug.WriteLine($"{nameof(HandlingEditorMenu)}: {menuItem.Text} selected");
+
             if (menuItem == ResetItem)
             {
                 ResetPropertiesEvent?.Invoke(this, menuItem.ItemData as string);
@@ -110,7 +114,7 @@ namespace HandlingEditor.Client.UI
 
                         menuItem = CreateDynamicFloatList(
                             fieldName,
-                            (float)_script.HandlingData.Fields[fieldName],
+                            (float)_script.HandlingData.GetFieldValue(fieldName),
                             FloatFieldInfo
                             );
 
@@ -122,7 +126,7 @@ namespace HandlingEditor.Client.UI
 
                         menuItem = CreateDynamicIntList(
                             fieldName,
-                            (int)_script.HandlingData.Fields[fieldName],
+                            (int)_script.HandlingData.GetFieldValue(fieldName),
                             IntFieldInfo
                             );
 
@@ -134,7 +138,7 @@ namespace HandlingEditor.Client.UI
 
                         var menuItems = CreateDynamicVector3List(
                             fieldName,
-                            (Vector3)_script.HandlingData.Fields[fieldName],
+                            (Vector3)_script.HandlingData.GetFieldValue(fieldName),
                             Vector3FieldInfo
                             );
 

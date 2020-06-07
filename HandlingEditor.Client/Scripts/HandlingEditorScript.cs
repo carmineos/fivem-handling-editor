@@ -1,6 +1,7 @@
 ﻿using CitizenFX.Core;
 using HandlingEditor.Client.UI;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using static CitizenFX.Core.Native.API;
 
@@ -83,7 +84,8 @@ namespace HandlingEditor.Client.Scripts
 
         private HandlingData GetHandlingDataFromEntity(int vehicle)
         {
-            HandlingData handlingData = new HandlingData();
+            Dictionary<string, object> defaultValues = new Dictionary<string, object>();
+            Dictionary<string, object> currentValues = new Dictionary<string, object>();
 
             foreach (var item in HandlingInfo.Fields)
             {
@@ -95,14 +97,14 @@ namespace HandlingEditor.Client.Scripts
                 if (fieldType == HandlingFieldTypes.FloatType)
                 {
                     var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetFloat(vehicle, defDecorName) : GetVehicleHandlingFloat(vehicle, className, fieldName);
-                    handlingData.DefaultFields[fieldName] = defaultValue;
-                    handlingData.Fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetFloat(vehicle, fieldName) : defaultValue;
+                    defaultValues[fieldName] = defaultValue;
+                    currentValues[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetFloat(vehicle, fieldName) : defaultValue;
                 }
                 else if (fieldType == HandlingFieldTypes.IntType)
                 {
                     var defaultValue = DecorExistOn(vehicle, defDecorName) ? DecorGetInt(vehicle, defDecorName) : GetVehicleHandlingInt(vehicle, className, fieldName);
-                    handlingData.DefaultFields[fieldName] = defaultValue;
-                    handlingData.Fields[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetInt(vehicle, fieldName) : defaultValue;
+                    defaultValues[fieldName] = defaultValue;
+                    currentValues[fieldName] = DecorExistOn(vehicle, fieldName) ? DecorGetFloat(vehicle, fieldName) : defaultValue;
                 }
                 else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
@@ -123,7 +125,7 @@ namespace HandlingEditor.Client.Scripts
                     if (DecorExistOn(vehicle, defDecorNameZ))
                         vec.Z = DecorGetFloat(vehicle, defDecorNameZ);
 
-                    handlingData.DefaultFields[fieldName] = vec;
+                    defaultValues[fieldName] = vec;
 
                     if (DecorExistOn(vehicle, decorX))
                         vec.X = DecorGetFloat(vehicle, decorX);
@@ -132,11 +134,11 @@ namespace HandlingEditor.Client.Scripts
                     if (DecorExistOn(vehicle, decorZ))
                         vec.Z = DecorGetFloat(vehicle, decorZ);
 
-                    handlingData.Fields[fieldName] = vec;
+                    currentValues[fieldName] = vec;
                 }
             }
 
-            return handlingData;
+            return new HandlingData(currentValues, defaultValues);
         }
 
         private async void OnHandlingDataPropertyChanged(string fieldName, object value)
@@ -171,9 +173,9 @@ namespace HandlingEditor.Client.Scripts
             if (!DoesEntityExist(vehicle))
                 return;
 
-            foreach (var fieldName in handlingData.Fields.Keys)
+            foreach (var fieldName in handlingData.Fields)
             {
-                UpdateVehicleUsingHandlingDataField(vehicle, handlingData, fieldName);
+                UpdateVehicleUsingHandlingDataField(vehicle, handlingData, fieldName.Key);
             }
         }
 
@@ -189,8 +191,8 @@ namespace HandlingEditor.Client.Scripts
             }
 
             Type fieldType = handlingFieldInfo.Type;
-            object fieldValue = handlingData.Fields[fieldName];
-            object defaultValue = handlingData.DefaultFields[fieldName];
+            object fieldValue = handlingData.GetFieldValue(fieldName);
+            object defaultValue = handlingData.GetDefaultFieldValue(fieldName);
 
             if (fieldType == HandlingFieldTypes.FloatType)
             {
@@ -464,7 +466,7 @@ namespace HandlingEditor.Client.Scripts
             if (!HandlingInfo.Fields.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
                 return;
 
-            HandlingData.Fields[fieldName] = value;
+            HandlingData.SetFieldValue(fieldName, value);
         }
 
         private void OnMenuIntPropertyChanged(string fieldName, int value)
@@ -472,7 +474,7 @@ namespace HandlingEditor.Client.Scripts
             if (!HandlingInfo.Fields.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
                 return;
 
-            HandlingData.Fields[fieldName] = value;
+            HandlingData.SetFieldValue(fieldName, value);
         }
 
         private void OnMenuVector3PropertyChanged(string fieldName, float value, string componentName)
@@ -480,7 +482,7 @@ namespace HandlingEditor.Client.Scripts
             if (!HandlingInfo.Fields.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
                 return;
 
-            Vector3 fieldValue = (Vector3)HandlingData.Fields[fieldName];
+            Vector3 fieldValue = (Vector3)HandlingData.GetFieldValue(fieldName);
 
             if (componentName.EndsWith(".x"))
                 fieldValue.X = value;
@@ -489,7 +491,7 @@ namespace HandlingEditor.Client.Scripts
             else if (componentName.EndsWith(".z"))
                 fieldValue.Z = value;
 
-            HandlingData.Fields[fieldName] = fieldValue;
+            HandlingData.SetFieldValue(fieldName, fieldValue);
         }
     }
 }

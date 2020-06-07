@@ -6,30 +6,42 @@ using CitizenFX.Core;
 namespace HandlingEditor.Client
 {
     // TODO: Rework class, make dictionaries private, add indexer which invokes PropertyChanged event
-    public class HandlingData : IEquatable<HandlingData>
+    public class HandlingData
     {
         public const float Epsilon = 0.001f;
 
         public delegate void HandlingDataPropertyChanged(string propertyName, object value);
         public event HandlingDataPropertyChanged PropertyChanged;
 
-        public Dictionary<string, object> DefaultFields { get; private set; }
-        public Dictionary<string, object> Fields { get; set; }
+        private readonly Dictionary<string, object> _defaultFields;
+        private readonly Dictionary<string, object> _fields;
 
-        public HandlingData()
+        public Dictionary<string, object> Fields => new Dictionary<string, object>(_fields);
+
+        public void SetFieldValue(string name, object value)
         {
-            DefaultFields = new Dictionary<string, object>();
-            Fields = new Dictionary<string, object>();
+            _fields[name] = value;
+            PropertyChanged?.Invoke(name, value);
+        }
+
+        public object GetFieldValue(string name) => _fields[name];
+
+        public object GetDefaultFieldValue(string name) => _defaultFields[name];
+
+        public HandlingData(Dictionary<string, object> currentValues, Dictionary<string,object> defaultValues)
+        {
+            _defaultFields = new Dictionary<string, object>(defaultValues);
+            _fields = new Dictionary<string, object>(currentValues);
         }
 
         public bool IsEdited
         {
             get
             {
-                foreach(var item in Fields)
+                foreach(var item in _fields)
                 {
                     var value = item.Value;
-                    var defaultValue = DefaultFields[item.Key];
+                    var defaultValue = _defaultFields[item.Key];
 
                     Type fieldType = value.GetType();
 
@@ -55,67 +67,32 @@ namespace HandlingEditor.Client
 
         public void Reset()
         {
-            foreach (var item in DefaultFields)
+            foreach (var item in _defaultFields)
             {
                 string name = item.Key;
                 var value = item.Value;
                 Type fieldType = value.GetType();
 
                 if (fieldType == HandlingFieldTypes.FloatType || fieldType == HandlingFieldTypes.IntType)
-                    Fields[name] = value;
+                    _fields[name] = value;
 
                 else if (fieldType == HandlingFieldTypes.Vector3Type)
                 {
                     Vector3 vec = (Vector3)value;
-                    Fields[name] = new Vector3(vec.X, vec.Y, vec.Z);
+                    _fields[name] = new Vector3(vec.X, vec.Y, vec.Z);
                 }
             }
 
             PropertyChanged?.Invoke(nameof(Reset), default);
         }
 
-        public bool Equals(HandlingData other)
-        {
-            if (Fields.Count != other.Fields.Count)
-                return false;
-
-            foreach (var item in Fields)
-            {
-                string key = item.Key;
-
-                if (!other.Fields.TryGetValue(key, out object otherValue))
-                    return false;
-
-                var value = item.Value;
-
-                Type fieldType = value.GetType();
-
-                if (fieldType == HandlingFieldTypes.IntType)
-                {
-                    if (value != otherValue)
-                        return false;
-                }
-                else if(fieldType == HandlingFieldTypes.FloatType)
-                {
-                    if (!MathUtil.WithinEpsilon((float)value, (float)otherValue, Epsilon))
-                        return false;
-                }
-                else if (fieldType == HandlingFieldTypes.Vector3Type)
-                {
-                    if (!((Vector3)value).Equals((Vector3)otherValue))
-                        return false;
-                }
-            }
-            return true;
-        }
-
         public override string ToString()
         {
             StringBuilder s = new StringBuilder();
             s.AppendLine("HandlingPreset Fields:");
-            foreach (var item in Fields)
+            foreach (var item in _fields)
             {
-                s.AppendLine($"{item.Key}: {item.Value}({DefaultFields[item.Key]})");
+                s.AppendLine($"{item.Key}: {item.Value}({_defaultFields[item.Key]})");
             }
 
             return s.ToString();
@@ -123,16 +100,16 @@ namespace HandlingEditor.Client
 
         public void CopyFields(HandlingData other, bool onlySharedFields = true)
         {
-            foreach (var item in other.Fields)
+            foreach (var item in other._fields)
             {
                 if (onlySharedFields)
                 {
-                    if (Fields.ContainsKey(item.Key))
-                        Fields[item.Key] = item.Value;
+                    if (_fields.ContainsKey(item.Key))
+                        _fields[item.Key] = item.Value;
                 }
                 else
                 {
-                    Fields[item.Key] = item.Value;
+                    _fields[item.Key] = item.Value;
                 }
             }
         }
