@@ -48,7 +48,10 @@ namespace HandlingEditor.Client.Scripts
             if (!_mainScript.Config.DisableMenu)
             {
                 Menu = new HandlingEditorMenu(this);
-                // TODO: Subscribe to menu events
+                Menu.ResetPropertiesEvent += (sender, id) => OnMenuCommandInvoked(id);
+                Menu.FloatPropertyChangedEvent += OnMenuFloatPropertyChanged;
+                Menu.IntPropertyChangedEvent += OnMenuIntPropertyChanged;
+                Menu.Vector3PropertyChangedEvent += OnMenuVector3PropertyChanged;
             }
 
             Tick += UpdateWorldVehiclesTask;
@@ -441,6 +444,52 @@ namespace HandlingEditor.Client.Scripts
                     DecorRegister($"{decorZ}_def", 1);
                 }
             }
+        }
+
+        private void OnMenuCommandInvoked(string commandID)
+        {
+            switch (commandID)
+            {
+                case ResetID:
+                    if (!DataIsValid)
+                        return;
+
+                    HandlingData.Reset();
+                    break;
+            }
+        }
+
+        private void OnMenuFloatPropertyChanged(string fieldName, float value)
+        {
+            if (!HandlingInfo.Fields.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
+                return;
+
+            HandlingData.Fields[fieldName] = value;
+        }
+
+        private void OnMenuIntPropertyChanged(string fieldName, int value)
+        {
+            if (!HandlingInfo.Fields.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
+                return;
+
+            HandlingData.Fields[fieldName] = value;
+        }
+
+        private void OnMenuVector3PropertyChanged(string fieldName, float value, string componentName)
+        {
+            if (!HandlingInfo.Fields.TryGetValue(fieldName, out HandlingFieldInfo fieldInfo))
+                return;
+
+            Vector3 fieldValue = (Vector3)HandlingData.Fields[fieldName];
+
+            if (componentName.EndsWith(".x"))
+                fieldValue.X = value;
+            else if (componentName.EndsWith(".y"))
+                fieldValue.Y = value;
+            else if (componentName.EndsWith(".z"))
+                fieldValue.Z = value;
+
+            HandlingData.Fields[fieldName] = fieldValue;
         }
     }
 }

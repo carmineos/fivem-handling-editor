@@ -5,6 +5,7 @@ using CitizenFX.Core;
 
 namespace HandlingEditor.Client
 {
+    // TODO: Rework class, make dictionaries private, add indexer which invokes PropertyChanged event
     public class HandlingData : IEquatable<HandlingData>
     {
         public const float Epsilon = 0.001f;
@@ -12,13 +13,13 @@ namespace HandlingEditor.Client
         public delegate void HandlingDataPropertyChanged(string propertyName, object value);
         public event HandlingDataPropertyChanged PropertyChanged;
 
-        public Dictionary<string, dynamic> DefaultFields { get; private set; }
-        public Dictionary<string, dynamic> Fields { get; set; }
+        public Dictionary<string, object> DefaultFields { get; private set; }
+        public Dictionary<string, object> Fields { get; set; }
 
         public HandlingData()
         {
-            DefaultFields = new Dictionary<string, dynamic>();
-            Fields = new Dictionary<string, dynamic>();
+            DefaultFields = new Dictionary<string, object>();
+            Fields = new Dictionary<string, object>();
         }
 
         public bool IsEdited
@@ -39,7 +40,7 @@ namespace HandlingEditor.Client
                     }
                     else if(fieldType == HandlingFieldTypes.FloatType)
                     {
-                        if (!MathUtil.WithinEpsilon(value, defaultValue, Epsilon))
+                        if (!MathUtil.WithinEpsilon((float)value, (float)defaultValue, Epsilon))
                             return true;
                     }
                     else if (fieldType == HandlingFieldTypes.Vector3Type)
@@ -69,6 +70,8 @@ namespace HandlingEditor.Client
                     Fields[name] = new Vector3(vec.X, vec.Y, vec.Z);
                 }
             }
+
+            PropertyChanged?.Invoke(nameof(Reset), default);
         }
 
         public bool Equals(HandlingData other)
@@ -80,7 +83,7 @@ namespace HandlingEditor.Client
             {
                 string key = item.Key;
 
-                if (!other.Fields.TryGetValue(key, out dynamic otherValue))
+                if (!other.Fields.TryGetValue(key, out object otherValue))
                     return false;
 
                 var value = item.Value;
@@ -94,7 +97,7 @@ namespace HandlingEditor.Client
                 }
                 else if(fieldType == HandlingFieldTypes.FloatType)
                 {
-                    if (!MathUtil.WithinEpsilon(value, otherValue, Epsilon))
+                    if (!MathUtil.WithinEpsilon((float)value, (float)otherValue, Epsilon))
                         return false;
                 }
                 else if (fieldType == HandlingFieldTypes.Vector3Type)

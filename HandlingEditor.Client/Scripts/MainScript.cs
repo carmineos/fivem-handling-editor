@@ -66,6 +66,8 @@ namespace HandlingEditor.Client.Scripts
                 return;
             }
 
+            LoadHandlingInfo();
+
             _lastTime = GetGameTimer();
             _playerVehicleHandle = -1;
             _playerPedHandle = -1;
@@ -188,6 +190,22 @@ namespace HandlingEditor.Client.Scripts
             }
 
             return config;
+        }
+
+        private void LoadHandlingInfo(string filename = "HandlingInfo.xml")
+        {
+            string strings = null;
+            try
+            {
+                strings = LoadResourceFile(Globals.ResourceName, filename);
+                HandlingInfo.ParseXml(strings);
+                Debug.WriteLine($"{nameof(MainScript)}: Loaded {filename}, found {HandlingInfo.Fields.Count} fields info");
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine($"{nameof(MainScript)}: Error loading {filename}");
+                Debug.WriteLine($"{nameof(MainScript)}: {e.Message}");
+            }
         }
 
         public async Task<string> GetOnScreenString(string title, string defaultText)
