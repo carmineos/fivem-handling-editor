@@ -134,4 +134,64 @@ namespace HandlingEditor.Client
         }
 
     }
+
+    public class CHandlingData
+    {
+        private string handlingName;
+        private float fMass;
+        private float fInitialDragCoeff;
+        private float fPercentSubmerged;
+        private Vector3 vecCentreOfMassOffset;
+        private Vector3 vecInertiaMultiplier;
+        private float fDriveBiasFront;
+        private int nInitialDriveGears;
+        private float fInitialDriveForce;
+        private float fDriveInertia;
+        private float fClutchChangeRateScaleUpShift;
+        private float fClutchChangeRateScaleDownShift;
+        private float fInitialDriveMaxFlatVel;
+        private float fBrakeForce;
+        private float fBrakeBiasFront;
+        private float fHandBrakeForce;
+        private float fSteeringLock;
+        private float fTractionCurveMax;
+        private float fTractionCurveMin;
+        private float fTractionCurveLateral;
+        private float fTractionSpringDeltaMax;
+        private float fLowSpeedTractionLossMult;
+        private float fCamberStiffnesss;
+        private float fTractionBiasFront;
+        private float fTractionLossMult;
+        private float fSuspensionForce;
+        private float fSuspensionCompDamp;
+        private float fSuspensionReboundDamp;
+        private float fSuspensionUpperLimit;
+        private float fSuspensionLowerLimit;
+        private float fSuspensionRaise;
+        private float fSuspensionBiasFront;
+        private float fAntiRollBarForce;
+        private float fAntiRollBarBiasFront;
+        private float fRollCentreHeightFront;
+        private float fRollCentreHeightRear;
+        private float fCollisionDamageMult;
+        private float fWeaponDamageMult;
+        private float fDeformationDamageMult;
+        private float fEngineDamageMult;
+        private float fPetrolTankVolume;
+        private float fOilVolume;
+        private float fSeatOffsetDistX;
+        private float fSeatOffsetDistY;
+        private float fSeatOffsetDistZ;
+        private int nMonetaryValue;
+        private string strModelFlags;
+        private string strHandlingFlags;
+        private string strDamageFlags;
+        private string AIHandling;
+        private string SubHandlingData;
+        private float fWeaponDamageScaledToVehHealthMult;
+        private float fPopUpLightRotation;
+        private float fDownforceModifier;
+        private float fRocketBoostCapacity;
+        private float fBoostMaxSpeed;
+    }
 }
