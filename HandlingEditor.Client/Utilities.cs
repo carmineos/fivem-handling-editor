@@ -9,7 +9,7 @@ using static CitizenFX.Core.Native.API;
 
 namespace HandlingEditor.Client
 {
-    public static class ScriptUtilities
+    public static class Utilities
     {
         public const float Epsilon = 0.001f;
 

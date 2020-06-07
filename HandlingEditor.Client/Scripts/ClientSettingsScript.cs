@@ -2,13 +2,13 @@
 
 namespace HandlingEditor.Client.Scripts
 {
-    internal class SettingsScript
+    internal class ClientSettingsScript
     {
         private readonly MainScript _mainScript;
 
-        internal SettingsMenu Menu { get; private set; }
+        internal ClientSettingsMenu Menu { get; private set; }
 
-        internal SettingsScript(MainScript mainScript)
+        internal ClientSettingsScript(MainScript mainScript)
         {
             _mainScript = mainScript;
         }

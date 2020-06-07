@@ -3,11 +3,11 @@ using MenuAPI;
 
 namespace HandlingEditor.Client.UI
 {
-    internal class SettingsMenu : Menu
+    internal class ClientSettingsMenu : Menu
     {
-        private readonly SettingsScript _script;
+        private readonly ClientSettingsScript _script;
 
-        internal SettingsMenu(SettingsScript script, string name = Globals.ScriptName, string subtitle = "Settings Menu") : base(name, subtitle)
+        internal ClientSettingsMenu(ClientSettingsScript script, string name = Globals.ScriptName, string subtitle = "Settings Menu") : base(name, subtitle)
         {
             _script = script;
         }

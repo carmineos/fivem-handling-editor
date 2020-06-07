@@ -52,11 +52,11 @@ namespace HandlingEditor.Client.Scripts
 
         internal event EventHandler ToggleMenuVisibility;
 
-        internal HandlingConfig Config { get; private set; }
+        internal Config Config { get; private set; }
         internal HandlingEditorScript HandlingEditorScript { get; private set; }
         internal ClientPresetsScript ClientPresetsScript { get; private set; }
         internal ServerPresetsScript ServerPresetsScript { get; private set; }
-        internal SettingsScript SettingsScript { get; private set; }
+        internal ClientSettingsScript SettingsScript { get; private set; }
 
         public MainScript()
         {
@@ -91,7 +91,7 @@ namespace HandlingEditor.Client.Scripts
 
             if (Config.EnableSettings)
             {
-                SettingsScript = new SettingsScript(this);
+                SettingsScript = new ClientSettingsScript(this);
             }
 
             if (!Config.DisableMenu)
@@ -136,7 +136,7 @@ namespace HandlingEditor.Client.Scripts
             {
                 _playerPedCoords = GetEntityCoords(_playerPedHandle, true);
 
-                _worldVehiclesHandles = ScriptUtilities.GetWorldVehicles();
+                _worldVehiclesHandles = Utilities.GetWorldVehicles();
 
                 _lastTime = GetGameTimer();
             }
@@ -168,14 +168,14 @@ namespace HandlingEditor.Client.Scripts
             PlayerVehicleHandle = vehicle;
         }
 
-        private HandlingConfig LoadConfig(string filename = "config.json")
+        private Config LoadConfig(string filename = "config.json")
         {
-            HandlingConfig config;
+            Config config;
 
             try
             {
                 string strings = LoadResourceFile(Globals.ResourceName, filename);
-                config = JsonConvert.DeserializeObject<HandlingConfig>(strings);
+                config = JsonConvert.DeserializeObject<Config>(strings);
 
                 Debug.WriteLine($"{Globals.ScriptName}: Loaded config from {filename}");
             }
@@ -184,7 +184,7 @@ namespace HandlingEditor.Client.Scripts
                 Debug.WriteLine($"{Globals.ScriptName}: Impossible to load {filename}", e.Message);
                 Debug.WriteLine(e.StackTrace);
 
-                config = new HandlingConfig();
+                config = new Config();
             }
 
             return config;

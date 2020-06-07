@@ -18,7 +18,7 @@ namespace HandlingEditor.Client
         public void ParseXml(string xml)
         {
             // Remove BOM if present
-            ScriptUtilities.RemoveByteOrderMarks(ref xml);
+            Utilities.RemoveByteOrderMarks(ref xml);
 
             // Load the Xml document
             XmlDocument doc = new XmlDocument();

@@ -2,7 +2,7 @@
 
 namespace HandlingEditor.Client
 {
-    public class HandlingConfig
+    public class Config
     {
         public float FloatStep { get; set; }
         public float ScriptRange { get; set; }
@@ -17,7 +17,7 @@ namespace HandlingEditor.Client
         public bool ExposeCommand { get; set; }
         public bool ExposeEvent { get; set; }
 
-        public HandlingConfig()
+        public Config()
         {
             FloatStep = 0.01f;
             ScriptRange = 150.0f;

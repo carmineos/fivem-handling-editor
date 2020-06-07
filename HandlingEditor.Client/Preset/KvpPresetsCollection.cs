@@ -93,7 +93,7 @@ namespace HandlingEditor.Client
 
         public IEnumerable<string> GetKeys()
         {
-            return ScriptUtilities.GetKeyValuePairs(mKvpPrefix).Select(key => key.Remove(0, mKvpPrefix.Length));
+            return Utilities.GetKeyValuePairs(mKvpPrefix).Select(key => key.Remove(0, mKvpPrefix.Length));
         }
     }
 }

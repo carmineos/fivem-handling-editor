@@ -11,14 +11,14 @@ namespace HandlingEditor.Client.UI
         private readonly MainScript _script;
 
         private HandlingEditorMenu HandlingEditorMenu { get; set; }
-        private ClientPresetsMenu PersonalPresetsMenu { get; set; }
+        private ClientPresetsMenu ClientPresetsMenu { get; set; }
         private ServerPresetsMenu ServerPresetsMenu { get; set; }
-        private SettingsMenu SettingsMenu { get; set; }
+        private ClientSettingsMenu ClientSettingsMenu { get; set; }
 
         private MenuItem HandlingEditorMenuMenuItem { get; set; }
-        private MenuItem PersonalPresetsMenuMenuItem { get; set; }
+        private MenuItem ClientPresetsMenuMenuItem { get; set; }
         private MenuItem ServerPresetsMenuMenuItem { get; set; }
-        private MenuItem SettingsMenuMenuItem { get; set; }
+        private MenuItem ClientSettingsMenuMenuItem { get; set; }
 
 
         internal MainMenu(MainScript script, string name = Globals.ScriptName, string subtitle = "Main Menu") : base(name, subtitle)
@@ -45,13 +45,13 @@ namespace HandlingEditor.Client.UI
                 HandlingEditorMenu = _script.HandlingEditorScript.Menu;
 
             if (_script.ClientPresetsScript != null)
-                PersonalPresetsMenu = _script.ClientPresetsScript.Menu;
+                ClientPresetsMenu = _script.ClientPresetsScript.Menu;
 
             if (_script.ServerPresetsScript != null)
                 ServerPresetsMenu = _script.ServerPresetsScript.Menu;
 
             if (_script.SettingsScript != null)
-                SettingsMenu = _script.SettingsScript.Menu;
+                ClientSettingsMenu = _script.SettingsScript.Menu;
 
             Update();
         }
@@ -76,17 +76,17 @@ namespace HandlingEditor.Client.UI
                 MenuController.BindMenuItem(this, HandlingEditorMenu, HandlingEditorMenuMenuItem);
             }
 
-            if (PersonalPresetsMenu != null)
+            if (ClientPresetsMenu != null)
             {
-                PersonalPresetsMenuMenuItem = new MenuItem("Personal Presets Menu", "The menu to manage the presets saved by you.")
+                ClientPresetsMenuMenuItem = new MenuItem("Personal Presets Menu", "The menu to manage the presets saved by you.")
                 {
                     Label = "→→→"
                 };
 
-                AddMenuItem(PersonalPresetsMenuMenuItem);
+                AddMenuItem(ClientPresetsMenuMenuItem);
 
-                MenuController.AddSubmenu(this, PersonalPresetsMenu);
-                MenuController.BindMenuItem(this, PersonalPresetsMenu, PersonalPresetsMenuMenuItem);
+                MenuController.AddSubmenu(this, ClientPresetsMenu);
+                MenuController.BindMenuItem(this, ClientPresetsMenu, ClientPresetsMenuMenuItem);
             }
 
             if (ServerPresetsMenu != null)
@@ -102,17 +102,17 @@ namespace HandlingEditor.Client.UI
                 MenuController.BindMenuItem(this, ServerPresetsMenu, ServerPresetsMenuMenuItem);
             }
 
-            if (SettingsMenu != null)
+            if (ClientSettingsMenu != null)
             {
-                SettingsMenuMenuItem = new MenuItem("Settings Menu", "The menu to change available settings.")
+                ClientSettingsMenuMenuItem = new MenuItem("Settings Menu", "The menu to change available settings.")
                 {
                     Label = "→→→"
                 };
 
-                AddMenuItem(SettingsMenuMenuItem);
+                AddMenuItem(ClientSettingsMenuMenuItem);
 
-                MenuController.AddSubmenu(this, SettingsMenu);
-                MenuController.BindMenuItem(this, SettingsMenu, SettingsMenuMenuItem);
+                MenuController.AddSubmenu(this, ClientSettingsMenu);
+                MenuController.BindMenuItem(this, ClientSettingsMenu, ClientSettingsMenuMenuItem);
             }
         }
 
