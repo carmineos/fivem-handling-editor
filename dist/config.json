@@ -1,5 +1,5 @@
 {
-  "LogLevel": 1,
+  "Debug": true,
   "FloatStep": 0.01,
   "ScriptRange": 150.0,
   "Timer": 1000,
@@ -8,6 +8,8 @@
   "CopyOnlySharedFields": true,
   "EnableClientPresets":  true,
   "EnableServerPresets":  true,
-  "EnableSettings":  true,
-  "DisableMenu":  false
+  "EnableClientSettings":  true,
+  "DisableMenu": false,
+  "ExposeCommand":  false,
+  "ExposeEvent":  false
 }

@@ -50,8 +50,8 @@ namespace HandlingEditor.Client.UI
             if (_script.ServerPresetsScript != null)
                 ServerPresetsMenu = _script.ServerPresetsScript.Menu;
 
-            if (_script.SettingsScript != null)
-                ClientSettingsMenu = _script.SettingsScript.Menu;
+            if (_script.ClientSettingsScript != null)
+                ClientSettingsMenu = _script.ClientSettingsScript.Menu;
 
             Update();
         }

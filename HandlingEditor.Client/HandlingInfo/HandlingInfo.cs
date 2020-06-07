@@ -6,16 +6,11 @@ using System.Xml;
 
 namespace HandlingEditor.Client
 {
-    public class HandlingInfo
+    public static class HandlingInfo
     {
-        public Dictionary<string, HandlingFieldInfo> Fields;
+        public static Dictionary<string, HandlingFieldInfo> Fields = new Dictionary<string, HandlingFieldInfo>();
 
-        public HandlingInfo()
-        {
-            Fields = new Dictionary<string, HandlingFieldInfo>();
-        }
-
-        public void ParseXml(string xml)
+        public static void ParseXml(string xml)
         {
             // Remove BOM if present
             Utilities.RemoveByteOrderMarks(ref xml);
@@ -46,7 +41,7 @@ namespace HandlingEditor.Client
                     Type type = HandlingFieldTypes.GetHandlingFieldTypeByName(fieldName);
 
                     if (!bool.TryParse(item.Attributes["Editable"].Value, out bool editable))
-                        Debug.WriteLine($"Unable to parse Editable attribute in {fieldName}.");
+                        Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Editable attribute in {fieldName}.");
 
                     string description = item["Description"].InnerText;
 
@@ -57,10 +52,10 @@ namespace HandlingEditor.Client
                     if (type == HandlingFieldTypes.FloatType)
                     {
                         if (!float.TryParse(minNode.Attributes["value"].Value, out float min))
-                            Debug.WriteLine($"Unable to parse Min attribute in {fieldName}.");
+                            Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Min attribute in {fieldName}.");
                         
                         if (!float.TryParse(maxNode.Attributes["value"].Value, out float max))
-                            Debug.WriteLine($"Unable to parse Max attribute in {fieldName}.");
+                            Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Max attribute in {fieldName}.");
 
                         HandlingFieldInfo<float> fieldInfo = new HandlingFieldInfo<float>(fieldName, className, description, editable, min, max);
                         Fields[fieldName] = fieldInfo;
@@ -71,10 +66,10 @@ namespace HandlingEditor.Client
                     {
                         
                         if (!int.TryParse(minNode.Attributes["value"].Value, out int min))
-                            Debug.WriteLine($"Unable to parse Min attribute in {fieldName}.");
+                            Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Min attribute in {fieldName}.");
                         
                         if (!int.TryParse(maxNode.Attributes["value"].Value, out int max))
-                            Debug.WriteLine($"Unable to parse Max attribute in {fieldName}.");
+                            Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Max attribute in {fieldName}.");
 
                         HandlingFieldInfo<int> fieldInfo = new HandlingFieldInfo<int>(fieldName, className, description, editable, min, max);
                         Fields[fieldName] = fieldInfo;
@@ -84,24 +79,24 @@ namespace HandlingEditor.Client
                     else if (type == HandlingFieldTypes.Vector3Type)
                     {
                         if (!float.TryParse(minNode.Attributes["x"].Value, out float minX))
-                            Debug.WriteLine($"Unable to parse Min attribute in {fieldName}.");
+                            Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Min attribute in {fieldName}.");
                         
                         if (!float.TryParse(minNode.Attributes["y"].Value, out float minY))
-                            Debug.WriteLine($"Unable to parse Min attribute in {fieldName}.");
+                            Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Min attribute in {fieldName}.");
                         
                         if (!float.TryParse(minNode.Attributes["z"].Value, out float minZ))
-                            Debug.WriteLine($"Unable to parse Min attribute in {fieldName}.");
+                            Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Min attribute in {fieldName}.");
                         
                         Vector3 min = new Vector3(minX, minY, minZ);
                         
                         if (!float.TryParse(maxNode.Attributes["x"].Value, out float maxX))
-                            Debug.WriteLine($"Unable to parse Max attribute in {fieldName}.");
+                            Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Max attribute in {fieldName}.");
                         
                         if (!float.TryParse(maxNode.Attributes["y"].Value, out float maxY))
-                            Debug.WriteLine($"Unable to parse Max attribute in {fieldName}.");
+                            Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Max attribute in {fieldName}.");
                         
                         if (!float.TryParse(maxNode.Attributes["z"].Value, out float maxZ))
-                            Debug.WriteLine($"Unable to parse Max attribute in {fieldName}.");
+                            Debug.WriteLine($"{nameof(HandlingInfo)}: Unable to parse Max attribute in {fieldName}.");
                         
                         Vector3 max = new Vector3(maxX, maxY, maxZ);
 
@@ -125,7 +120,7 @@ namespace HandlingEditor.Client
         }
 
 
-        public bool IsValueAllowed(string name, int value)
+        public static bool IsValueAllowed(string name, int value)
         {
             if (string.IsNullOrEmpty(name))
                 return false;
@@ -140,7 +135,7 @@ namespace HandlingEditor.Client
             return false;
         }
 
-        public bool IsValueAllowed(string name, float value)
+        public static bool IsValueAllowed(string name, float value)
         {
             if (string.IsNullOrEmpty(name))
                 return false;
@@ -155,7 +150,7 @@ namespace HandlingEditor.Client
             return false;
         }
 
-        public bool IsValueAllowed(string name, Vector3 value)
+        public static bool IsValueAllowed(string name, Vector3 value)
         {
             if (string.IsNullOrEmpty(name))
                 return false;
@@ -174,7 +169,7 @@ namespace HandlingEditor.Client
             return false;
         }
 
-        public bool IsComponentValueAllowed(string componentName, float value)
+        public static bool IsComponentValueAllowed(string componentName, float value)
         {
             if (string.IsNullOrEmpty(componentName))
                 return false;

@@ -56,7 +56,7 @@ namespace HandlingEditor.Client.Scripts
         internal HandlingEditorScript HandlingEditorScript { get; private set; }
         internal ClientPresetsScript ClientPresetsScript { get; private set; }
         internal ServerPresetsScript ServerPresetsScript { get; private set; }
-        internal ClientSettingsScript SettingsScript { get; private set; }
+        internal ClientSettingsScript ClientSettingsScript { get; private set; }
 
         public MainScript()
         {
@@ -89,9 +89,9 @@ namespace HandlingEditor.Client.Scripts
                 ServerPresetsScript = new ServerPresetsScript(this);
             }
 
-            if (Config.EnableSettings)
+            if (Config.EnableClientSettings)
             {
-                SettingsScript = new ClientSettingsScript(this);
+                ClientSettingsScript = new ClientSettingsScript(this);
             }
 
             if (!Config.DisableMenu)
