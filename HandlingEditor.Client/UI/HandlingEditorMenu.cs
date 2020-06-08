@@ -4,6 +4,8 @@ using MenuAPI;
 using System;
 using System.Collections.Generic;
 using static HandlingEditor.Client.UI.MenuUtilities;
+using static CitizenFX.Core.Native.API;
+using CitizenFX.Core.UI;
 
 namespace HandlingEditor.Client.UI
 {
@@ -26,37 +28,116 @@ namespace HandlingEditor.Client.UI
 
             Update();
 
+            AddTextEntry("HANDLING_EDITOR_ENTER_VALUE", "Enter a value (without spaces)");
+
             OnDynamicListItemCurrentItemChange += DynamicListItemCurrentItemChange;
             OnItemSelect += ItemSelect;
+            OnDynamicListItemSelect += DynamicListItemSelect;
+        }
+
+        private async void DynamicListItemSelect(Menu menu, MenuDynamicListItem dynamicListItem, string currentItem)
+        {
+            if (_script.Config.Debug)
+                Debug.WriteLine($"{nameof(HandlingEditorMenu)}: {dynamicListItem.Text} MenuDynamicListItem selected");
+
+            // TODO: Move checks logic in script
+            var fieldInfo = dynamicListItem.ItemData as HandlingFieldInfo;
+
+            string text = await _script.GetValueFromUser("HANDLING_EDITOR_ENTER_VALUE", dynamicListItem.CurrentItem);
+
+            if (fieldInfo.Type == HandlingFieldTypes.FloatType)
+            {
+                var min = (fieldInfo as HandlingFieldInfo<float>).Min;
+                var max = (fieldInfo as HandlingFieldInfo<float>).Max;
+
+                if (!float.TryParse(text, out float newFloatvalue))
+                {
+                    Screen.ShowNotification($"~r~ERROR~w~ Invalid value for ~b~{fieldInfo.Name}~w~");
+                    return;
+                }
+
+                if (newFloatvalue >= min && newFloatvalue <= max)
+                {
+                    dynamicListItem.CurrentItem = newFloatvalue.ToString("F3");
+                    FloatPropertyChangedEvent?.Invoke(fieldInfo.Name, newFloatvalue);
+                }
+                else
+                    Screen.ShowNotification($"~r~ERROR~w~ Value out of allowed limits for ~b~{fieldInfo.Name}~w~ [Min:{min}, Max:{max}]");
+            }
+            else if (fieldInfo.Type == HandlingFieldTypes.IntType)
+            {
+                var min = (fieldInfo as HandlingFieldInfo<int>).Min;
+                var max = (fieldInfo as HandlingFieldInfo<int>).Max;
+
+                if (!int.TryParse(text, out int newIntvalue))
+                {
+                    Screen.ShowNotification($"~r~ERROR~w~ Invalid value for ~b~{fieldInfo.Name}~w~");
+                    return;
+                }
+
+                if (newIntvalue >= min && newIntvalue <= max)
+                {
+                    dynamicListItem.CurrentItem = newIntvalue.ToString();
+                    IntPropertyChangedEvent?.Invoke(fieldInfo.Name, newIntvalue);
+                }
+                else
+                    Screen.ShowNotification($"~r~ERROR~w~ Value out of allowed limits for ~b~{fieldInfo.Name}~w~ [Min:{min}, Max:{max}]");
+            }
+            else if (fieldInfo.Type == HandlingFieldTypes.Vector3Type)
+            {
+                var min = (fieldInfo as HandlingFieldInfo<Vector3>).Min;
+                var max = (fieldInfo as HandlingFieldInfo<Vector3>).Max;
+
+                if (!float.TryParse(text, out float newfloatValue))
+                {
+                    Screen.ShowNotification($"~r~ERROR~w~ Invalid value for ~b~{dynamicListItem.Text}~w~");
+                    return;
+                }
+
+                if (dynamicListItem.Text.EndsWith(".x"))
+                {
+                    if (newfloatValue >= min.X && newfloatValue <= max.X)
+                    {
+                        dynamicListItem.CurrentItem = newfloatValue.ToString("F3");
+                        Vector3PropertyChangedEvent?.Invoke(fieldInfo.Name, newfloatValue, dynamicListItem.Text);
+                    }
+                    else
+                        Screen.ShowNotification($"~r~ERROR~w~ Value out of allowed limits for ~b~{dynamicListItem.Text}~w~ [Min:{min.X}, Max:{max.X}]");
+
+                }
+                else if (dynamicListItem.Text.EndsWith(".y"))
+                {
+                    if (newfloatValue >= min.Y && newfloatValue <= max.Y)
+                    {
+                        dynamicListItem.CurrentItem = newfloatValue.ToString("F3");
+                        Vector3PropertyChangedEvent?.Invoke(fieldInfo.Name, newfloatValue, dynamicListItem.Text);
+                    }
+                    else
+                        Screen.ShowNotification($"~r~ERROR~w~ Value out of allowed limits for ~b~{dynamicListItem.Text}~w~ [Min:{min.Y}, Max:{max.Y}]");
+                }
+                else if (dynamicListItem.Text.EndsWith(".z"))
+                {
+                    if (newfloatValue >= min.Z && newfloatValue <= max.Z)
+                    {
+                        dynamicListItem.CurrentItem = newfloatValue.ToString("F3");
+                        Vector3PropertyChangedEvent?.Invoke(fieldInfo.Name, newfloatValue, dynamicListItem.Text);
+                    }
+                    else
+                        Screen.ShowNotification($"~r~ERROR~w~ Value out of allowed limits for ~b~{dynamicListItem.Text}~w~ [Min:{min.Z}, Max:{max.Z}]");
+                }
+            }
         }
 
         private void ItemSelect(Menu menu, MenuItem menuItem, int itemIndex)
         {
-                
             if (_script.Config.Debug)
-                Debug.WriteLine($"{nameof(HandlingEditorMenu)}: {menuItem.Text} selected");
+                Debug.WriteLine($"{nameof(HandlingEditorMenu)}: {menuItem.Text} MenuItem selected");
 
             if (menuItem == ResetItem)
             {
                 ResetPropertiesEvent?.Invoke(this, menuItem.ItemData as string);
                 return;
             }
-
-            // TODO: Get on screen value
-            var fieldInfo = menuItem.ItemData as HandlingFieldInfo;
-            if (fieldInfo.Type == HandlingFieldTypes.FloatType)
-            {
-                //
-            }
-            else if (fieldInfo.Type == HandlingFieldTypes.IntType)
-            {
-                //
-            }
-            else if (fieldInfo.Type == HandlingFieldTypes.Vector3Type)
-            {
-                //
-            }
-
         }
 
         private void DynamicListItemCurrentItemChange(Menu menu, MenuDynamicListItem dynamicListItem, string oldValue, string newValue)

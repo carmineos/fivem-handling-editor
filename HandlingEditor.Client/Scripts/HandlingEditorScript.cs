@@ -493,5 +493,10 @@ namespace HandlingEditor.Client.Scripts
 
             HandlingData.SetFieldValue(fieldName, fieldValue);
         }
+
+        internal async Task<string> GetValueFromUser(string title, string defaultText)
+        {
+            return await _mainScript.GetOnScreenString(title, defaultText);
+        }
     }
 }
