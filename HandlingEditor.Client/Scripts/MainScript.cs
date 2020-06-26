@@ -73,10 +73,10 @@ namespace HandlingEditor.Client.Scripts
             _playerPedHandle = -1;
             _playerPedCoords = Vector3.Zero;
             _worldVehiclesHandles = new List<int>();
-            _maxDistanceSquared = 10;
+            _maxDistanceSquared = 10000;
 
             Config = LoadConfig();
-            _maxDistanceSquared = (float)Math.Sqrt(Config.ScriptRange);
+            _maxDistanceSquared = (float)Math.Pow(Config.ScriptRange, 2.0);
 
             HandlingEditorScript = new HandlingEditorScript(this);
             RegisterScript(HandlingEditorScript);
@@ -230,7 +230,7 @@ namespace HandlingEditor.Client.Scripts
                 if (float.TryParse(args[0], out float value))
                 {
                     Config.ScriptRange = value;
-                    _maxDistanceSquared = (float)Math.Sqrt(value);
+                    _maxDistanceSquared = (float)Math.Pow(Config.ScriptRange, 2.0);
                     Debug.WriteLine($"{nameof(MainScript)}: {nameof(Config.ScriptRange)} updated to {value}");
                 }
                 else Debug.WriteLine($"{nameof(MainScript)}: Error parsing {args[0]} as float");
